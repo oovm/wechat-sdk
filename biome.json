@@ -1,0 +1,44 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 80
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "style": {
+                "useVueMultiWordComponentNames": "off"
+            },
+            "correctness": {
+                "noUnusedImports": "off",
+                "noUnusedVariables": "off"
+            }
+        }
+    },
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
+    "files": {
+        "includes": ["**", "!**/dist", "!**/node_modules", "!**/public/models"]
+    },
+    "overrides": [
+        {
+            "includes": ["**/*.vue"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noUnusedImports": "off",
+                        "noUnusedVariables": "off"
+                    }
+                }
+            }
+        }
+    ]
+}

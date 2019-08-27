@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main, master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Biome
+        run: pnpm check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Build homepage
+        run: pnpm build:homepage
+
+      - name: Verify (local parity)
+        if: false
+        run: pnpm verify
+
+      - name: Upload homepage dist
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-dist
+          path: projects/homepage/dist
+          if-no-files-found: error
+          retention-days: 7

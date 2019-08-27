@@ -1,0 +1,11 @@
+{
+    "extends": "../../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "paths": {
+            "@doki-land/live2d": ["../../live2d/src/index.ts"],
+            "@doki-land/live2d-widget": ["../../live2d-widget/src/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts"]
+}

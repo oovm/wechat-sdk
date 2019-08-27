@@ -1,0 +1,39 @@
+{
+    "name": "@doki-land/live2d-loader",
+    "version": "0.0.0",
+    "description": "Live2D asset resolve and model load pipeline",
+    "type": "module",
+    "license": "MIT",
+    "author": "Doki Land",
+    "keywords": [
+        "live2d",
+        "loader",
+        "doki-land"
+    ],
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm --dts",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@doki-land/live2d-core": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "^8.5.1",
+        "typescript": "^5.8.0",
+        "vitest": "^2.1.8"
+    },
+    "sideEffects": false
+}

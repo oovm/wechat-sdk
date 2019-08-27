@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.tsbuildinfo
+projects/homepage/public/models/samples/
+projects/homepage/public/models/npm/
+projects/homepage/public/models/quad/
+projects/homepage/public/models/catalog.json
+coverage/
+.turbo/
+
+
+
+# Node
+node_modules/
+dist/
+*.txt
+*.log

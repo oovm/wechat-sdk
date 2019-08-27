@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "jsx": "preserve",
+        "moduleResolution": "bundler",
+        "types": ["vite/client", "@webgpu/types", "node"],
+        "paths": {
+            "@doki-land/live2d": ["../live2d/src/index.ts"],
+            "vue-plugin-live2d": ["../adaptors/vue-plugin-live2d/src/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "src/**/*.vue"],
+    "exclude": ["vite.config.ts"]
+}

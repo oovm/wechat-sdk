@@ -1,0 +1,13 @@
+{
+    "extends": "../../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "jsx": "preserve",
+        "moduleResolution": "bundler",
+        "types": ["@webgpu/types", "vite/client"],
+        "paths": {
+            "@doki-land/live2d": ["../../live2d/src/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "src/**/*.vue"]
+}

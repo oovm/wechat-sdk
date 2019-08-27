@@ -1,0 +1,50 @@
+{
+    "name": "@doki-land/live2d",
+    "version": "0.0.0",
+    "description": "Live2D TypeScript library — public facade for Doki Land",
+    "type": "module",
+    "license": "MIT",
+    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git"
+    },
+    "keywords": [
+        "live2d",
+        "webgpu",
+        "webgl2",
+        "doki-land"
+    ],
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts",
+        "./core": "./src/reexports/core.ts",
+        "./loader": "./src/reexports/loader.ts",
+        "./renderer": "./src/reexports/renderer.ts"
+    },
+    "files": [
+        "dist",
+        "src"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm --dts",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run --passWithNoTests"
+    },
+    "dependencies": {
+        "@doki-land/live2d-core": "workspace:*",
+        "@doki-land/live2d-loader": "workspace:*",
+        "@doki-land/live2d-renderer": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "^8.5.1",
+        "typescript": "^5.8.0",
+        "vitest": "^2.1.8"
+    },
+    "sideEffects": false
+}

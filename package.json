@@ -1,0 +1,33 @@
+{
+    "name": "live2d.ts",
+    "private": true,
+    "type": "module",
+    "description": "Doki Land Live2D TypeScript workspace — facade @doki-land/live2d",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git"
+    },
+    "scripts": {
+        "build": "pnpm -r --filter \"@doki-land/*\" --if-present run build",
+        "typecheck": "pnpm -r --filter \"@doki-land/*\" --if-present run typecheck",
+        "test": "pnpm -r --filter \"@doki-land/*\" --if-present run test",
+        "dev:homepage": "pnpm --filter @doki-land/live2d-homepage dev",
+        "build:homepage": "pnpm --filter @doki-land/live2d-homepage build",
+        "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm build && pnpm build:homepage",
+        "fmt": "biome format --write .",
+        "check": "biome check ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.8",
+        "@webgpu/types": "^0.1.64",
+        "typescript": "^5.8.0",
+        "tsup": "^8.5.1",
+        "vitest": "^2.1.8"
+    },
+    "engines": {
+        "node": ">=20",
+        "pnpm": ">=9"
+    },
+    "packageManager": "pnpm@9.15.0"
+}
