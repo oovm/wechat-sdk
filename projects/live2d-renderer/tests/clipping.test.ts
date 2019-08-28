@@ -8,7 +8,7 @@ import {
     layoutMaskAtlasRgba,
     layoutMaskAtlasUvGrid,
     partitionForClipping,
-} from "./clipping.js";
+} from "../src/clipping.js";
 
 function fakeContexts(n: number): ClippingContext[] {
     return Array.from({ length: n }, (_, i) => ({

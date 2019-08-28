@@ -1,15 +1,16 @@
 /**
  * Optional official/sample MOC binaries for integration tests.
- * CI checkouts lack `live2d-ts-ref-repos` and gitignored homepage samples —
- * suites must `describe.skipIf(!bytes)` when these resolve to null.
+ * CI lacks `live2d-ts-ref-repos`; only catalog entries with `local: true`
+ * are part of the offline corpus — suites must `describe.skipIf(!bytes)`
+ * when these resolve to null.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-/** `live2d.ts` repo root (`projects/live2d-renderer/src/moc` → ../../../..) */
-export const LIVE2D_TS_ROOT = resolve(HERE, "../../../..");
+/** `live2d.ts` repo root (`projects/live2d-renderer/tests` → ../../..) */
+export const LIVE2D_TS_ROOT = resolve(HERE, "../../..");
 /** Sibling checkout used by local developers */
 export const REF_REPOS_ROOT = resolve(LIVE2D_TS_ROOT, "../live2d-ts-ref-repos");
 

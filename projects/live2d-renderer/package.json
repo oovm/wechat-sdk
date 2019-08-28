@@ -1,7 +1,7 @@
 {
     "name": "@doki-land/live2d-renderer",
     "version": "0.0.0",
-    "description": "Live2D WebGPU/WebGL2 renderers and moc2/moc3 backends",
+    "description": "Live2D graphics backends (WebGPU/WebGL2/Canvas2D) plus moc2/moc3 CPU model runtimes",
     "type": "module",
     "license": "MIT",
     "author": "Doki Land",
@@ -9,6 +9,7 @@
         "live2d",
         "webgpu",
         "webgl2",
+        "canvas2d",
         "renderer",
         "doki-land"
     ],
@@ -22,7 +23,15 @@
         "src"
     ],
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "main": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js"
+            }
+        }
     },
     "scripts": {
         "build": "tsup src/index.ts --format esm --dts",

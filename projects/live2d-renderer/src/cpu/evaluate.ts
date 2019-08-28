@@ -1,4 +1,4 @@
-import type {
+﻿import type {
     FrameBlendMode,
     FrameDrawable,
     FrameSnapshot,
@@ -48,7 +48,7 @@ function paramWeight(instance: ModelInstance, paramIndex: number): number {
     return span === 0 ? 0 : (v - p.defaultValue) / span;
 }
 
-/** CPU deform → FrameSnapshot. */
+/** CPU deform 鈫?FrameSnapshot. */
 export function evaluateFrame(instance: ModelInstance): FrameSnapshot {
     const drawables: FrameDrawable[] = [];
 

@@ -6,22 +6,22 @@ import type {
     ModelSettings,
 } from "@doki-land/live2d-core";
 import { detectModelSettingsFormat } from "@doki-land/live2d-core";
-import type {
-    ModelBackend,
-    ModelBackendOptions,
-    ParameterBinding,
-} from "../backend.js";
 import {
     createModelInstance,
     evaluateFrame,
     setParameterValue,
 } from "../cpu/evaluate.js";
-import { type Moc2ModelImpl, Moc2Parser } from "../moc/moc2-objects.js";
+import type {
+    ModelBackend,
+    ModelBackendOptions,
+    ParameterBinding,
+} from "../model-runtime.js";
+import type { BlendMode, DrawableMesh } from "../types.js";
+import { type Moc2ModelImpl, Moc2Parser } from "./moc2-objects.js";
 import {
     moc2ModelToProgram,
     moc2ParamGetterFromValues,
-} from "../moc/moc2-to-program.js";
-import type { BlendMode, DrawableMesh } from "../types.js";
+} from "./moc2-to-program.js";
 
 function toDrawableMesh(d: FrameDrawable): DrawableMesh {
     return {

@@ -54,15 +54,17 @@ function normalizePositions(
     canvasWidth: number,
     canvasHeight: number,
 ): Float32Array {
-    // moc2 draw coords are in canvas pixels with origin at the corner
-    // (typically bottom-left after deform). Map [0, canvas] → NDC [-1, 1]
-    // so the model sits in the viewport center like moc3.
+    // moc2 draw coords are canvas pixels with origin at the **top-left**
+    // (Y increases downward), matching Live2D Cubism 2 canvas space.
+    // Map to Y-up NDC so WebGL/WebGPU/Canvas2D share one convention:
+    //   x: [0, w] → [-1, 1]
+    //   y: [0, h] → [1, -1]  (top of canvas → NDC +Y)
     const w = canvasWidth > 0 ? canvasWidth : 1;
     const h = canvasHeight > 0 ? canvasHeight : 1;
     const out = new Float32Array(positions.length);
     for (let i = 0; i + 1 < positions.length; i += 2) {
         out[i] = (positions[i]! / w) * 2 - 1;
-        out[i + 1] = (positions[i + 1]! / h) * 2 - 1;
+        out[i + 1] = 1 - (positions[i + 1]! / h) * 2;
     }
     return out;
 }

@@ -1,16 +1,17 @@
-import { canvasCompositeForBlendMode } from "./blend.js";
+import { canvasCompositeForBlendMode } from "../blend.js";
 import {
     fitClippingContexts,
     type MaskLayoutRect,
     partitionForClipping,
-} from "./clipping.js";
-import { PREVIEW_FILL, PREVIEW_STROKE } from "./preview-style.js";
+} from "../clipping.js";
+import { modelXToCanvasPixelX, modelYUpToCanvasPixelY } from "../coords.js";
+import { PREVIEW_FILL, PREVIEW_STROKE } from "../preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,
     Renderer,
     TextureData,
-} from "./types.js";
+} from "../types.js";
 
 export interface Canvas2DRendererOptions {
     /** Fill color for deformed triangles (CSS). */
@@ -318,12 +319,13 @@ class Canvas2DModelDrawPass implements ModelDrawPass {
                 const a = idx[i]!;
                 const b = idx[i + 1]!;
                 const c = idx[i + 2]!;
-                const ax = (pos[a * 2]! + 1) * sx;
-                const ay = (1 - pos[a * 2 + 1]!) * sy;
-                const bx = (pos[b * 2]! + 1) * sx;
-                const by = (1 - pos[b * 2 + 1]!) * sy;
-                const cx = (pos[c * 2]! + 1) * sx;
-                const cy = (1 - pos[c * 2 + 1]!) * sy;
+                // Geometry: single Y-up → Y-down map. UV stays as authored.
+                const ax = modelXToCanvasPixelX(pos[a * 2]!, w);
+                const ay = modelYUpToCanvasPixelY(pos[a * 2 + 1]!, h);
+                const bx = modelXToCanvasPixelX(pos[b * 2]!, w);
+                const by = modelYUpToCanvasPixelY(pos[b * 2 + 1]!, h);
+                const cx = modelXToCanvasPixelX(pos[c * 2]!, w);
+                const cy = modelYUpToCanvasPixelY(pos[c * 2 + 1]!, h);
                 drawTexturedTriangle(
                     ctx,
                     tex.image,
