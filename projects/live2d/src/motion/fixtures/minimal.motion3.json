@@ -1,0 +1,34 @@
+{
+    "Version": 3,
+    "Meta": {
+        "Duration": 1,
+        "Fps": 30,
+        "Loop": false,
+        "AreBeziersRestricted": true,
+        "FadeInTime": 0,
+        "FadeOutTime": 0,
+        "CurveCount": 3,
+        "TotalSegmentCount": 3,
+        "TotalPointCount": 6
+    },
+    "UserData": [
+        { "Time": 0.5, "Value": "mid" }
+    ],
+    "Curves": [
+        {
+            "Target": "Parameter",
+            "Id": "PARAM_ANGLE_X",
+            "Segments": [0, 0, 0, 1, 30]
+        },
+        {
+            "Target": "Parameter",
+            "Id": "PARAM_ANGLE_Y",
+            "Segments": [0, 0, 2, 0.5, 10, 0, 1, 0]
+        },
+        {
+            "Target": "Parameter",
+            "Id": "PARAM_BODY_ANGLE_X",
+            "Segments": [0, 0, 1, 0.333, 0, 0.667, 20, 1, 20]
+        }
+    ]
+}

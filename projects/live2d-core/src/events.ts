@@ -44,8 +44,8 @@ export type Live2DEventMap = {
     /** Fired after each successful `update()` while live. */
     profile: FrameProfile;
     hit: { area: string; x: number; y: number };
-    "motion:start": { group: string; index: number };
-    "motion:finish": { group: string; index: number };
+    "motion:start": { group: string; index: number; slot: string };
+    "motion:finish": { group: string; index: number; slot: string };
     phase: { phase: string; generation: number };
 };
 
