@@ -7,20 +7,24 @@ import type {
     ModelSettings,
 } from "@doki-land/live2d-core";
 import { detectModelSettingsFormat } from "@doki-land/live2d-core";
-import type {
-    ModelBackend,
-    ModelBackendOptions,
-    ParameterBinding,
-} from "../backend.js";
 import { isCpuProgramBytes, parseCpuProgram } from "../cpu/cpu-program.js";
 import {
     createModelInstance,
     evaluateFrame,
     setParameterValue,
 } from "../cpu/evaluate.js";
-import { type Moc3Document, parseMoc3Document } from "../moc/moc3-reader.js";
-import { moc3DocumentToProgram } from "../moc/moc3-to-program.js";
+import type {
+    ModelBackend,
+    ModelBackendOptions,
+    ParameterBinding,
+} from "../model-runtime.js";
 import type { BlendMode, DrawableMesh } from "../types.js";
+import { type Moc3Document, parseMoc3Document } from "./moc3-reader.js";
+import { moc3DocumentToProgram } from "./moc3-to-program.js";
+import {
+    cascadedPartOpacity,
+    readMoc3PartTables,
+} from "./moc3-parts.js";
 
 function toDrawableMesh(d: FrameDrawable): DrawableMesh {
     return {
@@ -53,6 +57,8 @@ interface Moc3State {
     instance: ModelInstance;
     lastFrame: FrameSnapshot | null;
     bakedFingerprint: string;
+    /** Runtime PartOpacity overrides (id → 0..1). */
+    partOpacity: Map<string, number>;
 }
 
 const stateByModel = new WeakMap<InternalModel, Moc3State>();
@@ -125,6 +131,7 @@ export class Moc3Backend implements ModelBackend {
             instance,
             lastFrame: null,
             bakedFingerprint: paramFingerprint(instance.parameterValues),
+            partOpacity: new Map(),
         });
         return model;
     }
@@ -148,7 +155,17 @@ export class Moc3Backend implements ModelBackend {
         bakePose(state);
         const frame = state.lastFrame ?? evaluateFrame(state.instance);
         state.lastFrame = frame;
-        return frame.drawables.map(toDrawableMesh);
+        const tables = state.doc ? readMoc3PartTables(state.doc) : null;
+        return frame.drawables.map((d) => {
+            const mesh = toDrawableMesh(d);
+            if (!tables || state.partOpacity.size === 0) return mesh;
+            const mul = cascadedPartOpacity(
+                tables,
+                d.index,
+                state.partOpacity,
+            );
+            return { ...mesh, opacity: mesh.opacity * mul };
+        });
     }
 
     captureFrame(model: InternalModel): FrameSnapshot | null {
@@ -157,7 +174,17 @@ export class Moc3Backend implements ModelBackend {
         bakePose(state);
         const frame = state.lastFrame ?? evaluateFrame(state.instance);
         state.lastFrame = frame;
-        return frame;
+        const tables = state.doc ? readMoc3PartTables(state.doc) : null;
+        if (!tables || state.partOpacity.size === 0) return frame;
+        return {
+            ...frame,
+            drawables: frame.drawables.map((d) => ({
+                ...d,
+                opacity:
+                    d.opacity *
+                    cascadedPartOpacity(tables, d.index, state.partOpacity),
+            })),
+        };
     }
 
     setParameter(model: InternalModel, id: string, value: number): void {
@@ -166,6 +193,16 @@ export class Moc3Backend implements ModelBackend {
         setParameterValue(state.instance, id, value);
         state.lastFrame = null;
         state.bakedFingerprint = "";
+    }
+
+    setPartOpacity(model: InternalModel, id: string, value: number): void {
+        const state = stateByModel.get(model);
+        if (!state) return;
+        const v = Number.isFinite(value)
+            ? Math.min(1, Math.max(0, value))
+            : 1;
+        state.partOpacity.set(id, v);
+        // Opacity is applied in getDrawables; no need to rebake deform.
     }
 
     listParameters(model: InternalModel): readonly ParameterBinding[] {

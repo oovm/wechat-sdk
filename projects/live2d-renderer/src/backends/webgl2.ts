@@ -5,7 +5,7 @@
  * multiply drawable alpha by the mask (or 1−mask when inverted).
  */
 
-import { applyWebGl2BlendMode } from "./blend.js";
+import { applyWebGl2BlendMode } from "../blend.js";
 import {
     fitClippingContexts,
     type LaidOutClippingContext,
@@ -13,18 +13,18 @@ import {
     maskChannelVec4,
     maskLayoutVec4,
     partitionForClipping,
-} from "./clipping.js";
+} from "../clipping.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
-} from "./preview-style.js";
+} from "../preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,
     TextureData,
     WebGl2Renderer,
-} from "./types.js";
+} from "../types.js";
 
 const VS = `#version 300 es
 layout(location = 0) in vec2 a_pos;
@@ -600,6 +600,11 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
 export interface WebGl2RendererOptions {
     antialias?: boolean;
     alpha?: boolean;
+    /**
+     * Keep color buffer after present so `canvas.toDataURL` / `toBlob` work.
+     * Default true (preview / gallery capture). Set false for max FPS if unused.
+     */
+    preserveDrawingBuffer?: boolean;
 }
 
 /** WebGL2 renderer. */
@@ -619,6 +624,7 @@ export class WebGl2RendererImpl implements WebGl2Renderer {
             antialias: this.#options.antialias ?? true,
             alpha: this.#options.alpha ?? true,
             premultipliedAlpha: true,
+            preserveDrawingBuffer: this.#options.preserveDrawingBuffer ?? true,
             powerPreference: "high-performance",
         });
         if (!gl) {

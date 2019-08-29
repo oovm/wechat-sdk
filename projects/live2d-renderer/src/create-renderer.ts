@@ -1,10 +1,16 @@
 import {
     type Canvas2DRendererOptions,
     createCanvas2DRenderer,
-} from "./canvas2d.js";
+} from "./backends/canvas2d.js";
+import {
+    createWebGl2Renderer,
+    type WebGl2RendererOptions,
+} from "./backends/webgl2.js";
+import {
+    createWebGpuRenderer,
+    type WebGpuRendererOptions,
+} from "./backends/webgpu.js";
 import type { Renderer, RendererKind } from "./types.js";
-import { createWebGl2Renderer, type WebGl2RendererOptions } from "./webgl2.js";
-import { createWebGpuRenderer, type WebGpuRendererOptions } from "./webgpu.js";
 
 export interface CreateRendererOptions {
     /**

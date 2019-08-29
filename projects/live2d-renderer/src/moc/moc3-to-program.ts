@@ -38,14 +38,18 @@ function normalizePositions(
     canvasHeight: number,
     pixelsPerUnit: number,
 ): Float32Array {
-    // Cubism deformer output is in logical units (canvas / ppu). Map to NDC.
+    // Cubism deformer output is in logical units (canvas / ppu), center origin.
+    // Authoring Y grows upward in the editor, but the runtime draw path that
+    // matches Cubism Web samples presents with Y flipped into our shared
+    // Y-up NDC (head / bowl toward +Y). Negate Y once here — same contract as
+    // moc2 after top-left pixel normalization.
     const ppu = pixelsPerUnit > 0 ? pixelsPerUnit : 1;
     const hw = canvasWidth > 0 ? (canvasWidth / ppu) * 0.5 : 0.5;
     const hh = canvasHeight > 0 ? (canvasHeight / ppu) * 0.5 : 0.5;
     const out = new Float32Array(positions.length);
     for (let i = 0; i + 1 < positions.length; i += 2) {
         out[i] = positions[i]! / hw;
-        out[i + 1] = positions[i + 1]! / hh;
+        out[i + 1] = -positions[i + 1]! / hh;
     }
     return out;
 }

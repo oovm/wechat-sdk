@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { buildClippingContexts, partitionForClipping } from "../clipping.js";
-import { decodeMoc3 } from "./decode.js";
+import {
+    buildClippingContexts,
+    partitionForClipping,
+} from "../src/clipping.js";
+import { decodeMoc3 } from "../src/moc/decode.js";
 import {
     CLIPPING_MOC3_CANDIDATES,
     HARU_MOC3_CANDIDATES,
     MAO_MOC3_CANDIDATES,
     MARK_MOC3_CANDIDATES,
     tryReadFixture,
-} from "./test-fixtures.js";
+} from "./fixtures.js";
 
 const clippingBytes = tryReadFixture(...CLIPPING_MOC3_CANDIDATES);
 

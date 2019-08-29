@@ -1,26 +1,36 @@
 /**
- * `@doki-land/live2d-renderer` — WebGPU/WebGL2/Canvas2D renderers and moc2/moc3 backends.
+ * `@doki-land/live2d-renderer`
+ *
+ * Layout:
+ * - `backends/`  — graphics only (webgpu / webgl2 / canvas2d)
+ * - `moc/`       — moc2 / moc3 decode + model runtimes (not graphics backends)
+ * - `cpu/`       — CPU evaluate + cpu-program fixture codec
+ * - `tests/`     — all vitest suites (package root)
  */
 
-export {
-    type ModelBackend,
-    type ModelBackendOptions,
-    type ParameterBinding,
-    selectModelBackend,
-} from "./backend.js";
-export { createMoc2Backend, Moc2Backend } from "./backends/moc2.js";
-export { createMoc3Backend, Moc3Backend } from "./backends/moc3.js";
-export {
-    applyWebGl2BlendMode,
-    canvasCompositeForBlendMode,
-    webGpuBlendState,
-} from "./blend.js";
 export {
     Canvas2DRendererImpl,
     type Canvas2DRendererOptions,
     createCanvas2DRenderer,
     isCanvas2DAvailable,
-} from "./canvas2d.js";
+} from "./backends/canvas2d.js";
+export {
+    createWebGl2Renderer,
+    isWebGl2Available,
+    WebGl2RendererImpl,
+    type WebGl2RendererOptions,
+} from "./backends/webgl2.js";
+export {
+    createWebGpuRenderer,
+    isWebGpuAvailable,
+    WebGpuRendererImpl,
+    type WebGpuRendererOptions,
+} from "./backends/webgpu.js";
+export {
+    applyWebGl2BlendMode,
+    canvasCompositeForBlendMode,
+    webGpuBlendState,
+} from "./blend.js";
 export {
     buildClippingContexts,
     type ClippingContext,
@@ -77,6 +87,8 @@ export {
     decodeMoc3DrawableFlags,
     Moc3DrawableFlag,
 } from "./moc/drawable-flags.js";
+export { createMoc2Backend, Moc2Backend } from "./moc/moc2.js";
+export { createMoc3Backend, Moc3Backend } from "./moc/moc3.js";
 export {
     applyMoc3Glues,
     loadMoc3Glues,
@@ -84,6 +96,12 @@ export {
     type Moc3GluePair,
     meanGlueSeamDistance,
 } from "./moc/moc3-glue.js";
+export {
+    type ModelBackend,
+    type ModelBackendOptions,
+    type ParameterBinding,
+    selectModelBackend,
+} from "./model-runtime.js";
 export {
     PREVIEW_FILL,
     PREVIEW_STROKE,
@@ -99,17 +117,5 @@ export {
     type WebGl2Renderer,
     type WebGpuRenderer,
 } from "./types.js";
-export {
-    createWebGl2Renderer,
-    isWebGl2Available,
-    WebGl2RendererImpl,
-    type WebGl2RendererOptions,
-} from "./webgl2.js";
-export {
-    createWebGpuRenderer,
-    isWebGpuAvailable,
-    WebGpuRendererImpl,
-    type WebGpuRendererOptions,
-} from "./webgpu.js";
 
 export const LIVE2D_RENDERER_VERSION = "0.0.0" as const;

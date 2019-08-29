@@ -6,7 +6,7 @@
  * atlas layout; endFrame submits.
  */
 
-import { webGpuBlendState } from "./blend.js";
+import { webGpuBlendState } from "../blend.js";
 import {
     fitClippingContexts,
     type LaidOutClippingContext,
@@ -14,19 +14,19 @@ import {
     maskChannelVec4,
     maskLayoutVec4,
     partitionForClipping,
-} from "./clipping.js";
+} from "../clipping.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
-} from "./preview-style.js";
+} from "../preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,
     TextureData,
     WebGpuRenderer,
-} from "./types.js";
-import { BlendMode } from "./types.js";
+} from "../types.js";
+import { BlendMode } from "../types.js";
 
 const SOLID_WGSL = /* wgsl */ `
 struct Uniforms {

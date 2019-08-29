@@ -4,7 +4,7 @@ import {
     decodeMoc2ColorComposition,
     decodeMoc3DrawableFlags,
     Moc3DrawableFlag,
-} from "./drawable-flags.js";
+} from "../src/moc/drawable-flags.js";
 
 describe("drawable-flags", () => {
     it("decodes moc3 additive / multiplicative / invert", () => {

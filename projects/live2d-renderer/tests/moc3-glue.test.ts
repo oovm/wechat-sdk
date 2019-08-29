@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { loadMoc3KeyTables } from "./moc3-deform.js";
+import { loadMoc3KeyTables } from "../src/moc/moc3-deform.js";
 import {
     applyMoc3Glues,
     loadMoc3Glues,
     type Moc3GlueDef,
     meanGlueSeamDistance,
-} from "./moc3-glue.js";
-import type { Moc3KeyTables } from "./moc3-keyforms.js";
-import { CountIdx } from "./moc3-layout.js";
-import { moc3SectionF32, parseMoc3Document } from "./moc3-reader.js";
-import { moc3DocumentToProgram } from "./moc3-to-program.js";
+} from "../src/moc/moc3-glue.js";
+import type { Moc3KeyTables } from "../src/moc/moc3-keyforms.js";
+import { CountIdx } from "../src/moc/moc3-layout.js";
+import { moc3SectionF32, parseMoc3Document } from "../src/moc/moc3-reader.js";
+import { moc3DocumentToProgram } from "../src/moc/moc3-to-program.js";
 import {
     MAO_MOC3_CANDIDATES,
     tryReadFixture,
     WANKO_MOC3_CANDIDATES,
-} from "./test-fixtures.js";
+} from "./fixtures.js";
 
 const EMPTY_KEYS: Moc3KeyTables = {
     bindingIndex: new Int32Array(),

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createMoc3Backend } from "../backends/moc3.js";
 import {
     createModelInstance,
     evaluateFrame,
     setParameterValue,
-} from "../cpu/evaluate.js";
-import { decodeMoc3 } from "./decode.js";
-import { parseMoc3Document } from "./moc3-reader.js";
-import { moc3DocumentToProgram } from "./moc3-to-program.js";
-import { tryReadFixture, WANKO_MOC3_CANDIDATES } from "./test-fixtures.js";
+} from "../src/cpu/evaluate.js";
+import { decodeMoc3 } from "../src/moc/decode.js";
+import { createMoc3Backend } from "../src/moc/moc3.js";
+import { parseMoc3Document } from "../src/moc/moc3-reader.js";
+import { moc3DocumentToProgram } from "../src/moc/moc3-to-program.js";
+import { tryReadFixture, WANKO_MOC3_CANDIDATES } from "./fixtures.js";
 
 const wankoBytes = tryReadFixture(...WANKO_MOC3_CANDIDATES);
 

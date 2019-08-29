@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createMoc2Backend } from "../backends/moc2.js";
-import { createModelInstance, evaluateFrame } from "../cpu/evaluate.js";
-import { decodeMoc2 } from "./decode.js";
-import { Moc2Parser } from "./moc2-objects.js";
-import { moc2ModelToProgram } from "./moc2-to-program.js";
-import { HIJIKI_MOC2_CANDIDATES, tryReadFixture } from "./test-fixtures.js";
+import { createModelInstance, evaluateFrame } from "../src/cpu/evaluate.js";
+import { decodeMoc2 } from "../src/moc/decode.js";
+import { createMoc2Backend } from "../src/moc/moc2.js";
+import { Moc2Parser } from "../src/moc/moc2-objects.js";
+import { moc2ModelToProgram } from "../src/moc/moc2-to-program.js";
+import { HIJIKI_MOC2_CANDIDATES, tryReadFixture } from "./fixtures.js";
 
 const hijikiBytes = tryReadFixture(...HIJIKI_MOC2_CANDIDATES);
 

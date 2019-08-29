@@ -7,8 +7,12 @@ import type {
 } from "@doki-land/live2d-core";
 import type { DrawableMesh, Renderer } from "./types.js";
 
+/**
+ * Model-format runtime contract (moc2 / moc3 / cpu-program).
+ * Not a graphics backend — those live under `backends/`.
+ */
 export interface ModelBackendOptions {
-    /** Bound graphics renderer, if the backend needs GPU handles. */
+    /** Bound graphics renderer, if the runtime needs GPU handles. */
     renderer?: Renderer | null;
     /** Asset resolver for moc / textures. */
     resolver?: AssetResolver;
@@ -48,6 +52,9 @@ export interface ModelBackend {
     captureFrame?(model: InternalModel): FrameSnapshot | null;
 
     setParameter?(model: InternalModel, id: string, value: number): void;
+
+    /** Optional PartOpacity override (moc3 parts / pose / motion). */
+    setPartOpacity?(model: InternalModel, id: string, value: number): void;
 
     listParameters?(model: InternalModel): readonly ParameterBinding[];
 }

@@ -8,7 +8,7 @@ import {
     parseCpuProgram,
     serializeCpuProgram,
     setParameterValue,
-} from "../index.js";
+} from "../src/index.js";
 
 describe("moc3 CPU golden (cpu-program)", () => {
     it("round-trips cpu-program JSON and matches default-pose golden", () => {
