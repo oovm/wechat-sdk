@@ -20,7 +20,15 @@
         "src"
     ],
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "main": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js"
+            }
+        }
     },
     "scripts": {
         "build": "tsup src/index.ts --format esm --dts",
@@ -31,6 +39,7 @@
         "@doki-land/live2d": "workspace:*"
     },
     "devDependencies": {
+        "happy-dom": "15",
         "tsup": "^8.5.1",
         "typescript": "^5.8.0",
         "vitest": "^2.1.8"
