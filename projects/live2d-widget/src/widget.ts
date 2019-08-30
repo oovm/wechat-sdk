@@ -1,9 +1,17 @@
 import {
     type CreateLive2DOptions,
     createLive2D,
+    focusParameterUpdates,
     type Live2DRuntime,
     type RendererKind,
 } from "@doki-land/live2d";
+import {
+    type ChromeSession,
+    mountChrome,
+    type WidgetChromeOptions,
+} from "./chrome.js";
+
+export type { WidgetChromeOptions, WidgetToolId } from "./chrome.js";
 
 export interface WidgetOptions extends CreateLive2DOptions {
     /** CSS selector or element to host the canvas. */
@@ -16,6 +24,13 @@ export interface WidgetOptions extends CreateLive2DOptions {
     autoSway?: boolean;
     /** Start the RAF update loop after mount. Default true. */
     autoplay?: boolean;
+    /**
+     * Optional tips bubble + toolbar (hitokoto / photo / quit).
+     * Pass `true` for defaults, or a config object.
+     */
+    chrome?: boolean | WidgetChromeOptions;
+    /** Fired when canvas hit-test finds a drawable. */
+    onHit?: (payload: { area: string; x: number; y: number }) => void;
 }
 
 /**
@@ -23,12 +38,13 @@ export interface WidgetOptions extends CreateLive2DOptions {
  * Renderer fallback is `createRenderer({ prefer })` (webgpu → webgl2 → canvas2d).
  */
 export class Live2DWidget {
-    #host: HTMLElement | null = null;
     #canvas: HTMLCanvasElement | null = null;
     #runtime: Live2DRuntime | null = null;
+    #chrome: ChromeSession | null = null;
     #raf = 0;
     #lastTs = 0;
     #autoSway = true;
+    #onHit: WidgetOptions["onHit"];
 
     async mount(options: WidgetOptions): Promise<void> {
         const host =
@@ -49,8 +65,9 @@ export class Live2DWidget {
         canvas.width = width;
         canvas.height = height;
         canvas.style.cssText =
-            "display:block;width:100%;height:auto;pointer-events:auto;background:transparent;";
-        host.replaceChildren(canvas);
+            "display:block;width:100%;height:auto;pointer-events:auto;touch-action:none;background:transparent;cursor:grab;";
+        canvas.addEventListener("pointermove", this.#onPointerMove);
+        canvas.addEventListener("pointerdown", this.#onPointerDown);
 
         const prefer = normalizePrefer(options.prefer);
         const runtime = createLive2D({
@@ -60,10 +77,19 @@ export class Live2DWidget {
         });
         runtime.mount(canvas);
 
-        this.#host = host;
         this.#canvas = canvas;
         this.#runtime = runtime;
         this.#autoSway = options.autoSway !== false;
+        this.#onHit = options.onHit;
+        this.#chrome = mountChrome({
+            host,
+            canvas,
+            chrome: options.chrome ?? false,
+            getCanvas: () => this.#canvas,
+        });
+        if (!this.#chrome) {
+            host.replaceChildren(canvas);
+        }
 
         if (options.model) {
             await runtime.loadModel(options.model);
@@ -78,16 +104,88 @@ export class Live2DWidget {
 
     destroy(): void {
         this.#stopLoop();
+        if (this.#canvas) {
+            this.#canvas.removeEventListener(
+                "pointermove",
+                this.#onPointerMove,
+            );
+            this.#canvas.removeEventListener(
+                "pointerdown",
+                this.#onPointerDown,
+            );
+        }
+        this.#chrome?.destroy();
+        this.#chrome = null;
         this.#runtime?.destroy();
         this.#canvas?.remove();
         this.#runtime = null;
         this.#canvas = null;
-        this.#host = null;
+        this.#onHit = undefined;
     }
 
     getRuntime(): Live2DRuntime | null {
         return this.#runtime;
     }
+
+    /** Show a tips bubble when chrome tips are enabled. */
+    showMessage(
+        text: string | string[],
+        timeoutMs?: number,
+        priority?: number,
+    ): void {
+        this.#chrome?.tips?.show(text, timeoutMs, priority);
+    }
+
+    #parameterFromNormalized(id: string, normalized: number): number {
+        const binding = this.#runtime
+            ?.listParameters()
+            .find((p) => p.id === id);
+        if (!binding) return normalized;
+        return normalized >= 0
+            ? binding.defaultValue +
+                  (binding.max - binding.defaultValue) * normalized
+            : binding.defaultValue +
+                  (binding.defaultValue - binding.min) * normalized;
+    }
+
+    #modelPoint(event: PointerEvent): { x: number; y: number } | null {
+        const canvas = this.#canvas;
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        return {
+            x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            y: 1 - ((event.clientY - rect.top) / rect.height) * 2,
+        };
+    }
+
+    #onPointerMove = (event: PointerEvent): void => {
+        const p = this.#modelPoint(event);
+        const runtime = this.#runtime;
+        if (!p || !runtime) return;
+        // Pointer tracking overrides auto-sway for ANGLE_X while moving.
+        this.#autoSwayPausedByPointer = true;
+        for (const { id, value } of focusParameterUpdates(
+            runtime.listParameters(),
+            p.x,
+            p.y,
+        )) {
+            runtime.setParameter(id, value);
+        }
+    };
+
+    #onPointerDown = (event: PointerEvent): void => {
+        const p = this.#modelPoint(event);
+        const runtime = this.#runtime;
+        if (!p || !runtime) return;
+        const area = runtime.hitTest(p.x, p.y);
+        if (area) {
+            this.#onHit?.({ area, x: p.x, y: p.y });
+            this.#chrome?.tips?.show("碰到我啦～", 2500, 4);
+        }
+    };
+
+    #autoSwayPausedByPointer = false;
 
     #startLoop(): void {
         this.#stopLoop();
@@ -96,11 +194,18 @@ export class Live2DWidget {
             if (!runtime) return;
             const dt = this.#lastTs ? (ts - this.#lastTs) / 1000 : 0;
             this.#lastTs = ts;
-            if (this.#autoSway) {
+            if (this.#autoSway && !this.#autoSwayPausedByPointer) {
                 runtime.setParameter(
                     "PARAM_ANGLE_X",
-                    Math.sin(ts / 1000) * 0.8,
+                    this.#parameterFromNormalized(
+                        "PARAM_ANGLE_X",
+                        Math.sin(ts / 1000) * 0.25,
+                    ),
                 );
+            }
+            // Resume sway shortly after the last pointer sample.
+            if (this.#autoSwayPausedByPointer) {
+                this.#autoSwayPausedByPointer = false;
             }
             runtime.update(dt);
             this.#raf = requestAnimationFrame(tick);
