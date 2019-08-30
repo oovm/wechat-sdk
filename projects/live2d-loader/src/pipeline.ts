@@ -143,6 +143,13 @@ export function normalizeModelSettings(
                         const def: MotionDefinition = { file };
                         const sound = (item as Record<string, unknown>).Sound;
                         if (typeof sound === "string") def.sound = sound;
+                        const fadeIn = (item as Record<string, unknown>)
+                            .FadeInTime;
+                        if (typeof fadeIn === "number") def.fadeInTime = fadeIn;
+                        const fadeOut = (item as Record<string, unknown>)
+                            .FadeOutTime;
+                        if (typeof fadeOut === "number")
+                            def.fadeOutTime = fadeOut;
                         return def;
                     })
                     .filter((x): x is MotionDefinition => x !== null);

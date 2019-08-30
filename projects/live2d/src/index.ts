@@ -51,6 +51,18 @@ export {
     type CreateLive2DOptions,
     createLive2D,
     type Live2DRuntime,
+    MotionPriority,
+    type PlayMotionOptions,
 } from "./create-live2d.js";
+export { focusParameterUpdates } from "./focus.js";
+export {
+    blendMotionLayers,
+    evaluateCurve,
+    evaluateMotion3,
+    MotionPlayer,
+    parseMotion3,
+    type Motion3Clip,
+    type MotionApplySample,
+} from "./motion/index.js";
 
 export const LIVE2D_VERSION = "0.0.0" as const;

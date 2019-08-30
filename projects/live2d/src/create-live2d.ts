@@ -5,6 +5,7 @@ import type {
     Live2DSession,
     LoadProgress,
     ModelSource,
+    MotionDefinition,
     SessionPhase,
     SessionState,
 } from "@doki-land/live2d-core";
@@ -29,6 +30,16 @@ import {
     selectModelBackend,
 } from "@doki-land/live2d-renderer";
 import { loadTextureData, releaseTextureData } from "./load-textures.js";
+import {
+    MotionPlayer,
+    MotionPriority,
+    parseMotion3,
+    type Motion3Clip,
+    type PlayMotionOptions,
+} from "./motion/index.js";
+
+export type { PlayMotionOptions } from "./motion/index.js";
+export { MotionPriority } from "./motion/index.js";
 
 export interface CreateLive2DOptions {
     backends?: ModelBackend[];
@@ -51,6 +62,37 @@ export interface Live2DRuntime extends Live2DSession {
 
     /** Hit-test the current model in normalized canvas coordinates (-1..1). */
     hitTest(x: number, y: number): string | null;
+
+    /** Motion groups from the loaded model settings. */
+    listMotionGroups(): Record<string, readonly MotionDefinition[]>;
+
+    /**
+     * Load and play a motion from `settings.motionGroups[group][index]`.
+     * Returns false if priority rejects or the entry is missing.
+     */
+    playMotion(
+        group: string,
+        index?: number,
+        options?: PlayMotionOptions,
+    ): Promise<boolean>;
+
+    /** Fade out (default) or hard-stop. Optional slot; omit = all slots. */
+    stopMotion(opts?: { fade?: boolean; slot?: string }): void;
+
+    /** Active motion slots (idle + tap can both appear). */
+    listPlayingMotions(): ReadonlyArray<{
+        slot: string;
+        group: string;
+        index: number;
+        time: number;
+        priority: number;
+    }>;
+
+    /**
+     * Draw one frame and encode the canvas as PNG.
+     * Works for Canvas2D and WebGL2 (`preserveDrawingBuffer`).
+     */
+    capturePng(opts?: { mimeType?: "image/png"; quality?: number }): Promise<Blob>;
 }
 
 function lerp(a: number, b: number, t: number): number {
@@ -82,6 +124,53 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
     let generation = 0;
     let loadGeneration = 0;
     let fpsSmooth = 0;
+    let activeResolver: AssetResolver | null = null;
+    const motionCache = new Map<string, Motion3Clip>();
+    const motionPlayer = new MotionPlayer({
+        onStart: ({ group, index, slot }) =>
+            events.emit("motion:start", { group, index, slot }),
+        onFinish: ({ group, index, slot }) =>
+            events.emit("motion:finish", { group, index, slot }),
+    });
+
+    const applyMotionSamples = (
+        samples: ReturnType<MotionPlayer["update"]>,
+    ): void => {
+        if (!model || !activeBackend) return;
+        for (const s of samples) {
+            if (s.weight <= 0) continue;
+            if (s.target === "PartOpacity") {
+                if (!activeBackend.setPartOpacity) continue;
+                if (s.weight >= 1) {
+                    activeBackend.setPartOpacity(model, s.id, s.value);
+                } else {
+                    // Soft blend toward motion opacity from full visibility.
+                    const cur = 1;
+                    activeBackend.setPartOpacity(
+                        model,
+                        s.id,
+                        cur + (s.value - cur) * s.weight,
+                    );
+                }
+                continue;
+            }
+            if (s.target !== "Parameter" || !activeBackend.setParameter)
+                continue;
+            if (s.weight >= 1) {
+                activeBackend.setParameter(model, s.id, s.value);
+                continue;
+            }
+            const cur =
+                activeBackend
+                    .listParameters?.(model)
+                    .find((p) => p.id === s.id)?.value ?? s.value;
+            activeBackend.setParameter(
+                model,
+                s.id,
+                cur + (s.value - cur) * s.weight,
+            );
+        }
+    };
 
     const clearTextures = () => {
         if (loadedTextures.length > 0) {
@@ -257,6 +346,9 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
                             }
                         },
                     });
+                activeResolver = assetResolver;
+                motionPlayer.clear();
+                motionCache.clear();
 
                 const backend = selectModelBackend(backends, json);
                 report({
@@ -370,11 +462,72 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
             if (!model || !activeBackend?.listParameters) return [];
             return activeBackend.listParameters(model);
         },
+        listMotionGroups() {
+            return model?.settings.motionGroups ?? {};
+        },
+        async playMotion(group, index = 0, options = {}) {
+            if (!model || !activeResolver) return false;
+            const list = model.settings.motionGroups[group];
+            const def = list?.[index];
+            if (!def) return false;
+
+            let clip = motionCache.get(def.file);
+            if (!clip) {
+                const json = await activeResolver.fetchJson(def.file);
+                clip = parseMotion3(json);
+                motionCache.set(def.file, clip);
+            }
+
+            const fadeInTime =
+                options.fadeInTime ?? def.fadeInTime ?? clip.fadeInTime;
+            const fadeOutTime =
+                options.fadeOutTime ?? def.fadeOutTime ?? clip.fadeOutTime;
+
+            return motionPlayer.start(group, index, clip, {
+                priority: options.priority ?? MotionPriority.normal,
+                slot: options.slot,
+                queue: options.queue,
+                loop: options.loop,
+                fadeInTime,
+                fadeOutTime,
+            });
+        },
+        stopMotion(opts) {
+            motionPlayer.stop(opts?.fade !== false, opts?.slot);
+        },
+        listPlayingMotions() {
+            return motionPlayer.listPlaying();
+        },
+        async capturePng(opts = {}) {
+            if (!canvas) {
+                throw new Error("@doki-land/live2d: mount(canvas) before capturePng");
+            }
+            if (phase === "live" && model && activeBackend && drawPass) {
+                runtime.update(0);
+            }
+            const mime = opts.mimeType ?? "image/png";
+            return await new Promise<Blob>((resolve, reject) => {
+                canvas!.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob);
+                        else
+                            reject(
+                                new Error(
+                                    "@doki-land/live2d: canvas.toBlob returned null",
+                                ),
+                            );
+                    },
+                    mime,
+                    opts.quality,
+                );
+            });
+        },
         update(deltaTimeSeconds) {
             if (!model || !activeBackend || !drawPass) return;
             if (phase !== "live") return;
 
             const t0 = nowMs();
+            applyMotionSamples(motionPlayer.update(deltaTimeSeconds));
             activeBackend.updateModel(model, deltaTimeSeconds);
             const drawables = activeBackend.getDrawables(model);
             const t1 = nowMs();
@@ -411,6 +564,9 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
         destroy() {
             loadGeneration += 1;
             generation += 1;
+            motionPlayer.clear();
+            motionCache.clear();
+            activeResolver = null;
             if (model && activeBackend) {
                 activeBackend.destroyModel(model);
             }
