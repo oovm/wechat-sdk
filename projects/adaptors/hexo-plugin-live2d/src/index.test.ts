@@ -32,9 +32,13 @@ describe("hexo-plugin-live2d", () => {
         expect(html).toContain('"webgl2"');
         expect(html).toContain('"canvas2d"');
         expect(html).toContain("autoSway: true");
+        expect(html).toContain("chrome: true");
         expect(cjs.renderInjector({ enable: true, model: "x" })).toContain(
             '"webgpu"',
         );
+        expect(
+            renderHexoLive2DInjector({ enable: true, chrome: false }),
+        ).toContain("chrome: false");
     });
 
     it("returns empty HTML when disabled", () => {

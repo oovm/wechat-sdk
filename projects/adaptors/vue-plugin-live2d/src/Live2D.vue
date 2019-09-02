@@ -31,9 +31,11 @@ import {
     createLive2D,
     createRenderer,
     type FrameProfile,
+    focusParameterUpdates,
     type Live2DRuntime,
     type LoadProgress,
     type ModelSource,
+    type PlayMotionOptions,
     type RendererKind,
 } from "@doki-land/live2d";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -276,17 +278,25 @@ function parameterFromNormalized(id: string, normalized: number) {
               (binding.defaultValue - binding.min) * normalized;
 }
 
+function applyPointerFocus(x: number, y: number) {
+    if (!runtime) return;
+    for (const { id, value } of focusParameterUpdates(
+        runtime.listParameters(),
+        x,
+        y,
+    )) {
+        if (id === "PARAM_ANGLE_X") {
+            // Pointer owns ANGLE_X until cleared; stops auto-sway fighting it.
+            manualAngleX = value;
+        }
+        runtime.setParameter(id, value);
+    }
+}
+
 function onPointerMove(event: PointerEvent) {
     const p = modelPoint(event);
     if (!p || !runtime) return;
-    runtime.setParameter(
-        "PARAM_ANGLE_X",
-        parameterFromNormalized("PARAM_ANGLE_X", p.x),
-    );
-    runtime.setParameter(
-        "PARAM_ANGLE_Y",
-        parameterFromNormalized("PARAM_ANGLE_Y", p.y),
-    );
+    applyPointerFocus(p.x, p.y);
     if (!props.autoplay) runtime.update(0);
 }
 
@@ -329,6 +339,22 @@ defineExpose({
     setParameter,
     clearManualAngleX,
     listParameters: () => runtime?.listParameters() ?? [],
+    playMotion: (
+        group: string,
+        index?: number,
+        options?: PlayMotionOptions,
+    ) => runtime?.playMotion(group, index, options) ?? Promise.resolve(false),
+    stopMotion: (opts?: { fade?: boolean; slot?: string }) =>
+        runtime?.stopMotion(opts),
+    listPlayingMotions: () => runtime?.listPlayingMotions() ?? [],
+    capturePng: (opts?: { mimeType?: "image/png"; quality?: number }) => {
+        if (!runtime) {
+            return Promise.reject(
+                new Error("vue-plugin-live2d: runtime not mounted"),
+            );
+        }
+        return runtime.capturePng(opts);
+    },
     reload,
 });
 </script>
