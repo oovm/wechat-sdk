@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "tags": {
+    "moc3": { "en-us": "MOC3", "zh-cn": "MOC3" },
+    "moc2": { "en-us": "MOC2", "zh-cn": "MOC2" },
+    "official": { "en-us": "Official sample", "zh-cn": "官方样例" },
+    "npm": { "en-us": "npm", "zh-cn": "npm" },
+    "cdn": { "en-us": "CDN", "zh-cn": "CDN" },
+    "fixture": { "en-us": "CPU fixture", "zh-cn": "CPU 夹具" },
+    "motions": { "en-us": "Motions", "zh-cn": "动作" },
+    "expressions": { "en-us": "Expressions", "zh-cn": "表情" },
+    "glue": { "en-us": "Glue mesh", "zh-cn": "Glue 网格" },
+    "physics": { "en-us": "Physics", "zh-cn": "物理" }
+  },
+  "models": [
+    {
+      "id": "local-wanko",
+      "name": {
+        "en-us": "Local moc3 Wanko",
+        "zh-cn": "本地 moc3 Wanko"
+      },
+      "source": "/models/samples/moc3-wanko/Wanko.model3.json",
+      "local": true,
+      "sample": "moc3-wanko",
+      "tags": ["moc3", "official", "motions"]
+    },
+    {
+      "id": "local-haru",
+      "name": {
+        "en-us": "Local moc3 Haru (exp/motions)",
+        "zh-cn": "本地 moc3 Haru（表情/动作）"
+      },
+      "source": "/models/samples/moc3-haru/Haru.model3.json",
+      "local": true,
+      "sample": "moc3-haru",
+      "tags": ["moc3", "official", "motions", "expressions", "physics"]
+    },
+    {
+      "id": "local-mao",
+      "name": {
+        "en-us": "Local moc3 Mao (glue)",
+        "zh-cn": "本地 moc3 Mao（Glue）"
+      },
+      "source": "/models/samples/moc3-mao/Mao.model3.json",
+      "local": true,
+      "sample": "moc3-mao",
+      "tags": ["moc3", "official", "glue", "physics"]
+    },
+    {
+      "id": "local-hijiki",
+      "name": {
+        "en-us": "Local moc2 Hijiki",
+        "zh-cn": "本地 moc2 Hijiki"
+      },
+      "source": "/models/samples/moc2-hijiki/hijiki.model.json",
+      "local": true,
+      "sample": "moc2-hijiki",
+      "tags": ["moc2", "npm"]
+    },
+    {
+      "id": "npm-mirrored-hijiki",
+      "name": {
+        "en-us": "npm package (mirrored) Hijiki",
+        "zh-cn": "npm 包（镜像）Hijiki"
+      },
+      "source": "/models/npm/npm-hijiki/assets/hijiki.model.json",
+      "local": true,
+      "npm": {
+        "package": "live2d-widget-model-hijiki",
+        "assets": "assets",
+        "dest": "npm-hijiki"
+      },
+      "tags": ["moc2", "npm"]
+    },
+    {
+      "id": "npm-cdn-hijiki",
+      "name": {
+        "en-us": "npm: CDN Hijiki",
+        "zh-cn": "npm: CDN Hijiki"
+      },
+      "source": "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+      "local": false,
+      "tags": ["moc2", "npm", "cdn"]
+    },
+    {
+      "id": "npm-cdn-tororo",
+      "name": {
+        "en-us": "npm: CDN Tororo",
+        "zh-cn": "npm: CDN Tororo"
+      },
+      "source": "npm:live2d-widget-model-tororo@1.0.5/assets/tororo.model.json",
+      "local": false,
+      "tags": ["moc2", "npm", "cdn"]
+    },
+    {
+      "id": "remote-wanko",
+      "name": {
+        "en-us": "Remote moc3 Wanko (jsDelivr)",
+        "zh-cn": "远程 moc3 Wanko（jsDelivr）"
+      },
+      "source": "https://cdn.jsdelivr.net/gh/Live2D/CubismWebSamples@b1de66b/Samples/Resources/Wanko/Wanko.model3.json",
+      "local": false,
+      "tags": ["moc3", "official", "cdn", "motions"]
+    },
+    {
+      "id": "cpu-quad",
+      "name": {
+        "en-us": "Local CPU program (quad)",
+        "zh-cn": "本地 CPU program（方块）"
+      },
+      "source": "/models/quad/quad.model3.json",
+      "local": true,
+      "fixture": "cpu-quad",
+      "tags": ["moc3", "fixture"]
+    }
+  ]
+}

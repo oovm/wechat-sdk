@@ -5,14 +5,12 @@
 .idea/
 .vscode/
 *.tsbuildinfo
+# Synced model binaries (from ref-repos / npm); catalog.json is hand-edited and committed.
 projects/homepage/public/models/samples/
 projects/homepage/public/models/npm/
 projects/homepage/public/models/quad/
-projects/homepage/public/models/catalog.json
 coverage/
 .turbo/
-
-
 
 # Node
 node_modules/
