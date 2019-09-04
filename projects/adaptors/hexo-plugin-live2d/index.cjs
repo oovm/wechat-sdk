@@ -11,6 +11,7 @@
  *     model: npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json
  *     prefer: [webgpu, webgl2, canvas2d]
  *     autoSway: true
+ *     chrome: true   # tips bubble + hitokoto/photo/quit toolbar
  *     width: 280
  *     height: 400
  */
@@ -32,6 +33,7 @@ const DEFAULTS = {
     pluginRootPath: "live2dw/",
     prefer: ["webgpu", "webgl2", "canvas2d"],
     autoSway: true,
+    chrome: true,
 };
 
 function mergeConfig(hexo) {
@@ -58,6 +60,10 @@ function renderInjector(config) {
     const scriptUrl = config.scriptUrl || DEFAULTS.scriptUrl;
     const prefer = normalizePrefer(config.prefer);
     const autoSway = config.autoSway !== false;
+    const chrome =
+        config.chrome === undefined || config.chrome === null
+            ? true
+            : config.chrome;
     const needsHost = (config.target || "#doki-live2d") === "#doki-live2d";
     const host = needsHost
         ? `<div id="doki-live2d" class="${className}" style="position:fixed;left:0;bottom:0;z-index:999;pointer-events:none;" aria-hidden="true"></div>\n`
@@ -69,7 +75,8 @@ window.__DOKI_LIVE2D_HEXO__ = {
   width: ${width},
   height: ${height},
   prefer: ${JSON.stringify(prefer)},
-  autoSway: ${autoSway ? "true" : "false"}
+  autoSway: ${autoSway ? "true" : "false"},
+  chrome: ${JSON.stringify(chrome)}
 };
 </script>
 <script defer src="${scriptUrl}"></script>

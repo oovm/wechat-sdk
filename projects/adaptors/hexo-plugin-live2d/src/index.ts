@@ -28,6 +28,11 @@ export interface HexoLive2DConfig {
     prefer?: HexoRendererPrefer[];
     /** Sine-drive PARAM_ANGLE_X. Default true. */
     autoSway?: boolean;
+    /**
+     * Widget chrome (tips / hitokoto / photo / quit).
+     * Default true. Pass `false` to disable, or an options object.
+     */
+    chrome?: boolean | Record<string, unknown>;
 }
 
 export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
@@ -42,6 +47,7 @@ export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
         | "pluginRootPath"
         | "prefer"
         | "autoSway"
+        | "chrome"
     >
 > & { model: string } = {
     enable: true,
@@ -54,6 +60,7 @@ export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
     pluginRootPath: "live2dw/",
     prefer: ["webgpu", "webgl2", "canvas2d"],
     autoSway: true,
+    chrome: true,
 };
 
 export function mergeHexoLive2DConfig(
@@ -88,6 +95,8 @@ export function renderHexoLive2DInjector(config: HexoLive2DConfig): string {
     const prefer =
         normalizePrefer(cfg.prefer) ?? DEFAULT_HEXO_LIVE2D_CONFIG.prefer;
     const autoSway = cfg.autoSway !== false;
+    const chrome =
+        cfg.chrome === undefined || cfg.chrome === null ? true : cfg.chrome;
     const needsHost = (cfg.target ?? "#doki-live2d") === "#doki-live2d";
 
     const host = needsHost
@@ -101,7 +110,8 @@ window.__DOKI_LIVE2D_HEXO__ = {
   width: ${width},
   height: ${height},
   prefer: ${JSON.stringify(prefer)},
-  autoSway: ${autoSway ? "true" : "false"}
+  autoSway: ${autoSway ? "true" : "false"},
+  chrome: ${JSON.stringify(chrome)}
 };
 </script>
 <script defer src="${scriptUrl}"></script>

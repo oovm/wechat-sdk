@@ -6,7 +6,11 @@
  * (site-wide float still auto-mounts from `__DOKI_LIVE2D_HEXO__`).
  */
 import type { RendererKind } from "@doki-land/live2d";
-import { Live2DWidget, mountWidget } from "@doki-land/live2d-widget";
+import {
+    Live2DWidget,
+    mountWidget,
+    type WidgetChromeOptions,
+} from "@doki-land/live2d-widget";
 
 declare global {
     // eslint-disable-next-line no-var
@@ -18,6 +22,7 @@ declare global {
               height?: number;
               prefer?: RendererKind[];
               autoSway?: boolean;
+              chrome?: boolean | WidgetChromeOptions;
           }
         | undefined;
     // eslint-disable-next-line no-var
@@ -43,7 +48,11 @@ void mountWidget({
     height: cfg.height ?? 400,
     prefer: cfg.prefer,
     autoSway: cfg.autoSway !== false,
+    chrome: cfg.chrome === undefined ? true : cfg.chrome,
     autoplay: true,
+    onHit: (payload) => {
+        console.debug("[hexo-plugin-live2d] hit", payload.area);
+    },
 }).catch((err) => {
     console.error("[hexo-plugin-live2d]", err);
 });
