@@ -3,19 +3,26 @@ import {
     type FrameProfile,
     type InternalModel,
     type LoadProgress,
+    MotionPriority,
     type ParameterBinding,
+    type PlayMotionOptions,
     type RendererKind,
     resolveModelSourceUrl,
     type SessionState,
 } from "@doki-land/live2d";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { Live2D } from "vue-plugin-live2d";
 import { useI18n } from "../i18n";
+import { displayNameFor, type CatalogLocalizedName } from "../lib/catalog";
 
 interface Preset {
     id: string;
-    label: string;
+    name?: CatalogLocalizedName;
+    /** @deprecated use name */
+    label?: string;
     source: string;
+    local?: boolean;
 }
 
 type PanelTab = "source" | "status" | "properties";
@@ -32,7 +39,8 @@ const LOAD_STAGES = [
 
 type LoadStageId = (typeof LOAD_STAGES)[number];
 
-const { t, messages } = useI18n();
+const { t, locale } = useI18n();
+const route = useRoute();
 
 const tabs = computed(() => [
     { id: "source" as const, label: t("playground.tabSource") },
@@ -42,25 +50,78 @@ const tabs = computed(() => [
 
 const activeTab = ref<PanelTab>("source");
 
+const DEFAULT_PRESET_ID = "local-wanko";
+const DEFAULT_PRESET_SOURCE = "/models/samples/moc3-wanko/Wanko.model3.json";
+
 const presets = ref<Preset[]>([
     {
+        id: DEFAULT_PRESET_ID,
+        name: {
+            "en-us": "Local moc3 Wanko",
+            "zh-cn": "本地 moc3 Wanko",
+        },
+        source: DEFAULT_PRESET_SOURCE,
+        local: true,
+    },
+    {
         id: "cpu-quad",
-        label: "Local CPU program (quad)",
+        name: {
+            "en-us": "Local CPU program (quad)",
+            "zh-cn": "本地 CPU program（方块）",
+        },
         source: "/models/quad/quad.model3.json",
+        local: true,
     },
 ]);
 
 function presetLabel(p: Preset): string {
-    return messages.value.playground.presets[p.id] ?? p.label;
+    if (p.name) return displayNameFor({ id: p.id, name: p.name }, locale.value);
+    return p.label || p.id;
 }
 
 const mode = ref<"preset" | "url" | "npm">("preset");
-const presetId = ref("cpu-quad");
+const presetId = ref(DEFAULT_PRESET_ID);
 const customUrl = ref(
     "https://cdn.jsdelivr.net/gh/Live2D/CubismWebSamples@b1de66b/Samples/Resources/Wanko/Wanko.model3.json",
 );
-const npmPackage = ref("live2d-widget-model-hijiki@1.0.5");
-const npmPath = ref("assets/hijiki.model.json");
+
+/** Known jsDelivr npm: models — fills package + path together. */
+const npmExamples = [
+    {
+        id: "hijiki",
+        package: "live2d-widget-model-hijiki@1.0.5",
+        path: "assets/hijiki.model.json",
+    },
+    {
+        id: "tororo",
+        package: "live2d-widget-model-tororo@1.0.5",
+        path: "assets/tororo.model.json",
+    },
+] as const;
+
+const npmExampleId = ref<(typeof npmExamples)[number]["id"] | "">("hijiki");
+const npmPackage = ref<string>(npmExamples[0].package);
+const npmPath = ref<string>(npmExamples[0].path);
+
+function applyNpmExample(id: string) {
+    const ex = npmExamples.find((e) => e.id === id);
+    if (!ex) {
+        npmExampleId.value = "";
+        return;
+    }
+    npmExampleId.value = ex.id;
+    npmPackage.value = ex.package;
+    npmPath.value = ex.path;
+}
+
+function syncNpmExampleFromFields() {
+    const hit = npmExamples.find(
+        (e) =>
+            e.package === npmPackage.value.trim() &&
+            e.path === npmPath.value.trim().replace(/^\/+/, ""),
+    );
+    npmExampleId.value = hit?.id ?? "";
+}
 const appliedSource = ref<string | null>(null);
 const status = ref("idle");
 const errorText = ref("");
@@ -140,7 +201,6 @@ const profileRows = computed(() => {
 
 const width = ref(360);
 const height = ref(360);
-const autoSway = ref(true);
 const preferKey = ref<RendererKind>("canvas2d");
 
 /** Homepage picks one backend — no fallback chain (fail loud for testing). */
@@ -169,6 +229,19 @@ const live2dRef = ref<{
     setParameter: (id: string, value: number) => void;
     clearManualAngleX: () => void;
     listParameters: () => readonly ParameterBinding[];
+    playMotion: (
+        group: string,
+        index?: number,
+        options?: PlayMotionOptions,
+    ) => Promise<boolean>;
+    stopMotion: (opts?: { fade?: boolean; slot?: string }) => void;
+    listPlayingMotions: () => ReadonlyArray<{
+        slot: string;
+        group: string;
+        index: number;
+        time: number;
+        priority: number;
+    }>;
     reload: () => Promise<void>;
 } | null>(null);
 
@@ -181,10 +254,23 @@ const motionGroupEntries = computed(() => {
     return Object.entries(groups).map(([name, motions]) => ({
         name,
         count: motions.length,
-        files: motions.map((m) => m.file),
+        files: motions.map((m, index) => ({ file: m.file, index })),
     }));
 });
 
+async function playMotion(group: string, index: number) {
+    try {
+        const lower = group.toLowerCase();
+        const isIdle = lower === "idle" || lower.includes("idle");
+        await live2dRef.value?.playMotion(group, index, {
+            priority: isIdle ? MotionPriority.idle : MotionPriority.normal,
+            loop: isIdle,
+        });
+    } catch (err) {
+        console.error(err);
+        status.value = `motion failed: ${String(err)}`;
+    }
+}
 const propertyRows = computed(() => {
     const m = modelInfo.value;
     if (!m) return [] as { key: string; value: string }[];
@@ -220,13 +306,20 @@ const propertyRows = computed(() => {
 
 function buildSource(): string {
     if (mode.value === "preset") {
-        return activePreset.value?.source ?? "/models/quad/quad.model3.json";
+        return activePreset.value?.source ?? DEFAULT_PRESET_SOURCE;
     }
     if (mode.value === "url") {
         return customUrl.value.trim();
     }
     const pkg = npmPackage.value.trim().replace(/^npm:/, "");
     const path = npmPath.value.trim().replace(/^\/+/, "");
+    if (!pkg || !path) {
+        throw new Error("npm package and asset path are both required");
+    }
+    // Guard against accidental `pkg/path` stuffed into the package field alone.
+    if (pkg.includes("/") && !path) {
+        return `npm:${pkg}`;
+    }
     return `npm:${pkg}/${path}`;
 }
 
@@ -344,32 +437,27 @@ function onProfile(p: FrameProfile) {
 
 function onParamInput(id: string, value: number) {
     paramOverrides.value = { ...paramOverrides.value, [id]: value };
-    if (id === "PARAM_ANGLE_X") {
-        autoSway.value = false;
-    }
     live2dRef.value?.setParameter(id, value);
 }
-
-watch(autoSway, (on) => {
-    if (on) {
-        live2dRef.value?.clearManualAngleX();
-    } else {
-        const v =
-            paramOverrides.value.PARAM_ANGLE_X ??
-            parameters.value.find((p) => p.id === "PARAM_ANGLE_X")?.value ??
-            0;
-        live2dRef.value?.setParameter("PARAM_ANGLE_X", v);
-    }
-});
 
 onMounted(async () => {
     try {
         const res = await fetch("/models/catalog.json");
         if (res.ok) {
-            const catalog = (await res.json()) as { presets?: Preset[] };
-            if (catalog.presets?.length) {
-                presets.value = catalog.presets;
-                presetId.value = catalog.presets[0]?.id ?? presetId.value;
+            const catalog = (await res.json()) as { models?: Preset[] };
+            if (catalog.models?.length) {
+                presets.value = catalog.models;
+                const fromQuery = String(route.query.preset ?? "");
+                const preferred =
+                    (fromQuery &&
+                        catalog.models.find((p) => p.id === fromQuery)) ||
+                    catalog.models.find((p) => p.id === DEFAULT_PRESET_ID) ||
+                    catalog.models.find((p) => p.id !== "cpu-quad") ||
+                    catalog.models[0];
+                if (preferred) {
+                    presetId.value = preferred.id;
+                    mode.value = "preset";
+                }
             }
         }
     } catch {
@@ -379,14 +467,26 @@ onMounted(async () => {
     applyLoad();
 });
 
-watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
+watch(
+    () => route.query.preset,
+    (id) => {
+        if (typeof id !== "string" || !id) return;
+        if (!presets.value.some((p) => p.id === id)) return;
+        presetId.value = id;
+        mode.value = "preset";
+        applyLoad();
+    },
+);
+watch([mode, presetId, customUrl, npmPackage, npmPath], () => {
+    if (mode.value === "npm") syncNpmExampleFromFields();
+    refreshResolvedHint();
+});
 </script>
 
 <template>
   <main class="playground">
     <header>
       <h1>{{ t("playground.title") }}</h1>
-      <p>{{ t("playground.lede") }}</p>
     </header>
 
     <div class="layout">
@@ -417,12 +517,12 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
               {{ t("playground.modePreset") }}
             </label>
             <label>
-              <input v-model="mode" type="radio" value="url"/>
-              {{ t("playground.modeUrl") }}
-            </label>
-            <label>
               <input v-model="mode" type="radio" value="npm"/>
               {{ t("playground.modeNpm") }}
+            </label>
+            <label>
+              <input v-model="mode" type="radio" value="url"/>
+              {{ t("playground.modeUrl") }}
             </label>
           </div>
 
@@ -435,19 +535,35 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
             </select>
           </div>
 
-          <div v-else-if="mode === 'url'" class="field">
-            <label for="url">{{ t("playground.urlLabel") }}</label>
-            <input id="url" v-model="customUrl" type="url" spellcheck="false"/>
-          </div>
-
-          <div v-else class="field-grid">
+          <div v-else-if="mode === 'npm'" class="npm-fields">
+            <div class="field">
+              <label for="npm-example">{{ t("playground.npmExample") }}</label>
+              <select
+                id="npm-example"
+                v-model="npmExampleId"
+                @change="applyNpmExample(npmExampleId)"
+              >
+                <option value="">{{ t("playground.npmExampleCustom") }}</option>
+                <option
+                  v-for="ex in npmExamples"
+                  :key="ex.id"
+                  :value="ex.id"
+                >
+                  {{ t(`playground.npmExamples.${ex.id}`) }}
+                </option>
+              </select>
+              <p class="field-hint">{{ t("playground.npmExampleHint") }}</p>
+            </div>
             <div class="field">
               <label for="npm-pkg">{{ t("playground.npmPkg") }}</label>
               <input
                 id="npm-pkg"
                 v-model="npmPackage"
+                class="mono"
                 type="text"
                 spellcheck="false"
+                autocomplete="off"
+                placeholder="live2d-widget-model-hijiki@1.0.5"
               />
             </div>
             <div class="field">
@@ -455,10 +571,18 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
               <input
                 id="npm-path"
                 v-model="npmPath"
+                class="mono"
                 type="text"
                 spellcheck="false"
+                autocomplete="off"
+                placeholder="assets/hijiki.model.json"
               />
             </div>
+          </div>
+
+          <div v-else class="field">
+            <label for="url">{{ t("playground.urlLabel") }}</label>
+            <input id="url" v-model="customUrl" type="url" spellcheck="false"/>
           </div>
 
           <p class="resolved">
@@ -513,10 +637,6 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
               />
             </div>
           </div>
-          <label class="check">
-            <input v-model="autoSway" type="checkbox"/>
-            {{ t("playground.autoSway") }}
-          </label>
 
           <button type="button" class="load" @click="applyLoad">
             {{ t("playground.load") }}
@@ -669,11 +789,22 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
             </dl>
 
             <h3>{{ t("playground.motionsHeading") }}</h3>
-            <ul v-if="motionGroupEntries.length" class="list">
+            <ul v-if="motionGroupEntries.length" class="list motion-list">
               <li v-for="g in motionGroupEntries" :key="g.name">
                 <strong>{{ g.name }}</strong>
                 ({{ g.count }})
-                <span class="muted">{{ g.files.join(", ") }}</span>
+                <ul class="motion-files">
+                  <li v-for="m in g.files" :key="`${g.name}-${m.index}`">
+                    <button
+                      type="button"
+                      class="motion-play"
+                      @click="playMotion(g.name, m.index)"
+                    >
+                      {{ t("playground.playMotion") }}
+                    </button>
+                    <span class="muted mono">{{ m.file }}</span>
+                  </li>
+                </ul>
               </li>
             </ul>
             <p v-else class="muted">{{ t("playground.noMotions") }}</p>
@@ -698,7 +829,6 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
                   :max="p.max"
                   step="0.01"
                   :value="paramOverrides[p.id] ?? p.value"
-                  :disabled="autoSway && p.id === 'PARAM_ANGLE_X'"
                   @input="
                     onParamInput(
                       p.id,
@@ -719,7 +849,7 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
           <div><span class="stage-dot"></span><strong>LIVE SESSION</strong><small>{{ rendererKind }} · {{
               status
             }}</small></div>
-          <div class="stage-toolbar-actions"><span>01</span><span>{{ width }} × {{ height }}</span></div>
+          <div class="stage-toolbar-actions"><span>{{ width }} × {{ height }}</span></div>
         </div>
         <Live2D
           v-if="appliedSource"
@@ -729,7 +859,6 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
           :width="width"
           :height="height"
           :prefer="prefer"
-          :auto-sway="autoSway"
           @ready="onReady"
           @error="onError"
           @progress="onProgress"
@@ -754,13 +883,6 @@ watch([mode, presetId, customUrl, npmPackage, npmPath], refreshResolvedHint);
 header h1 {
   margin: 0;
   font-size: 1.55rem;
-}
-
-header p {
-  margin: 0.3rem 0 0;
-  color: #4a5b76;
-  font-size: 0.92rem;
-  max-width: 42rem;
 }
 
 .layout {
@@ -887,6 +1009,27 @@ header p {
 .field-grid {
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+}
+
+.npm-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #5a6b84;
+}
+
+input.mono,
+code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+input.mono {
+  font-size: 0.82rem;
 }
 
 .param-list {
@@ -1212,6 +1355,41 @@ input[type="range"] {
   font-size: 0.82rem;
 }
 
+.motion-files {
+  margin: 0.35rem 0 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.motion-files li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.motion-play {
+  appearance: none;
+  border: 1px solid #9fc3dc;
+  background: #eef7fc;
+  color: #1a5f8a;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+}
+
+.motion-play:hover {
+  border-color: #1677c8;
+  color: #0f4f78;
+}
+
+.mono {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
 .muted {
   margin: 0;
   color: #5a6b84;
@@ -1240,10 +1418,6 @@ input[type="range"] {
   color: #172a49;
   font: 700 clamp(1.8rem, 3vw, 2.5rem)/1 var(--font-display);
   letter-spacing: 0;
-}
-
-.playground > header p {
-  color: #58708a;
 }
 
 .layout {
