@@ -1,17 +1,34 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    type Ref,
+} from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import SiteFooter from "./components/SiteFooter.vue";
 import { landingBrand } from "./config/landing";
 import { getDoc } from "./docs/catalog";
-import { docsHomePath, LOCALES, setLocale, useI18n } from "./i18n";
+import {
+    docsHomePath,
+    LOCALES,
+    setLocale,
+    useI18n,
+    type Locale,
+} from "./i18n";
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
 const onHome = computed(() => route.path === "/");
+const hideChrome = computed(() => Boolean(route.meta.hideChrome));
 
-function onLocaleClick(next: "zh" | "en") {
+const langOpen = ref(false);
+const langRoot: Ref<HTMLElement | null> = ref(null);
+
+function onLocaleClick(next: Locale) {
+    langOpen.value = false;
     setLocale(next);
     if (!route.path.startsWith("/d")) return;
     const p0 = String(route.params.langOrAlias ?? "");
@@ -27,6 +44,28 @@ function onLocaleClick(next: "zh" | "en") {
     const hit = getDoc(next, slug);
     void router.push(hit?.meta.path ?? docsHomePath(next));
 }
+
+function onDocPointerDown(ev: PointerEvent) {
+    const root = langRoot.value;
+    if (!root || !langOpen.value) return;
+    if (ev.target instanceof Node && !root.contains(ev.target)) {
+        langOpen.value = false;
+    }
+}
+
+function onDocKeydown(ev: KeyboardEvent) {
+    if (ev.key === "Escape") langOpen.value = false;
+}
+
+onMounted(() => {
+    document.addEventListener("pointerdown", onDocPointerDown);
+    document.addEventListener("keydown", onDocKeydown);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("pointerdown", onDocPointerDown);
+    document.removeEventListener("keydown", onDocKeydown);
+});
 </script>
 
 <style>
@@ -35,32 +74,66 @@ function onLocaleClick(next: "zh" | "en") {
 </style>
 
 <template>
-  <div class="shell" :class="{ home: onHome }">
-    <header class="top">
+  <div class="shell" :class="{ home: onHome, bare: hideChrome }">
+    <header v-if="!hideChrome" class="top">
       <RouterLink class="brand" to="/"><span class="brand-mark">✦</span>{{ landingBrand }}</RouterLink>
       <div class="top-right">
         <nav>
           <RouterLink to="/">{{ t("nav.home") }}</RouterLink>
+          <RouterLink to="/gallery">{{ t("nav.gallery") }}</RouterLink>
+          <RouterLink to="/stage">{{ t("nav.stage") }}</RouterLink>
           <RouterLink :to="docsHomePath()">{{ t("nav.docs") }}</RouterLink>
         </nav>
-        <div class="lang" :aria-label="t('lang.switch')">
+        <div ref="langRoot" class="lang">
           <button
-            v-for="l in LOCALES"
-            :key="l"
             type="button"
-            class="lang-btn"
-            :class="{ active: locale === l }"
-            @click="onLocaleClick(l)"
+            class="lang-toggle"
+            :aria-label="t('lang.switch')"
+            :aria-expanded="langOpen"
+            aria-haspopup="listbox"
+            @click="langOpen = !langOpen"
           >
-            {{ t(`lang.${l}`) }}
+            <svg
+              class="lang-icon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path
+                d="M3.5 12h17M12 3c2.8 2.4 4.2 5.4 4.2 9s-1.4 6.6-4.2 9c-2.8-2.4-4.2-5.4-4.2-9S9.2 5.4 12 3Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+              />
+            </svg>
           </button>
+          <ul
+            v-show="langOpen"
+            class="lang-menu"
+            role="listbox"
+            :aria-label="t('lang.switch')"
+          >
+            <li v-for="l in LOCALES" :key="l" role="option" :aria-selected="locale === l">
+              <button
+                type="button"
+                class="lang-option"
+                :class="{ active: locale === l }"
+                @click="onLocaleClick(l)"
+              >
+                {{ t(`lang.${l}`) }}
+              </button>
+            </li>
+          </ul>
         </div>
         <RouterLink class="header-play" to="/playground">{{ t("nav.playground") }} <span aria-hidden="true">↗</span>
         </RouterLink>
       </div>
     </header>
     <RouterView/>
-    <SiteFooter/>
+    <SiteFooter v-if="!hideChrome"/>
   </div>
 </template>
 
@@ -93,6 +166,11 @@ a {
   display: flex;
   flex-direction: column;
 }
+
+.shell.bare {
+  min-height: 100vh;
+}
+
 
 .top {
   display: flex;
@@ -171,35 +249,69 @@ a {
 }
 
 .lang {
-  display: flex;
-  gap: 0.25rem;
+  position: relative;
 }
 
-.lang-btn {
+.lang-toggle {
   appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
   background: transparent;
   color: var(--muted);
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.lang-toggle:hover,
+.lang-toggle[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.lang-icon {
+  display: block;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 0.25rem;
+  min-width: 7.5rem;
+  list-style: none;
+  border: 1px solid #cfe3f1;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(37, 92, 128, 0.12);
+}
+
+.lang-option {
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
   font: inherit;
-  font-size: 0.78rem;
-  padding: 0.25rem 0.5rem;
+  font-size: 0.84rem;
+  text-align: left;
   cursor: pointer;
 }
 
-.shell.home .lang-btn {
-  border-color: color-mix(in srgb, var(--ink) 18%, transparent);
-  color: var(--muted);
+.lang-option:hover {
+  color: var(--ink);
+  background: #eef6fc;
 }
 
-.lang-btn.active {
-  border-color: var(--accent);
-  color: var(--ink);
+.lang-option.active {
+  color: var(--accent);
   font-weight: 600;
-}
-
-.shell.home .lang-btn.active {
-  border-color: var(--accent);
-  color: var(--ink);
 }
 
 .header-play {

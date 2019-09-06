@@ -8,6 +8,8 @@ const { t } = useI18n();
 
 const links = computed(() => [
     { label: t("footer.docs"), href: docsHomePath(), external: false },
+    { label: t("footer.gallery"), href: "/gallery", external: false },
+    { label: t("footer.stage"), href: "/stage", external: false },
     { label: t("footer.playground"), href: "/playground", external: false },
     { label: t("footer.repository"), href: landingGithub, external: true },
     { label: t("footer.issues"), href: landingIssues, external: true },
@@ -29,7 +31,7 @@ const links = computed(() => [
         <div><b>RUNTIME</b><a href="/">Browser Canvas</a><a href="/playground">Game loop</a><a :href="docsHomePath()">Resource
           loading</a></div>
         <div><b>PACKAGES</b><span>@doki-land/live2d</span><span>live2d-loader</span><span>live2d-renderer</span></div>
-        <div><b>HOSTS</b><span>Web / H5</span><span>Vue adaptor</span><span>Hexo adaptor</span></div>
+        <div><b>HOSTS</b><span>Web / H5</span><span>Vue adaptor</span><span>Hexo adaptor</span><span>Cocos adaptor</span></div>
       </div>
       <nav :aria-label="t('footer.navAria')">
         <template v-for="link in links" :key="link.label + link.href">
