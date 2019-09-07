@@ -14,5 +14,6 @@ order: 1
 | `@doki-land/live2d-widget`       | 页面挂载壳（含后续 tips/chrome）          |
 | `vue-plugin-live2d`  | Vue `<Live2D>`                            |
 | `hexo-plugin-live2d` | Hexo 注入；不做对话壳                     |
+| `cocos-plugin-live2d` | Creator 3.x（Web）`Live2D` 组件          |
 
 依赖方向：`adaptor / widget → live2d → loader + renderer → core`。

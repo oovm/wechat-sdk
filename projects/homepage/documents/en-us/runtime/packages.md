@@ -14,5 +14,6 @@ order: 1
 | `@doki-land/live2d-widget`       | Page mount shell (tips/chrome later)                   |
 | `vue-plugin-live2d`  | Vue `<Live2D>`                                         |
 | `hexo-plugin-live2d` | Hexo inject only — no dialogue chrome                  |
+| `cocos-plugin-live2d` | Creator 3.x (Web) `Live2D` component                  |
 
 Dependency direction: `adaptor / widget → live2d → loader + renderer → core`.
