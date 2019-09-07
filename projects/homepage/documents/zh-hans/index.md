@@ -5,7 +5,7 @@ order: 0
 
 # live2d.ts 文档
 
-纯 TypeScript 的 Live2D 运行时：WebGPU / WebGL2 / Canvas2D，以及 Vue、Hexo 适配层。
+纯 TypeScript 的 Live2D 运行时：WebGPU / WebGL2 / Canvas2D，以及 Vue、Hexo、Cocos 适配层。
 
 ## 从这里开始
 
@@ -13,7 +13,7 @@ order: 0
 - [模型来源](./guide/sources) — 本地 / URL / `npm:`
 - [包结构](./runtime/packages) — 各包职责
 - [模型格式](./runtime/formats) — cpu-program / moc2 / moc3
-- [Vue 适配](./adaptors/vue) · [Hexo 适配](./adaptors/hexo)
+- [Vue 适配](./adaptors/vue) · [Hexo 适配](./adaptors/hexo) · [Cocos 适配](./adaptors/cocos)
 
 ## 在线试用
 

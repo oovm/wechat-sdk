@@ -5,7 +5,7 @@ order: 0
 
 # live2d.ts docs
 
-Pure TypeScript Live2D runtime with WebGPU / WebGL2 / Canvas2D, plus Vue and Hexo adaptors.
+Pure TypeScript Live2D runtime with WebGPU / WebGL2 / Canvas2D, plus Vue, Hexo, and Cocos adaptors.
 
 ## Start here
 
@@ -13,7 +13,7 @@ Pure TypeScript Live2D runtime with WebGPU / WebGL2 / Canvas2D, plus Vue and Hex
 - [Model sources](./guide/sources) — local / URL / `npm:`
 - [Packages](./runtime/packages) — package responsibilities
 - [Formats](./runtime/formats) — cpu-program / moc2 / moc3
-- [Vue adaptor](./adaptors/vue) · [Hexo adaptor](./adaptors/hexo)
+- [Vue adaptor](./adaptors/vue) · [Hexo adaptor](./adaptors/hexo) · [Cocos adaptor](./adaptors/cocos)
 
 ## Try it
 
