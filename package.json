@@ -17,6 +17,9 @@
         "verify": "pnpm check && pnpm typecheck && pnpm test && pnpm build && pnpm build:homepage",
         "publish:packages": "node ./scripts/publish-packages.mjs",
         "publish:packages:yes": "node ./scripts/publish-packages.mjs --yes",
+        "placeholder": "node scripts/ci/publish-placeholder.mjs",
+        "placeholder:publish": "node scripts/ci/publish-placeholder.mjs publish",
+        "placeholder:trust": "node scripts/ci/publish-placeholder.mjs trust",
         "fmt": "biome format --write .",
         "check": "biome check ."
     },
