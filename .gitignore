@@ -17,3 +17,8 @@ node_modules/
 dist/
 *.txt
 *.log
+
+# npm placeholder / Trusted Publisher local secrets
+.placeholder-npm-cache.json
+scripts/.placeholder-npm-cache.json
+.env.placeholder.local
