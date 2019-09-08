@@ -29,10 +29,30 @@
         "src"
     ],
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "main": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js"
+            },
+            "./core": {
+                "types": "./dist/reexports/core.d.ts",
+                "import": "./dist/reexports/core.js"
+            },
+            "./loader": {
+                "types": "./dist/reexports/loader.d.ts",
+                "import": "./dist/reexports/loader.js"
+            },
+            "./renderer": {
+                "types": "./dist/reexports/renderer.d.ts",
+                "import": "./dist/reexports/renderer.js"
+            }
+        }
     },
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts",
+        "build": "tsup src/index.ts src/reexports/core.ts src/reexports/loader.ts src/reexports/renderer.ts --format esm --dts",
         "typecheck": "tsc --noEmit",
         "test": "vitest run --passWithNoTests"
     },
