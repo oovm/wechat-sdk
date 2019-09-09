@@ -134,7 +134,10 @@ export class MotionPlayer {
             this.#finish(existing, false);
         }
 
-        this.#slots.set(slot, this.#createActive(slot, group, index, clip, options));
+        this.#slots.set(
+            slot,
+            this.#createActive(slot, group, index, clip, options),
+        );
         return true;
     }
 
@@ -227,7 +230,8 @@ export class MotionPlayer {
         const fadeIn =
             options.fadeInTime ?? (clip.fadeInTime > 0 ? clip.fadeInTime : 0);
         const fadeOut =
-            options.fadeOutTime ?? (clip.fadeOutTime > 0 ? clip.fadeOutTime : 0);
+            options.fadeOutTime ??
+            (clip.fadeOutTime > 0 ? clip.fadeOutTime : 0);
         return {
             slot,
             group,

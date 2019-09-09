@@ -37,7 +37,12 @@ describe("models catalog", () => {
     it("declares tags with localized labels", () => {
         const full = JSON.parse(readFileSync(catalogPath, "utf8")) as {
             tags?: Record<string, Record<string, string>>;
-            models: Array<{ id: string; tags?: string[]; local: boolean; source: string }>;
+            models: Array<{
+                id: string;
+                tags?: string[];
+                local: boolean;
+                source: string;
+            }>;
         };
         expect(full.tags?.moc3?.["en-us"]).toBeTruthy();
         for (const m of full.models) {

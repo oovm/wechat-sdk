@@ -1,3 +1,10 @@
+export { evaluateCurve, evaluateMotion3 } from "./evaluate-curve.js";
+export {
+    blendMotionLayers,
+    MotionPlayer,
+    type MotionPlayerHandlers,
+} from "./motion-player.js";
+export { parseMotion3 } from "./parse-motion3.js";
 export type {
     Motion3Clip,
     MotionApplySample,
@@ -11,6 +18,3 @@ export type {
     PlayMotionOptions,
 } from "./types.js";
 export { MotionPriority } from "./types.js";
-export { parseMotion3 } from "./parse-motion3.js";
-export { evaluateCurve, evaluateMotion3 } from "./evaluate-curve.js";
-export { MotionPlayer, blendMotionLayers, type MotionPlayerHandlers } from "./motion-player.js";

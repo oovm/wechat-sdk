@@ -57,9 +57,7 @@ const filtered = computed(() => {
         previewUrl: previewUrlFor(p),
         favorite: isFavorite(p.id),
         tagLabels: (p.tags ?? []).map((id) =>
-            catalog.value
-                ? tagLabelFor(catalog.value, id, locale.value)
-                : id,
+            catalog.value ? tagLabelFor(catalog.value, id, locale.value) : id,
         ),
     }));
 
@@ -141,7 +139,10 @@ function syncFromRoute() {
             (x): x is string => typeof x === "string" && !!x,
         );
     } else if (typeof tagRaw === "string" && tagRaw) {
-        selectedTags.value = tagRaw.split(",").map((s) => s.trim()).filter(Boolean);
+        selectedTags.value = tagRaw
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
     } else {
         selectedTags.value = [];
     }

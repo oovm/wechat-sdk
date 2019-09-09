@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FrameProfile, RendererKind } from "@doki-land/live2d";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { Live2D } from "vue-plugin-live2d";
+import { useRoute } from "vue-router";
 import { useI18n } from "../i18n";
 import {
     type CatalogModel,
@@ -120,7 +120,10 @@ function addActors(modelId: string, count: number) {
 
 function addSelected() {
     if (!addModelId.value) return;
-    addActors(addModelId.value, Math.max(1, Math.min(32, spawnCount.value | 0)));
+    addActors(
+        addModelId.value,
+        Math.max(1, Math.min(32, spawnCount.value | 0)),
+    );
 }
 
 function duplicateSelected() {
@@ -238,7 +241,8 @@ function restore() {
             uidSeq = actors.value.length;
         }
         if (data.preferKind) preferKind.value = data.preferKind;
-        if (typeof data.actorSize === "number") actorSize.value = data.actorSize;
+        if (typeof data.actorSize === "number")
+            actorSize.value = data.actorSize;
         if (typeof data.autoSway === "boolean") autoSway.value = data.autoSway;
     } catch {
         // ignore
@@ -269,8 +273,7 @@ onMounted(async () => {
         models.value = [];
     }
     restore();
-    const addId =
-        typeof route.query.add === "string" ? route.query.add : "";
+    const addId = typeof route.query.add === "string" ? route.query.add : "";
     const n = Math.max(
         1,
         Math.min(32, Number(route.query.n ?? spawnCount.value) || 1),

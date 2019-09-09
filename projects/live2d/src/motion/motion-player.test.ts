@@ -77,12 +77,12 @@ describe("MotionPlayer", () => {
             Meta: { ...fixture.Meta, Duration: 0.2, FadeOutTime: 0 },
             UserData: [],
         });
-        expect(
-            player.start("A", 0, short, { slot: "q", queue: false }),
-        ).toBe(true);
-        expect(
-            player.start("B", 1, short, { slot: "q", queue: true }),
-        ).toBe(true);
+        expect(player.start("A", 0, short, { slot: "q", queue: false })).toBe(
+            true,
+        );
+        expect(player.start("B", 1, short, { slot: "q", queue: true })).toBe(
+            true,
+        );
         player.update(0.25);
         expect(onFinish).toHaveBeenCalledWith(
             expect.objectContaining({ group: "A" }),

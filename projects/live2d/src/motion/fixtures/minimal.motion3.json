@@ -11,9 +11,7 @@
         "TotalSegmentCount": 3,
         "TotalPointCount": 6
     },
-    "UserData": [
-        { "Time": 0.5, "Value": "mid" }
-    ],
+    "UserData": [{ "Time": 0.5, "Value": "mid" }],
     "Curves": [
         {
             "Target": "Parameter",

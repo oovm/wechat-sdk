@@ -11,10 +11,10 @@ import {
     type SessionState,
 } from "@doki-land/live2d";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { Live2D } from "vue-plugin-live2d";
+import { useRoute } from "vue-router";
 import { useI18n } from "../i18n";
-import { displayNameFor, type CatalogLocalizedName } from "../lib/catalog";
+import { type CatalogLocalizedName, displayNameFor } from "../lib/catalog";
 
 interface Preset {
     id: string;

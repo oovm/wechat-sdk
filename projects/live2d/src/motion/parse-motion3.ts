@@ -20,7 +20,9 @@ const SEGMENT_KIND: Record<number, MotionSegmentKind> = {
  */
 export function parseMotion3(json: unknown): Motion3Clip {
     if (!json || typeof json !== "object") {
-        throw new Error("@doki-land/live2d: motion3.json root must be an object");
+        throw new Error(
+            "@doki-land/live2d: motion3.json root must be an object",
+        );
     }
     const root = json as Record<string, unknown>;
     const version = Number(root.Version ?? 3);

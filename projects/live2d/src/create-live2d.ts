@@ -31,11 +31,11 @@ import {
 } from "@doki-land/live2d-renderer";
 import { loadTextureData, releaseTextureData } from "./load-textures.js";
 import {
+    type Motion3Clip,
     MotionPlayer,
     MotionPriority,
-    parseMotion3,
-    type Motion3Clip,
     type PlayMotionOptions,
+    parseMotion3,
 } from "./motion/index.js";
 
 export type { PlayMotionOptions } from "./motion/index.js";
@@ -92,7 +92,10 @@ export interface Live2DRuntime extends Live2DSession {
      * Draw one frame and encode the canvas as PNG.
      * Works for Canvas2D and WebGL2 (`preserveDrawingBuffer`).
      */
-    capturePng(opts?: { mimeType?: "image/png"; quality?: number }): Promise<Blob>;
+    capturePng(opts?: {
+        mimeType?: "image/png";
+        quality?: number;
+    }): Promise<Blob>;
 }
 
 function lerp(a: number, b: number, t: number): number {
@@ -161,9 +164,8 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
                 continue;
             }
             const cur =
-                activeBackend
-                    .listParameters?.(model)
-                    .find((p) => p.id === s.id)?.value ?? s.value;
+                activeBackend.listParameters?.(model).find((p) => p.id === s.id)
+                    ?.value ?? s.value;
             activeBackend.setParameter(
                 model,
                 s.id,
@@ -500,7 +502,9 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
         },
         async capturePng(opts = {}) {
             if (!canvas) {
-                throw new Error("@doki-land/live2d: mount(canvas) before capturePng");
+                throw new Error(
+                    "@doki-land/live2d: mount(canvas) before capturePng",
+                );
             }
             if (phase === "live" && model && activeBackend && drawPass) {
                 runtime.update(0);

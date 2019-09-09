@@ -346,8 +346,7 @@ export const messages: Record<Locale, MessageTree> = {
             urlLabel: "model3.json / model.json URL",
             npmExample: "CDN 示例（jsDelivr）",
             npmExampleCustom: "自定义…",
-            npmExampleHint:
-                "选示例会同时填好包名与资源路径；也可下方手改。",
+            npmExampleHint: "选示例会同时填好包名与资源路径；也可下方手改。",
             npmExamples: {
                 hijiki: "live2d-widget-model-hijiki（CDN）",
                 tororo: "live2d-widget-model-tororo（CDN）",

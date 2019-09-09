@@ -68,9 +68,13 @@ export function localizedText(
             byNorm.set(normalizeTag(k), v);
         }
     }
-    const preferred =
-        LOCALE_TAG_PREFERENCE[normalizeTag(locale)] ??
-        [normalizeTag(locale), "en-us", "en", "zh-cn", "zh"];
+    const preferred = LOCALE_TAG_PREFERENCE[normalizeTag(locale)] ?? [
+        normalizeTag(locale),
+        "en-us",
+        "en",
+        "zh-cn",
+        "zh",
+    ];
     for (const tag of preferred) {
         const hit = byNorm.get(normalizeTag(tag));
         if (hit) return hit;

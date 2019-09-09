@@ -103,7 +103,10 @@ async function main() {
             console.log(
                 `[previews] capture ${preset.id} → ${previewUrlFor(preset)}`,
             );
-            await page.goto(url, { waitUntil: "networkidle", timeout: 120_000 });
+            await page.goto(url, {
+                waitUntil: "networkidle",
+                timeout: 120_000,
+            });
             const result = await page.waitForFunction(
                 () => {
                     const api = window.__LIVE2D_CAPTURE__;

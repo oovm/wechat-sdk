@@ -8,10 +8,10 @@ import {
 import {
     _decorator,
     Component,
-    EventTouch,
+    type EventTouch,
     Node,
     PixelFormat,
-    Size,
+    type Size,
     Sprite,
     SpriteFrame,
     Texture2D,

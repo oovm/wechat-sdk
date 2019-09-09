@@ -59,10 +59,10 @@ export {
     blendMotionLayers,
     evaluateCurve,
     evaluateMotion3,
-    MotionPlayer,
-    parseMotion3,
     type Motion3Clip,
     type MotionApplySample,
+    MotionPlayer,
+    parseMotion3,
 } from "./motion/index.js";
 
 export const LIVE2D_VERSION = "0.0.0" as const;
