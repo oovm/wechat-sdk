@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_COCOS_PREFER, normalizePrefer } from "./prefer.js";
+import {
+    DEFAULT_COCOS_PREFER,
+    normalizePrefer,
+} from "../../src/creator3/prefer.js";
 
 describe("normalizePrefer", () => {
     it("returns Cocos default when empty", () => {

@@ -4,7 +4,7 @@ import {
     DEFAULT_HEXO_LIVE2D_CONFIG,
     HEXO_PLUGIN_LIVE2D_VERSION,
     renderHexoLive2DInjector,
-} from "./index.js";
+} from "../src/index.js";
 
 const require = createRequire(import.meta.url);
 const cjs = require("../index.cjs") as {
