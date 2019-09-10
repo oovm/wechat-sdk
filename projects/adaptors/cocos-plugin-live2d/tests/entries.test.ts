@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { COCOS_CREATOR_API as api2 } from "./creator2/api.js";
-import { COCOS_CREATOR_API as api3 } from "./creator3/api.js";
+import { COCOS_CREATOR_API as api2 } from "../src/creator2/api.js";
+import { COCOS_CREATOR_API as api3 } from "../src/creator3/api.js";
 
 describe("dual entry scaffold", () => {
     it("creator3 API discriminator is 3", () => {

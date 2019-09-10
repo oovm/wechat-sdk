@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { readCanvasRgba } from "./canvas-bridge.js";
+import { readCanvasRgba } from "../../src/creator3/canvas-bridge.js";
 
 function mockCanvas2d(
     width: number,

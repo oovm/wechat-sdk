@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { evaluateMotion3 } from "./evaluate-curve.js";
-import { parseMotion3 } from "./parse-motion3.js";
+import { evaluateMotion3 } from "../../src/motion/evaluate-curve.js";
+import { parseMotion3 } from "../../src/motion/parse-motion3.js";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const catalogPath = join(
