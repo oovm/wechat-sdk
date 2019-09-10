@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import fixture from "../fixtures/minimal.motion3.json";
 import {
     blendMotionLayers,
     MotionPlayer,
 } from "../../src/motion/motion-player.js";
 import { parseMotion3 } from "../../src/motion/parse-motion3.js";
 import { MotionPriority } from "../../src/motion/types.js";
+import fixture from "../fixtures/minimal.motion3.json";
 
 describe("MotionPlayer", () => {
     const clip = parseMotion3(fixture);

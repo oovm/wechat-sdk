@@ -26,7 +26,13 @@
         }
     },
     "files": {
-        "includes": ["**", "!**/dist", "!**/node_modules", "!**/public/models"]
+        "includes": [
+            "**",
+            "!**/dist",
+            "!**/node_modules",
+            "!**/public/models",
+            "!**/browser/doki-live2d-hexo.js"
+        ]
     },
     "overrides": [
         {
