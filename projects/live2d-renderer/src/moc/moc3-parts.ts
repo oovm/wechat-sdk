@@ -15,9 +15,7 @@ export function readMoc3PartTables(doc: Moc3Document): Moc3PartTables | null {
         ids: ids as string[],
         parentPartIndices: parents,
         artMeshParentPartIndices:
-            meshParents instanceof Int32Array
-                ? meshParents
-                : new Int32Array(0),
+            meshParents instanceof Int32Array ? meshParents : new Int32Array(0),
     };
 }
 

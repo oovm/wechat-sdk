@@ -339,11 +339,8 @@ defineExpose({
     setParameter,
     clearManualAngleX,
     listParameters: () => runtime?.listParameters() ?? [],
-    playMotion: (
-        group: string,
-        index?: number,
-        options?: PlayMotionOptions,
-    ) => runtime?.playMotion(group, index, options) ?? Promise.resolve(false),
+    playMotion: (group: string, index?: number, options?: PlayMotionOptions) =>
+        runtime?.playMotion(group, index, options) ?? Promise.resolve(false),
     stopMotion: (opts?: { fade?: boolean; slot?: string }) =>
         runtime?.stopMotion(opts),
     listPlayingMotions: () => runtime?.listPlayingMotions() ?? [],

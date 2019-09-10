@@ -19,12 +19,9 @@ import type {
     ParameterBinding,
 } from "../model-runtime.js";
 import type { BlendMode, DrawableMesh } from "../types.js";
+import { cascadedPartOpacity, readMoc3PartTables } from "./moc3-parts.js";
 import { type Moc3Document, parseMoc3Document } from "./moc3-reader.js";
 import { moc3DocumentToProgram } from "./moc3-to-program.js";
-import {
-    cascadedPartOpacity,
-    readMoc3PartTables,
-} from "./moc3-parts.js";
 
 function toDrawableMesh(d: FrameDrawable): DrawableMesh {
     return {
@@ -159,11 +156,7 @@ export class Moc3Backend implements ModelBackend {
         return frame.drawables.map((d) => {
             const mesh = toDrawableMesh(d);
             if (!tables || state.partOpacity.size === 0) return mesh;
-            const mul = cascadedPartOpacity(
-                tables,
-                d.index,
-                state.partOpacity,
-            );
+            const mul = cascadedPartOpacity(tables, d.index, state.partOpacity);
             return { ...mesh, opacity: mesh.opacity * mul };
         });
     }
@@ -198,9 +191,7 @@ export class Moc3Backend implements ModelBackend {
     setPartOpacity(model: InternalModel, id: string, value: number): void {
         const state = stateByModel.get(model);
         if (!state) return;
-        const v = Number.isFinite(value)
-            ? Math.min(1, Math.max(0, value))
-            : 1;
+        const v = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 1;
         state.partOpacity.set(id, v);
         // Opacity is applied in getDrawables; no need to rebake deform.
     }

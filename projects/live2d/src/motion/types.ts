@@ -1,5 +1,9 @@
 /** Cubism motion3 segment kinds (spec). */
-export type MotionSegmentKind = "linear" | "bezier" | "stepped" | "inverseStepped";
+export type MotionSegmentKind =
+    | "linear"
+    | "bezier"
+    | "stepped"
+    | "inverseStepped";
 
 export type MotionCurveTarget = "Parameter" | "PartOpacity" | "Model";
 

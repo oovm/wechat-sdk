@@ -81,7 +81,10 @@ export function loadModelsCatalog(path = CATALOG_PATH) {
             throw new Error(`invalid catalog tags on ${m.id}`);
         }
     }
-    if (raw.tags != null && (typeof raw.tags !== "object" || Array.isArray(raw.tags))) {
+    if (
+        raw.tags != null &&
+        (typeof raw.tags !== "object" || Array.isArray(raw.tags))
+    ) {
         throw new Error("invalid catalog tags map");
     }
     return raw;
@@ -89,7 +92,8 @@ export function loadModelsCatalog(path = CATALOG_PATH) {
 
 /** Resolve display name; `locale` may be `zh` / `en` or `zh-cn` / `en-us`. */
 export function displayNameFor(model, locale = "en") {
-    const name = model?.name && typeof model.name === "object" ? model.name : {};
+    const name =
+        model?.name && typeof model.name === "object" ? model.name : {};
     const byNorm = new Map();
     for (const [k, v] of Object.entries(name)) {
         if (typeof v === "string" && v.trim()) {

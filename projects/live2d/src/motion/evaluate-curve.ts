@@ -41,7 +41,10 @@ export function evaluateCurve(
         const isLast = i === segs.length - 1;
         // At a segment boundary, hand off to the next segment so stepped ends
         // expose their end value as the next key.
-        if (timeSeconds < seg.p3.time || (isLast && timeSeconds <= seg.p3.time)) {
+        if (
+            timeSeconds < seg.p3.time ||
+            (isLast && timeSeconds <= seg.p3.time)
+        ) {
             return evaluateSegment(seg, timeSeconds, areBeziersRestricted);
         }
     }
@@ -86,10 +89,7 @@ function evaluateSegment(
 function cubic(a: number, b: number, c: number, d: number, t: number): number {
     const u = 1 - t;
     return (
-        u * u * u * a +
-        3 * u * u * t * b +
-        3 * u * t * t * c +
-        t * t * t * d
+        u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d
     );
 }
 

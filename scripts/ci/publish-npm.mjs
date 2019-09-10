@@ -15,7 +15,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const ROOT = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../..",
+);
 
 /** @type {{ dir: string }[]} */
 const PACKAGES = [
@@ -87,7 +90,10 @@ function rewriteWorkspaceDeps(deps, version) {
     /** @type {Record<string, string>} */
     const out = {};
     for (const [k, v] of Object.entries(deps)) {
-        if (typeof v === "string" && (v.startsWith("workspace:") || v === "*")) {
+        if (
+            typeof v === "string" &&
+            (v.startsWith("workspace:") || v === "*")
+        ) {
             out[k] = version;
         } else {
             out[k] = v;
@@ -142,7 +148,8 @@ function npmPublish(stagingDir, name, version) {
     if (r.stderr) process.stderr.write(`${r.stderr}\n`);
     const blob = `${r.stdout}\n${r.stderr}`;
     if (r.status === 0) return "published";
-    if (isAlreadyPublished(blob) || versionExists(name, version)) return "exists";
+    if (isAlreadyPublished(blob) || versionExists(name, version))
+        return "exists";
     if (isAuthFailure(blob)) return "auth";
     if (isMissingPackage(blob)) return "missing";
     if (versionExists(name, version)) return "exists";

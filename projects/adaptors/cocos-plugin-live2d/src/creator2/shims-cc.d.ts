@@ -13,9 +13,23 @@ declare namespace cc {
     }
 
     class Node {
+        static EventType: {
+            TOUCH_START: string;
+            TOUCH_MOVE: string;
+            TOUCH_END: string;
+            TOUCH_CANCEL: string;
+        };
         name: string;
-        on(type: string, callback: (...args: never[]) => void, target?: unknown): void;
-        off(type: string, callback: (...args: never[]) => void, target?: unknown): void;
+        on(
+            type: string,
+            callback: (...args: never[]) => void,
+            target?: unknown,
+        ): void;
+        off(
+            type: string,
+            callback: (...args: never[]) => void,
+            target?: unknown,
+        ): void;
         getComponent<T>(type: Constructor<T> | string): T | null;
         addComponent<T>(type: Constructor<T> | string): T;
         width: number;
@@ -42,20 +56,6 @@ declare namespace cc {
         initWithElement(element: HTMLCanvasElement | HTMLImageElement): void;
         handleLoadedTexture(): void;
     }
-
-    namespace Node {
-        // Creator 2 touch events use Node.EventType.* on some versions;
-        // projects also use cc.Node.EventType.
-    }
-
-    const Node: {
-        EventType: {
-            TOUCH_START: string;
-            TOUCH_MOVE: string;
-            TOUCH_END: string;
-            TOUCH_CANCEL: string;
-        };
-    };
 
     const _decorator: {
         ccclass: (name?: string) => ClassDecorator;

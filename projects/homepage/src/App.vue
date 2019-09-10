@@ -1,22 +1,10 @@
 <script setup lang="ts">
-import {
-    computed,
-    onBeforeUnmount,
-    onMounted,
-    ref,
-    type Ref,
-} from "vue";
+import { computed, onBeforeUnmount, onMounted, type Ref, ref } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import SiteFooter from "./components/SiteFooter.vue";
 import { landingBrand } from "./config/landing";
 import { getDoc } from "./docs/catalog";
-import {
-    docsHomePath,
-    LOCALES,
-    setLocale,
-    useI18n,
-    type Locale,
-} from "./i18n";
+import { docsHomePath, LOCALES, type Locale, setLocale, useI18n } from "./i18n";
 
 const route = useRoute();
 const router = useRouter();
