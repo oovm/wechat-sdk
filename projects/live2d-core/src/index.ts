@@ -43,5 +43,18 @@ export {
     createSessionStub,
     type Live2DSession,
 } from "./session.js";
+export type {
+    ActorHit,
+    ActorTransform,
+    CreateActorOptions,
+    CreateLive2dStageOptions,
+    Live2dActor,
+    Live2dStage,
+    PointerTrackingMode,
+    PointerTrackingPolicy,
+    StagePointerEvent,
+    StageUpdateMode,
+} from "./stage.js";
+export { DEFAULT_ACTOR_TRANSFORM } from "./stage.js";
 
 export const LIVE2D_CORE_VERSION = "0.0.0" as const;

@@ -1,0 +1,147 @@
+import type { InternalModel } from "./model.js";
+
+/** Normalized stage placement for one actor (0,0) top-left → (1,1) bottom-right. */
+export interface ActorTransform {
+    /** Anchor point X in stage space. */
+    x: number;
+    /** Anchor point Y in stage space. */
+    y: number;
+    /** Uniform scale; ignored when `scaleX` / `scaleY` are set. */
+    scale?: number;
+    scaleX?: number;
+    scaleY?: number;
+    /** Radians, counter-clockwise. */
+    rotation?: number;
+    /** Horizontal anchor within the model bounds (0 = left, 1 = right). */
+    anchorX?: number;
+    /** Vertical anchor within the model bounds (0 = top, 1 = bottom in stage space). */
+    anchorY?: number;
+}
+
+export const DEFAULT_ACTOR_TRANSFORM: Readonly<ActorTransform> = {
+    x: 0.5,
+    y: 1,
+    scale: 1,
+    anchorX: 0.5,
+    anchorY: 1,
+};
+
+export type PointerTrackingMode =
+    | "all"
+    | "focused"
+    | "hovered"
+    | "nearest"
+    | "none"
+    | "custom";
+
+export interface PointerTrackingPolicy {
+    mode: PointerTrackingMode;
+    /** Used when `mode` is `custom`. */
+    targetActorId?: string;
+}
+
+export interface CreateActorOptions {
+    id?: string;
+    transform?: Partial<ActorTransform>;
+    layer?: string;
+    order?: number;
+    visible?: boolean;
+    opacity?: number;
+}
+
+export interface ActorHit {
+    readonly actor: Live2dActor;
+    readonly actorId: string;
+    readonly area: string;
+    readonly drawableIndex: number;
+    readonly stageX: number;
+    readonly stageY: number;
+    readonly localX: number;
+    readonly localY: number;
+}
+
+export interface StagePointerEvent {
+    readonly actor: Live2dActor | null;
+    readonly actorId: string | null;
+    readonly area: string | null;
+    readonly stageX: number;
+    readonly stageY: number;
+    readonly clientX: number;
+    readonly clientY: number;
+    readonly hit: ActorHit | null;
+}
+
+export type StageUpdateMode = "auto" | "manual";
+
+export interface CreateLive2dStageOptions {
+    updateMode?: StageUpdateMode;
+}
+
+/** Read-only actor surface exposed by the stage. */
+export interface Live2dActor {
+    readonly id: string;
+    readonly model: InternalModel | null;
+    readonly visible: boolean;
+    readonly opacity: number;
+    readonly layer: string;
+    readonly order: number;
+    readonly creationIndex: number;
+
+    getTransform(): ActorTransform;
+
+    setTransform(patch: Partial<ActorTransform>): void;
+
+    load(
+        source: import("./contracts.js").ModelSource,
+        resolver?: import("./contracts.js").AssetResolver,
+    ): Promise<InternalModel>;
+
+    setParameter(id: string, value: number): void;
+
+    lookAt(stageX: number, stageY: number): void;
+
+    destroy(): void;
+}
+
+/** Multi-character stage owning one canvas surface and shared renderer. */
+export interface Live2dStage {
+    readonly actors: readonly Live2dActor[];
+
+    mount(canvas: HTMLCanvasElement): Promise<void>;
+
+    createActor(options?: CreateActorOptions): Live2dActor;
+
+    removeActor(actor: Live2dActor | string): void;
+
+    defineLayers(layers: readonly string[]): void;
+
+    update(deltaTimeSeconds: number): void;
+
+    render(): void;
+
+    start(): void;
+
+    pause(): void;
+
+    resume(): void;
+
+    stop(): void;
+
+    hitTest(stageX: number, stageY: number): ActorHit | null;
+
+    hitTestAll(stageX: number, stageY: number): readonly ActorHit[];
+
+    addEventListener(
+        type: "pointerdown" | "pointermove" | "pointerup",
+        listener: (event: StagePointerEvent) => void,
+    ): void;
+
+    removeEventListener(
+        type: "pointerdown" | "pointermove" | "pointerup",
+        listener: (event: StagePointerEvent) => void,
+    ): void;
+
+    destroy(): void;
+
+    pointerTracking: PointerTrackingPolicy;
+}
