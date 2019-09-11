@@ -29,7 +29,6 @@
     },
     "scripts": {
         "build": "node ./scripts/build-browser.mjs",
-        "prepublishOnly": "pnpm run build",
         "typecheck": "tsc --noEmit",
         "test": "vitest run"
     },
