@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import fixture from "../fixtures/minimal.motion3.json";
 import { parseMotion3 } from "../../src/motion/parse-motion3.js";
+import fixture from "../fixtures/minimal.motion3.json";
 
 describe("parseMotion3", () => {
     it("parses minimal fixture", () => {
