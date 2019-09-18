@@ -1,3 +1,6 @@
+/**
+ * Thin ESM bootstrap — runtime lives in browser/vendor/ (import map).
+ */
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
@@ -8,14 +11,13 @@ const pkgRoot = join(root, "..");
 await esbuild.build({
     absWorkingDir: pkgRoot,
     entryPoints: [join(pkgRoot, "src/browser-entry.ts")],
-    outfile: join(pkgRoot, "browser/doki-live2d-hexo.js"),
+    outfile: join(pkgRoot, "browser/doki-live2d-hexo.bootstrap.mjs"),
     bundle: true,
-    format: "iife",
+    format: "esm",
     platform: "browser",
     target: ["es2022"],
-    sourcemap: true,
     logLevel: "info",
-    // Workspace packages resolve via pnpm links from this package.
+    external: ["@doki-land/live2d", "@doki-land/live2d-widget"],
 });
 
-console.log("wrote browser/doki-live2d-hexo.js");
+console.log("wrote browser/doki-live2d-hexo.bootstrap.mjs");
