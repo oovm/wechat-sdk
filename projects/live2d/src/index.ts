@@ -7,11 +7,17 @@
  */
 
 export type {
+    ActorHit,
+    ActorTransform,
     AssetResolver,
+    CreateActorOptions,
+    CreateLive2dStageOptions,
     FrameProfile,
     FrameSnapshot,
     InternalModel,
     Live2DSession,
+    Live2dActor,
+    Live2dStage,
     LoadProgress,
     LoadProgressStage,
     ModelFormat,
@@ -19,16 +25,19 @@ export type {
     ModelProgram,
     ModelSettings,
     ModelSource,
+    PointerTrackingMode,
+    PointerTrackingPolicy,
     SessionPhase,
     SessionState,
+    StagePointerEvent,
+    StageUpdateMode,
 } from "@doki-land/live2d-core";
-export { EventEmitter } from "@doki-land/live2d-core";
+export { DEFAULT_ACTOR_TRANSFORM, EventEmitter } from "@doki-land/live2d-core";
 export {
     DEFAULT_NPM_CDN,
     resolveModelSourceUrl,
     resolveNpmSpecifier,
 } from "@doki-land/live2d-loader";
-
 export {
     createCanvas2DRenderer,
     createMoc2Backend,
@@ -64,5 +73,9 @@ export {
     MotionPlayer,
     parseMotion3,
 } from "./motion/index.js";
+export {
+    type CreateLive2dStageFullOptions,
+    createLive2dStage,
+} from "./stage/stage.js";
 
 export const LIVE2D_VERSION = "0.0.0" as const;
