@@ -1,9 +1,7 @@
 /**
  * Browser bootstrap for hexo-plugin-live2d.
- * Bundled to `browser/doki-live2d-hexo.js` (IIFE).
- *
- * Exposes `window.DokiLive2D.mountWidget` for in-article demo stages
- * (site-wide float still auto-mounts from `__DOKI_LIVE2D_HEXO__`).
+ * ESM default: `browser/doki-live2d-hexo.bootstrap.mjs` + import map vendor.
+ * Legacy: bundled IIFE `browser/doki-live2d-hexo.js` (deprecated).
  */
 import type { RendererKind } from "@doki-land/live2d";
 import {

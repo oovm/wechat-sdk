@@ -21,6 +21,7 @@
     },
     "files": [
         "index.cjs",
+        "import-map.cjs",
         "browser",
         "src"
     ],
@@ -28,7 +29,9 @@
         "access": "public"
     },
     "scripts": {
-        "build": "node ./scripts/build-browser.mjs",
+        "build": "node ./scripts/sync-vendor-dist.mjs && node ./scripts/build-bootstrap.mjs",
+        "build:legacy": "node ./scripts/build-legacy-bundle.mjs",
+        "build:publish": "pnpm run build && pnpm run build:legacy",
         "typecheck": "tsc --noEmit",
         "test": "vitest run"
     },
