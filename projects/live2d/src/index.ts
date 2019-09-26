@@ -25,6 +25,7 @@ export type {
     ModelProgram,
     ModelSettings,
     ModelSource,
+    PlayMotionActorOptions,
     PointerTrackingMode,
     PointerTrackingPolicy,
     SessionPhase,

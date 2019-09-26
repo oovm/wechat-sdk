@@ -127,6 +127,24 @@ export class Live2dStageImpl implements Live2dStage {
         return actor;
     }
 
+    getActor(id: string): Live2dActor | null {
+        return this.#actors.get(id) ?? null;
+    }
+
+    resize(width?: number, height?: number): void {
+        if (!this.#canvas || this.#destroyed) return;
+        const cssW = width ?? this.#canvas.clientWidth;
+        const cssH = height ?? this.#canvas.clientHeight;
+        if (cssW <= 0 || cssH <= 0) return;
+        const dpr =
+            typeof globalThis.devicePixelRatio === "number"
+                ? globalThis.devicePixelRatio
+                : 1;
+        this.#canvas.width = Math.round(cssW * dpr);
+        this.#canvas.height = Math.round(cssH * dpr);
+        this.#renderer.resize(cssW, cssH);
+    }
+
     removeActor(actorOrId: Live2dActor | string): void {
         const id = typeof actorOrId === "string" ? actorOrId : actorOrId.id;
         const actor = this.#actors.get(id);
