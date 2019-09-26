@@ -196,7 +196,9 @@ function publishJs(version) {
                     "build:publish",
                 ]);
                 if (build.status !== 0) {
-                    fail("hexo browser build:publish failed before npm publish");
+                    fail(
+                        "hexo browser build:publish failed before npm publish",
+                    );
                 }
             }
         }
