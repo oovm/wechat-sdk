@@ -32,6 +32,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: No tracked hexo browser outputs
+        run: node scripts/ci/check-no-generated-assets.mjs
+
       - name: Biome
         run: pnpm check
 

@@ -179,6 +179,28 @@ function publishJs(version) {
             continue;
         }
 
+        if (name === "hexo-plugin-live2d") {
+            const bootstrap = path.join(
+                abs,
+                "browser",
+                "doki-live2d-hexo.bootstrap.mjs",
+            );
+            if (!fs.existsSync(bootstrap)) {
+                console.log(
+                    "ci-publish-npm: building hexo browser assets (not in git)",
+                );
+                const build = run("pnpm", [
+                    "--filter",
+                    "hexo-plugin-live2d",
+                    "run",
+                    "build:publish",
+                ]);
+                if (build.status !== 0) {
+                    fail("hexo browser build:publish failed before npm publish");
+                }
+            }
+        }
+
         const stage = path.join(
             os.tmpdir(),
             `live2d-pub-${name.replace(/[/@]/g, "-")}-${version}`,
@@ -206,6 +228,7 @@ function publishJs(version) {
                 "License.md",
                 "LICENSE",
                 "index.cjs",
+                "import-map.cjs",
             ]) {
                 const from = path.join(abs, extra);
                 if (!fs.existsSync(from)) continue;

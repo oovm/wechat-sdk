@@ -76,9 +76,6 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Build hexo browser assets
-        run: pnpm --filter hexo-plugin-live2d build:publish
-
       - name: Strip token-style npmrc (OIDC only)
         shell: bash
         run: |
