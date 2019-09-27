@@ -50,6 +50,7 @@ export type {
     CreateLive2dStageOptions,
     Live2dActor,
     Live2dStage,
+    PlayMotionActorOptions,
     PointerTrackingMode,
     PointerTrackingPolicy,
     StagePointerEvent,
