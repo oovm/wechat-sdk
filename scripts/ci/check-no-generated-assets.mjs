@@ -12,9 +12,7 @@ const ROOT = path.resolve(
 );
 
 const TRACKED_PREFIX = "projects/adaptors/hexo-plugin-live2d/browser/";
-const ALLOWED = new Set([
-    `${TRACKED_PREFIX}.gitkeep`,
-]);
+const ALLOWED = new Set([`${TRACKED_PREFIX}.gitkeep`]);
 
 const r = spawnSync("git", ["ls-files", TRACKED_PREFIX], {
     cwd: ROOT,
