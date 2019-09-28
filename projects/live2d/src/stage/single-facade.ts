@@ -139,19 +139,19 @@ export function createSingleActorFacade(
             return hit.area;
         },
         listParameters() {
-            return actor.slot.listParameters();
+            return actor.listParameters();
         },
         listMotionGroups() {
-            return actor.slot.listMotionGroups();
+            return actor.listMotionGroups();
         },
         playMotion(group, index, options) {
-            return actor.slot.playMotion(group, index, options);
+            return actor.playMotion(group, index, options);
         },
         stopMotion(opts) {
-            actor.slot.stopMotion(opts);
+            actor.stopMotion(opts);
         },
         listPlayingMotions() {
-            return actor.slot.listPlayingMotions();
+            return actor.listPlayingMotions();
         },
         async capturePng(opts = {}) {
             if (!canvas) {

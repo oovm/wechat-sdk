@@ -4,6 +4,7 @@ import type {
     CreateActorOptions,
     InternalModel,
     Live2dActor,
+    PlayMotionActorOptions,
 } from "@doki-land/live2d-core";
 import type {
     DrawableMesh,
@@ -11,6 +12,7 @@ import type {
     Renderer,
 } from "@doki-land/live2d-renderer";
 import { focusParameterUpdates } from "../focus.js";
+import type { PlayMotionOptions } from "../motion/index.js";
 import { ActorModelSlot } from "./actor-model-slot.js";
 import {
     resolveActorTransform,
@@ -115,6 +117,34 @@ export class Live2dActorImpl implements Live2dActor {
 
     setParameter(id: string, value: number): void {
         this.#slot.setParameter(id, value);
+    }
+
+    listParameters() {
+        return this.#slot.listParameters();
+    }
+
+    listMotionGroups() {
+        return this.#slot.listMotionGroups();
+    }
+
+    playMotion(
+        group: string,
+        index?: number,
+        options?: PlayMotionActorOptions,
+    ) {
+        return this.#slot.playMotion(
+            group,
+            index,
+            options as PlayMotionOptions | undefined,
+        );
+    }
+
+    stopMotion(opts?: { fade?: boolean; slot?: string }) {
+        this.#slot.stopMotion(opts);
+    }
+
+    listPlayingMotions() {
+        return this.#slot.listPlayingMotions();
     }
 
     lookAt(stageX: number, stageY: number): void {
