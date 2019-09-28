@@ -55,9 +55,24 @@ describe("createLive2dStage", () => {
         const stage = createLive2dStage({ updateMode: "manual" });
         const a = stage.createActor({ id: "a" });
         const b = stage.createActor({ id: "b" });
+        expect(stage.getActor("a")).toBe(a);
+        expect(stage.getActor("missing")).toBeNull();
         stage.removeActor(a);
         expect(stage.actors).toHaveLength(1);
         expect(stage.actors[0]?.id).toBe(b.id);
+        stage.destroy();
+    });
+});
+
+describe("Live2dActor motion API", () => {
+    it("delegates motion helpers before a model is loaded", async () => {
+        const stage = createLive2dStage({ updateMode: "manual" });
+        const actor = stage.createActor({ id: "idle" });
+        expect(actor.listParameters()).toEqual([]);
+        expect(actor.listMotionGroups()).toEqual({});
+        expect(await actor.playMotion("Idle")).toBe(false);
+        actor.stopMotion();
+        expect(actor.listPlayingMotions()).toEqual([]);
         stage.destroy();
     });
 });
