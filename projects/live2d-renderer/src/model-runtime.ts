@@ -18,6 +18,8 @@ export interface ModelBackendOptions {
     resolver?: AssetResolver;
     /** Preloaded moc bytes (tests). */
     mocBytes?: ArrayBuffer;
+    /** Reuse a prior compile from {@link SharedModelCompile}. */
+    sharedCompile?: SharedModelCompile;
 }
 
 /** Live parameter binding for inspectors / playground. */
@@ -27,6 +29,17 @@ export interface ParameterBinding {
     readonly max: number;
     readonly defaultValue: number;
     readonly value: number;
+}
+
+/** Shared read-only decode payload (renderer-internal; set by stage asset cache). */
+export interface SharedModelCompile {
+    readonly mocBytes: ArrayBuffer;
+    /** moc3 official `.moc3` document. */
+    readonly moc3Doc?: unknown;
+    /** moc3 CPU `.program.json` program. */
+    readonly cpuProgram?: import("@doki-land/live2d-core").ModelProgram;
+    /** Parsed moc2 model graph. */
+    readonly moc2Model?: unknown;
 }
 
 /** moc2 / moc3 model runtime. */

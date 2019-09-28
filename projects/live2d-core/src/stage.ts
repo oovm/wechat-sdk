@@ -1,4 +1,6 @@
+import type { AssetResolver, ModelSource } from "./contracts.js";
 import type { InternalModel, MotionDefinition } from "./model.js";
+import type { ModelAsset } from "./model-asset.js";
 
 /** Normalized stage placement for one actor (0,0) top-left → (1,1) bottom-right. */
 export interface ActorTransform {
@@ -100,10 +102,10 @@ export interface Live2dActor {
 
     setTransform(patch: Partial<ActorTransform>): void;
 
-    load(
-        source: import("./contracts.js").ModelSource,
-        resolver?: import("./contracts.js").AssetResolver,
-    ): Promise<InternalModel>;
+    load(source: ModelSource, resolver?: AssetResolver): Promise<InternalModel>;
+
+    /** Attach a stage-cached {@link ModelAsset} without re-fetching resources. */
+    loadAsset(asset: ModelAsset): Promise<InternalModel>;
 
     setParameter(id: string, value: number): void;
 
@@ -141,6 +143,9 @@ export interface Live2dActor {
 /** Multi-character stage owning one canvas surface and shared renderer. */
 export interface Live2dStage {
     readonly actors: readonly Live2dActor[];
+
+    /** Shared model resource cache for multi-actor reuse. */
+    readonly assets: import("./model-asset.js").Live2dStageAssets;
 
     mount(canvas: HTMLCanvasElement): Promise<void>;
 

@@ -100,6 +100,7 @@ export {
     type ModelBackend,
     type ModelBackendOptions,
     type ParameterBinding,
+    type SharedModelCompile,
     selectModelBackend,
 } from "./model-runtime.js";
 export {
@@ -107,6 +108,7 @@ export {
     PREVIEW_STROKE,
     triangleEdgesToLineList,
 } from "./preview-style.js";
+export { compileSharedModelCompile } from "./shared-compile.js";
 export {
     BlendMode,
     type DrawableMesh,

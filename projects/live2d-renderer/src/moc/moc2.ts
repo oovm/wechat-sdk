@@ -92,7 +92,8 @@ export class Moc2Backend implements ModelBackend {
         settings: ModelSettings,
         options?: ModelBackendOptions,
     ): Promise<InternalModel> {
-        let bytes = options?.mocBytes;
+        const shared = options?.sharedCompile;
+        let bytes = options?.mocBytes ?? shared?.mocBytes;
         if (!bytes) {
             if (!options?.resolver) {
                 throw new Error(
@@ -102,7 +103,9 @@ export class Moc2Backend implements ModelBackend {
             bytes = await options.resolver.fetchBytes(settings.moc);
         }
 
-        const moc = new Moc2Parser(bytes).parseModel();
+        const moc =
+            (shared?.moc2Model as Moc2ModelImpl | undefined) ??
+            new Moc2Parser(bytes).parseModel();
         const program = moc2ModelToProgram(moc);
         const instance = createModelInstance(program);
         const model: InternalModel = {
