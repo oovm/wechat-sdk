@@ -18,6 +18,7 @@ import {
     createRenderer,
 } from "@doki-land/live2d-renderer";
 import { allocateActorId, Live2dActorImpl } from "./actor.js";
+import { ModelAssetRegistry } from "./model-asset-registry.js";
 import {
     clientToStage,
     compareActorsForDraw,
@@ -36,6 +37,7 @@ type PointerListener = (event: StagePointerEvent) => void;
 export class Live2dStageImpl implements Live2dStage {
     readonly #backends: readonly ModelBackend[];
     readonly #renderer: Renderer;
+    readonly #assets: ModelAssetRegistry;
     readonly #updateMode: "auto" | "manual";
     readonly #actors = new Map<string, Live2dActorImpl>();
     readonly #definedLayers: string[] = [
@@ -76,7 +78,12 @@ export class Live2dStageImpl implements Live2dStage {
         ];
         this.#renderer =
             options.renderer ?? createRenderer({ prefer: options.prefer });
+        this.#assets = new ModelAssetRegistry({ backends: this.#backends });
         this.#updateMode = options.updateMode ?? "auto";
+    }
+
+    get assets(): ModelAssetRegistry {
+        return this.#assets;
     }
 
     get actors(): readonly Live2dActor[] {
@@ -117,7 +124,7 @@ export class Live2dStageImpl implements Live2dStage {
         const actor = new Live2dActorImpl(options, {
             id,
             creationIndex,
-            backends: this.#backends,
+            assets: this.#assets,
             renderer: this.#renderer,
         });
         this.#actors.set(id, actor);
@@ -274,6 +281,7 @@ export class Live2dStageImpl implements Live2dStage {
             actor.destroy();
         }
         this.#actors.clear();
+        this.#assets.destroy();
         this.#renderer.destroy();
         this.#canvas = null;
         this.#initPromise = null;
