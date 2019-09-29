@@ -1,4 +1,4 @@
-import type { InternalModel } from "./model.js";
+import type { InternalModel, MotionDefinition } from "./model.js";
 
 /** Normalized stage placement for one actor (0,0) top-left → (1,1) bottom-right. */
 export interface ActorTransform {
@@ -77,6 +77,15 @@ export interface CreateLive2dStageOptions {
     updateMode?: StageUpdateMode;
 }
 
+export interface PlayMotionActorOptions {
+    priority?: number;
+    slot?: string;
+    queue?: boolean;
+    loop?: boolean;
+    fadeInTime?: number;
+    fadeOutTime?: number;
+}
+
 /** Read-only actor surface exposed by the stage. */
 export interface Live2dActor {
     readonly id: string;
@@ -98,6 +107,32 @@ export interface Live2dActor {
 
     setParameter(id: string, value: number): void;
 
+    listParameters(): ReadonlyArray<{
+        id: string;
+        min: number;
+        max: number;
+        defaultValue: number;
+        value: number;
+    }>;
+
+    listMotionGroups(): Record<string, readonly MotionDefinition[]>;
+
+    playMotion(
+        group: string,
+        index?: number,
+        options?: PlayMotionActorOptions,
+    ): Promise<boolean>;
+
+    stopMotion(opts?: { fade?: boolean; slot?: string }): void;
+
+    listPlayingMotions(): ReadonlyArray<{
+        slot: string;
+        group: string;
+        index: number;
+        time: number;
+        priority: number;
+    }>;
+
     lookAt(stageX: number, stageY: number): void;
 
     destroy(): void;
@@ -111,9 +146,14 @@ export interface Live2dStage {
 
     createActor(options?: CreateActorOptions): Live2dActor;
 
+    getActor(id: string): Live2dActor | null;
+
     removeActor(actor: Live2dActor | string): void;
 
     defineLayers(layers: readonly string[]): void;
+
+    /** Sync canvas backing store and renderer to CSS or explicit pixel size. */
+    resize(width?: number, height?: number): void;
 
     update(deltaTimeSeconds: number): void;
 
