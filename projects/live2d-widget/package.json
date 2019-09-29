@@ -1,10 +1,15 @@
 {
     "name": "@doki-land/live2d-widget",
     "version": "0.0.0",
-    "description": "Browser canvas widget for @doki-land/live2d",
+    "description": "Live2D page widget — canvas shell, autoplay, optional tips chrome; built on @doki-land/live2d.",
     "type": "module",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/live2d-widget"
+    },
     "keywords": [
         "live2d",
         "widget",
@@ -17,7 +22,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public",
