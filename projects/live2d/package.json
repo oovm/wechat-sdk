@@ -1,14 +1,15 @@
 {
     "name": "@doki-land/live2d",
     "version": "0.0.0",
-    "description": "Live2D TypeScript library — public facade for Doki Land",
+    "description": "Live2D in the browser — load moc2/moc3 models, Stage + multi-actor, motion; WebGPU/WebGL2/Canvas2D. Main entry for live2d.ts.",
     "type": "module",
     "license": "MIT",
     "author": "Doki Land",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/doki-land/live2d.ts.git"
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/live2d"
     },
     "keywords": [
         "live2d",
@@ -26,7 +27,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public",

@@ -1,9 +1,14 @@
 {
     "name": "hexo-plugin-live2d",
     "version": "0.0.0",
-    "description": "Hexo plugin for doki-land live2d.ts — inject widget with renderer fallback (webgpu→webgl2→canvas2d)",
+    "description": "Hexo plugin — inject Live2D widget via _config.yml; ESM vendor + import map (default) or legacy bundle.",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/adaptors/hexo-plugin-live2d"
+    },
     "keywords": [
         "hexo",
         "hexo-plugin",
@@ -23,7 +28,8 @@
         "index.cjs",
         "import-map.cjs",
         "browser",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public"

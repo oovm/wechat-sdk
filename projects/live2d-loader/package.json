@@ -1,10 +1,15 @@
 {
     "name": "@doki-land/live2d-loader",
     "version": "0.0.0",
-    "description": "Live2D asset resolve and model load pipeline",
+    "description": "Fetch and normalize Live2D model.json/model3.json, resolve npm: URLs, AssetResolver for moc/textures.",
     "type": "module",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/live2d-loader"
+    },
     "keywords": [
         "live2d",
         "loader",
@@ -17,7 +22,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public",

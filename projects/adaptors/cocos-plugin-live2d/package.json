@@ -1,10 +1,15 @@
 {
     "name": "cocos-plugin-live2d",
     "version": "0.0.0",
-    "description": "Cocos Creator Live2D adaptor for @doki-land/live2d — one package, creator3 / creator2 entries",
+    "description": "Cocos Creator Live2D component — Creator 3.x Web runtime; Creator 2.4 scaffold entry.",
     "type": "module",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/adaptors/cocos-plugin-live2d"
+    },
     "keywords": [
         "live2d",
         "cocos",

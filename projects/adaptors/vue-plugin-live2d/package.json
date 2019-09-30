@@ -1,10 +1,15 @@
 {
     "name": "vue-plugin-live2d",
     "version": "0.0.0",
-    "description": "Vue plugin for @doki-land/live2d — <Live2D> component",
+    "description": "Vue 3 <Live2D> component — mount @doki-land/live2d with props, progress UI, and lifecycle.",
     "type": "module",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/adaptors/vue-plugin-live2d"
+    },
     "keywords": [
         "live2d",
         "vue",
@@ -18,7 +23,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public"

@@ -1,10 +1,15 @@
 {
     "name": "@doki-land/live2d-renderer",
     "version": "0.0.0",
-    "description": "Live2D graphics backends (WebGPU/WebGL2/Canvas2D) plus moc2/moc3 CPU model runtimes",
+    "description": "Live2D rendering — moc2/moc3 decode + WebGPU, WebGL2, Canvas2D backends for live2d.ts.",
     "type": "module",
     "license": "MIT",
-    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/live2d-renderer"
+    },
     "keywords": [
         "live2d",
         "webgpu",
@@ -20,7 +25,8 @@
     },
     "files": [
         "dist",
-        "src"
+        "src",
+        "README.md"
     ],
     "publishConfig": {
         "access": "public",
