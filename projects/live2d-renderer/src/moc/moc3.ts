@@ -94,7 +94,8 @@ export class Moc3Backend implements ModelBackend {
         settings: ModelSettings,
         options?: ModelBackendOptions,
     ): Promise<InternalModel> {
-        let bytes = options?.mocBytes;
+        const shared = options?.sharedCompile;
+        let bytes = options?.mocBytes ?? shared?.mocBytes;
         if (!bytes) {
             if (!options?.resolver) {
                 throw new Error(
@@ -111,9 +112,11 @@ export class Moc3Backend implements ModelBackend {
         let doc: Moc3Document | null = null;
         let program: ModelProgram;
         if (isCpu) {
-            program = parseCpuProgram(bytes);
+            program = shared?.cpuProgram ?? parseCpuProgram(bytes);
         } else {
-            doc = parseMoc3Document(bytes);
+            doc =
+                (shared?.moc3Doc as Moc3Document | undefined) ??
+                parseMoc3Document(bytes);
             program = moc3DocumentToProgram(doc);
         }
 

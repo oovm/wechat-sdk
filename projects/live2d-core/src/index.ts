@@ -34,6 +34,11 @@ export type {
     MotionDefinition,
 } from "./model.js";
 export type {
+    ActorInstance,
+    Live2dStageAssets,
+    ModelAsset,
+} from "./model-asset.js";
+export type {
     DrawableProgram,
     ModelInstance,
     ModelProgram,
