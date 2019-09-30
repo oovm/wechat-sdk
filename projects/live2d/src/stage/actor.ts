@@ -4,16 +4,14 @@ import type {
     CreateActorOptions,
     InternalModel,
     Live2dActor,
+    ModelAsset,
     PlayMotionActorOptions,
 } from "@doki-land/live2d-core";
-import type {
-    DrawableMesh,
-    ModelBackend,
-    Renderer,
-} from "@doki-land/live2d-renderer";
+import type { DrawableMesh, Renderer } from "@doki-land/live2d-renderer";
 import { focusParameterUpdates } from "../focus.js";
 import type { PlayMotionOptions } from "../motion/index.js";
 import { ActorModelSlot } from "./actor-model-slot.js";
+import type { ModelAssetRegistry } from "./model-asset-registry.js";
 import {
     resolveActorTransform,
     stageFocusDrag,
@@ -25,7 +23,7 @@ let nextActorId = 0;
 export interface Live2dActorImplOptions {
     id: string;
     creationIndex: number;
-    backends: readonly ModelBackend[];
+    assets: ModelAssetRegistry;
     renderer: Renderer;
 }
 
@@ -53,7 +51,7 @@ export class Live2dActorImpl implements Live2dActor {
         this.#layer = options?.layer ?? "characters";
         this.#order = options?.order ?? 0;
         this.#slot = new ActorModelSlot({
-            backends: shared.backends,
+            assets: shared.assets,
             renderer: shared.renderer,
         });
     }
@@ -113,6 +111,13 @@ export class Live2dActorImpl implements Live2dActor {
             throw new Error("@doki-land/live2d: actor destroyed");
         }
         return await this.#slot.load(source, resolver);
+    }
+
+    async loadAsset(asset: ModelAsset): Promise<InternalModel> {
+        if (this.#destroyed) {
+            throw new Error("@doki-land/live2d: actor destroyed");
+        }
+        return await this.#slot.loadAsset(asset);
     }
 
     setParameter(id: string, value: number): void {

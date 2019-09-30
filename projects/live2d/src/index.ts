@@ -8,6 +8,7 @@
 
 export type {
     ActorHit,
+    ActorInstance,
     ActorTransform,
     AssetResolver,
     CreateActorOptions,
@@ -18,8 +19,10 @@ export type {
     Live2DSession,
     Live2dActor,
     Live2dStage,
+    Live2dStageAssets,
     LoadProgress,
     LoadProgressStage,
+    ModelAsset,
     ModelFormat,
     ModelInstance,
     ModelProgram,

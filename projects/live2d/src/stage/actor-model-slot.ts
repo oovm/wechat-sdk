@@ -2,38 +2,30 @@ import type {
     AssetResolver,
     InternalModel,
     LoadProgress,
+    ModelAsset,
     ModelSource,
 } from "@doki-land/live2d-core";
-import { modelSourceUrl } from "@doki-land/live2d-core";
-import {
-    createUrlAssetResolver,
-    fetchModelJson,
-    normalizeModelSettings,
-    resolveModelSourceUrl,
-} from "@doki-land/live2d-loader";
 import type {
     DrawableMesh,
     ModelBackend,
     ParameterBinding,
     Renderer,
-    TextureData,
 } from "@doki-land/live2d-renderer";
-import { selectModelBackend } from "@doki-land/live2d-renderer";
-import { loadTextureData, releaseTextureData } from "../load-textures.js";
 import {
-    type Motion3Clip,
     MotionPlayer,
     MotionPriority,
     type PlayMotionOptions,
     parseMotion3,
 } from "../motion/index.js";
+import type {
+    ModelAssetLease,
+    ModelAssetRegistry,
+} from "./model-asset-registry.js";
 
-function lerp(a: number, b: number, t: number): number {
-    return a + (b - a) * Math.min(1, Math.max(0, t));
-}
+type ModelDrawPass = ReturnType<Renderer["createModelDrawPass"]>;
 
 export interface ActorModelSlotOptions {
-    backends: readonly ModelBackend[];
+    assets: ModelAssetRegistry;
     renderer: Renderer;
     onProgress?: (payload: LoadProgress) => void;
     onMotionStart?: (payload: {
@@ -50,21 +42,19 @@ export interface ActorModelSlotOptions {
 
 /** One loaded model + draw pass owned by an actor (not a renderer). */
 export class ActorModelSlot {
-    readonly #backends: readonly ModelBackend[];
+    readonly #assets: ModelAssetRegistry;
     readonly #renderer: Renderer;
     readonly #onProgress?: (payload: LoadProgress) => void;
     readonly #motionPlayer: MotionPlayer;
-    readonly #motionCache = new Map<string, Motion3Clip>();
 
-    #drawPass: ReturnType<Renderer["createModelDrawPass"]> | null = null;
+    #drawPass: ModelDrawPass | null = null;
     #model: InternalModel | null = null;
     #backend: ModelBackend | null = null;
-    #textures: TextureData[] = [];
-    #resolver: AssetResolver | null = null;
+    #lease: ModelAssetLease | null = null;
     #loadGeneration = 0;
 
     constructor(options: ActorModelSlotOptions) {
-        this.#backends = options.backends;
+        this.#assets = options.assets;
         this.#renderer = options.renderer;
         this.#onProgress = options.onProgress;
         this.#motionPlayer = new MotionPlayer({
@@ -77,11 +67,11 @@ export class ActorModelSlot {
         return this.#model;
     }
 
-    get drawPass(): ReturnType<Renderer["createModelDrawPass"]> | null {
+    get drawPass(): ModelDrawPass | null {
         return this.#drawPass;
     }
 
-    ensureDrawPass(): ReturnType<Renderer["createModelDrawPass"]> {
+    ensureDrawPass(): ModelDrawPass {
         if (!this.#drawPass) {
             this.#drawPass = this.#renderer.createModelDrawPass();
         }
@@ -92,12 +82,9 @@ export class ActorModelSlot {
         this.#onProgress?.(payload);
     }
 
-    #clearTextures(): void {
-        if (this.#textures.length > 0) {
-            releaseTextureData(this.#textures);
-            this.#textures = [];
-        }
-        this.#drawPass?.setTextures([]);
+    #releaseLease(): void {
+        this.#lease?.release();
+        this.#lease = null;
     }
 
     #applyMotionSamples(samples: ReturnType<MotionPlayer["update"]>): void {
@@ -148,161 +135,70 @@ export class ActorModelSlot {
         });
         const drawPass = this.ensureDrawPass();
 
-        this.#report({
-            stage: "resolve",
-            progress: 0.02,
-            detail: "resolve source",
-        });
-
-        let json: unknown;
-        let baseUrl: string;
-        let settingsUrl: string;
-
-        if (typeof source === "object" && source.kind === "json") {
-            json = source.json;
-            baseUrl = source.baseUrl;
-            settingsUrl = source.baseUrl;
-            this.#report({
-                stage: "settings",
-                progress: 0.2,
-                detail: "inline settings",
-            });
-        } else {
-            const raw =
-                typeof source === "string"
-                    ? source
-                    : source.kind === "npm"
-                      ? modelSourceUrl(source)
-                      : source.url;
-            const cdnBase =
-                typeof source === "object" && source.kind === "npm"
-                    ? source.cdnBase
-                    : undefined;
-            const fetchUrl = resolveModelSourceUrl(raw, {
-                npmCdnBase: cdnBase,
-            });
-            this.#report({
-                stage: "settings",
-                progress: 0.05,
-                detail: fetchUrl,
-            });
-            json = await fetchModelJson(fetchUrl, (u) => {
-                const ratio =
-                    u.bytesTotal && u.bytesTotal > 0
-                        ? u.bytesLoaded / u.bytesTotal
-                        : 0;
-                this.#report({
-                    stage: "settings",
-                    progress: lerp(0.05, 0.22, ratio),
-                    detail: fetchUrl,
-                    bytesLoaded: u.bytesLoaded,
-                    bytesTotal: u.bytesTotal,
-                });
-            });
-            baseUrl = fetchUrl;
-            settingsUrl = fetchUrl;
-        }
+        const lease = await this.#assets.acquire(source, resolver, (p) =>
+            this.#report(p),
+        );
         if (gen !== this.#loadGeneration) {
+            lease.release();
             throw new Error("@doki-land/live2d: load cancelled");
         }
 
-        const settings = normalizeModelSettings(json, settingsUrl);
+        return await this.#attachLease(lease, drawPass, gen);
+    }
+
+    async loadAsset(asset: ModelAsset): Promise<InternalModel> {
+        const gen = ++this.#loadGeneration;
         this.#report({
-            stage: "moc",
-            progress: 0.25,
-            detail: settings.moc,
+            stage: "mounting",
+            progress: 0.01,
+            detail: "prepare draw pass",
         });
+        const drawPass = this.ensureDrawPass();
 
-        const assetResolver =
-            resolver ??
-            createUrlAssetResolver(baseUrl, {
-                onBytesProgress: (key, u) => {
-                    const isMoc = key === settings.moc;
-                    const ratio =
-                        u.bytesTotal && u.bytesTotal > 0
-                            ? u.bytesLoaded / u.bytesTotal
-                            : 0;
-                    if (isMoc) {
-                        this.#report({
-                            stage: "moc",
-                            progress: lerp(0.25, 0.8, ratio),
-                            detail: key,
-                            bytesLoaded: u.bytesLoaded,
-                            bytesTotal: u.bytesTotal,
-                        });
-                    } else {
-                        this.#report({
-                            stage: "textures",
-                            progress: lerp(0.8, 0.9, ratio),
-                            detail: key,
-                            bytesLoaded: u.bytesLoaded,
-                            bytesTotal: u.bytesTotal,
-                        });
-                    }
-                },
-            });
-        this.#resolver = assetResolver;
-        this.#motionPlayer.clear();
-        this.#motionCache.clear();
+        const lease = this.#assets.acquireExisting(asset);
+        if (gen !== this.#loadGeneration) {
+            lease.release();
+            throw new Error("@doki-land/live2d: load cancelled");
+        }
 
-        const backend = selectModelBackend([...this.#backends], json);
         this.#report({
             stage: "decode",
             progress: 0.85,
-            detail: `decode ${settings.format}`,
+            detail: `reuse ${asset.key}`,
         });
-        const next = await backend.createModel(settings, {
-            renderer: this.#renderer,
-            resolver: assetResolver,
-        });
-        if (gen !== this.#loadGeneration) {
-            backend.destroyModel(next);
-            throw new Error("@doki-land/live2d: load cancelled");
-        }
 
-        this.#clearTextures();
-        if (settings.textures.length > 0) {
-            this.#report({
-                stage: "textures",
-                progress: 0.88,
-                detail: `${settings.textures.length} textures`,
-            });
-            const textures = await loadTextureData(
-                assetResolver,
-                settings.textures,
-                {
-                    onProgress: (u) => {
-                        const ratio = u.total > 0 ? (u.index + 1) / u.total : 1;
-                        this.#report({
-                            stage: "textures",
-                            progress: lerp(0.88, 0.96, ratio),
-                            detail: u.key,
-                            bytesLoaded: u.bytesLoaded,
-                            bytesTotal: u.bytesTotal,
-                        });
-                    },
-                },
-            );
-            if (gen !== this.#loadGeneration) {
-                releaseTextureData(textures);
-                backend.destroyModel(next);
-                throw new Error("@doki-land/live2d: load cancelled");
-            }
-            this.#textures = textures;
-            drawPass.setTextures(textures);
+        return await this.#attachLease(lease, drawPass, gen);
+    }
+
+    async #attachLease(
+        lease: ModelAssetLease,
+        drawPass: ModelDrawPass,
+        gen: number,
+    ): Promise<InternalModel> {
+        this.#motionPlayer.clear();
+        this.#releaseLease();
+
+        const { model, backend } = await lease.createInstance(this.#renderer);
+        if (gen !== this.#loadGeneration) {
+            backend.destroyModel(model);
+            lease.release();
+            throw new Error("@doki-land/live2d: load cancelled");
         }
 
         if (this.#model && this.#backend) {
             this.#backend.destroyModel(this.#model);
         }
-        this.#model = next;
+
+        drawPass.setTextures([...lease.textures]);
+        this.#lease = lease;
+        this.#model = model;
         this.#backend = backend;
         this.#report({
             stage: "ready",
             progress: 1,
-            detail: next.id,
+            detail: model.id,
         });
-        return next;
+        return model;
     }
 
     setParameter(id: string, value: number): void {
@@ -327,16 +223,17 @@ export class ActorModelSlot {
         index = 0,
         options: PlayMotionOptions = {},
     ): Promise<boolean> {
-        if (!this.#model || !this.#resolver) return false;
+        if (!this.#model || !this.#lease) return false;
         const list = this.#model.settings.motionGroups[group];
         const def = list?.[index];
         if (!def) return false;
 
-        let clip = this.#motionCache.get(def.file);
+        const cache = this.#lease.motionCache;
+        let clip = cache.get(def.file);
         if (!clip) {
-            const json = await this.#resolver.fetchJson(def.file);
+            const json = await this.#lease.resolver.fetchJson(def.file);
             clip = parseMotion3(json);
-            this.#motionCache.set(def.file, clip);
+            cache.set(def.file, clip);
         }
 
         const fadeInTime =
@@ -415,14 +312,13 @@ export class ActorModelSlot {
     destroy(): void {
         this.#loadGeneration += 1;
         this.#motionPlayer.clear();
-        this.#motionCache.clear();
-        this.#resolver = null;
         if (this.#model && this.#backend) {
             this.#backend.destroyModel(this.#model);
         }
         this.#model = null;
         this.#backend = null;
-        this.#clearTextures();
+        this.#releaseLease();
+        this.#drawPass?.setTextures([]);
         this.#drawPass?.destroy();
         this.#drawPass = null;
     }
