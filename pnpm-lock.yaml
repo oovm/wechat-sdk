@@ -163,6 +163,9 @@ importers:
         specifier: workspace:*
         version: link:../live2d-renderer
     devDependencies:
+      happy-dom:
+        specifier: '15'
+        version: 15.11.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.26)(typescript@5.9.3)

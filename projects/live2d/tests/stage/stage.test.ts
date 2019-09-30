@@ -76,14 +76,3 @@ describe("Live2dActor motion API", () => {
         stage.destroy();
     });
 });
-
-describe("createLive2D facade", () => {
-    it("exposes stage and default actor", async () => {
-        const { createLive2D } = await import("../../src/create-live2d.js");
-        const live2d = createLive2D();
-        expect(live2d.stage).toBeDefined();
-        expect(live2d.actor).toBeDefined();
-        expect(live2d.stage.actors).toHaveLength(1);
-        live2d.destroy();
-    });
-});
