@@ -2,7 +2,8 @@
 
 The public runtime facade for browser-native Live2D rendering.
 
-Use this package in browser games, game-engine integrations, interactive content, model tools, and custom webpage experiences. It composes the default loader, MOC runtimes, and rendering backends behind one small API.
+Use this package in browser games, game-engine integrations, interactive content, model tools, and custom webpage
+experiences. It composes the default loader, MOC runtimes, and rendering backends behind one small API.
 
 ## ✨ Features
 
@@ -63,7 +64,8 @@ engine.onUpdate((deltaTime) => {
 });
 ```
 
-The delta is expressed in seconds. Keep the value bounded after tab suspension or long pauses to avoid unstable animation and physics once those systems are enabled.
+The delta is expressed in seconds. Keep the value bounded after tab suspension or long pauses to avoid unstable
+animation and physics once those systems are enabled.
 
 ## 📥 Loading Models
 
@@ -82,8 +84,8 @@ await runtime.loadModel(
 Listen for progress when presenting a loading interface:
 
 ```ts
-runtime.events.on("progress", ({ stage, progress, detail }) => {
-  console.log(stage, Math.round(progress * 100), detail);
+runtime.events.on("progress", ({stage, progress, detail}) => {
+    console.log(stage, Math.round(progress * 100), detail);
 });
 ```
 
@@ -115,23 +117,25 @@ if (area) {
 }
 ```
 
-Current fallback hit testing can identify visible drawables. Semantic names such as `Head` or `Body` require corresponding model metadata and runtime support.
+Current fallback hit testing can identify visible drawables. Semantic names such as `Head` or `Body` require
+corresponding model metadata and runtime support.
 
 ## 📊 Frame Profiling
 
 ```ts
 runtime.events.on("profile", (profile) => {
-  console.log({
-    fps: profile.fpsSmooth,
-    frameMs: profile.frameMs,
-    evaluateMs: profile.evaluateMs,
-    drawMs: profile.drawMs,
-    drawables: profile.drawableCount,
-  });
+    console.log({
+        fps: profile.fpsSmooth,
+        frameMs: profile.frameMs,
+        evaluateMs: profile.evaluateMs,
+        drawMs: profile.drawMs,
+        drawables: profile.drawableCount,
+    });
 });
 ```
 
-These timings are runtime-side measurements. Use browser GPU profiling when diagnosing shader, mask, upload, or device scheduling costs.
+These timings are runtime-side measurements. Use browser GPU profiling when diagnosing shader, mask, upload, or device
+scheduling costs.
 
 ## 🧩 Custom Pipeline
 
@@ -144,7 +148,8 @@ const runtime = createLive2D({
 });
 ```
 
-Custom implementations must preserve the contracts exported by the renderer package. Avoid moving format or renderer logic into application adapters.
+Custom implementations must preserve the contracts exported by the renderer package. Avoid moving format or renderer
+logic into application adapters.
 
 ## 🧹 Lifecycle
 
@@ -152,7 +157,8 @@ Custom implementations must preserve the contracts exported by the renderer pack
 runtime.destroy();
 ```
 
-Destroy the runtime when its canvas or host scene is permanently removed. This releases model state, textures, draw passes, event listeners owned by the runtime, and graphics resources owned by the selected renderer.
+Destroy the runtime when its canvas or host scene is permanently removed. This releases model state, textures, draw
+passes, event listeners owned by the runtime, and graphics resources owned by the selected renderer.
 
 ## ⚡ Performance Notes
 
@@ -160,7 +166,8 @@ Destroy the runtime when its canvas or host scene is permanently removed. This r
 - Keep canvas backing dimensions intentional; CSS size alone does not limit GPU pixel work.
 - Prefer an engine-owned loop when integrating with a game.
 - Avoid repeatedly enumerating parameters in a hot loop.
-- Measure the complete frame path before attributing a bottleneck to TypeScript, WebAssembly, or a specific graphics API.
+- Measure the complete frame path before attributing a bottleneck to TypeScript, WebAssembly, or a specific graphics
+  API.
 
 ## 🧪 Development
 
@@ -171,11 +178,13 @@ pnpm typecheck
 pnpm --filter @doki-land/live2d build
 ```
 
-Changes to the facade should include tests for state transitions, cancellation, events, and resource cleanup where applicable.
+Changes to the facade should include tests for state transitions, cancellation, events, and resource cleanup where
+applicable.
 
 ## 🤝 Contributing
 
-Keep the facade small. Model-format behavior belongs in `@doki-land/live2d-renderer`, source resolution belongs in `@doki-land/live2d-loader`, and webpage chrome belongs in `@doki-land/live2d-widget`.
+Keep the facade small. Model-format behavior belongs in `@doki-land/live2d-renderer`, source resolution belongs in
+`@doki-land/live2d-loader`, and webpage chrome belongs in `@doki-land/live2d-widget`.
 
 ## 📄 License
 

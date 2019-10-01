@@ -1,30 +1,28 @@
 # vue-plugin-live2d
 
-**Vue 3 组件适配层** — 把 [`@doki-land/live2d`](https://www.npmjs.com/package/@doki-land/live2d) 包成 `<Live2D>`
-，处理挂载、模型切换、加载进度条与销毁。
+A Vue 3 compatibility component for `@doki-land/live2d`.
 
-Live2D 的解码、渲染、动作逻辑仍在 `@doki-land/live2d`；本包只做 Vue 生命周期与 props/events 绑定。
+This adapter helps existing Vue applications mount the browser-native runtime. It is not the architectural center of the
+project and does not replace the framework-independent facade used by game engines and other hosts.
 
-## 安装
+## ✨ Features
+
+- Declarative model source.
+- Configurable canvas dimensions.
+- Renderer preference passthrough.
+- Loading progress overlay.
+- Ready, error, progress, profile, and hit events.
+- Optional browser animation loop.
+- Pointer tracking.
+- Parameter inspection and mutation through the exposed component API.
+
+## 📦 Installation
 
 ```bash
-npm i vue-plugin-live2d @doki-land/live2d vue
+pnpm add vue-plugin-live2d @doki-land/live2d vue
 ```
 
-Peer：`vue ^3.4`。
-
-## 注册组件
-
-```ts
-// main.ts
-import { createApp } from "vue";
-import { Live2D } from "vue-plugin-live2d";
-import App from "./App.vue";
-
-createApp(App).component("Live2D", Live2D).mount("#app");
-```
-
-或在 SFC 里按需导入（无需全局注册）：
+## 🚀 Quick Start
 
 ```vue
 <script setup lang="ts">
@@ -33,50 +31,73 @@ import { Live2D } from "vue-plugin-live2d";
 
 <template>
   <Live2D
-    model="/models/wanko/Wanko.model3.json"
-    :width="320"
-    :height="320"
+    model="/models/character.model3.json"
+    :width="480"
+    :height="640"
+    :prefer="['webgpu', 'webgl2', 'canvas2d']"
     :autoplay="true"
-    :show-progress="true"
+    :auto-sway="true"
+    @ready="(modelId) => console.log('ready', modelId)"
+    @hit="(payload) => console.log('hit', payload.area)"
+    @error="(error) => console.error(error)"
   />
 </template>
 ```
 
-## `<Live2D>` Props
+## 🎛️ Component API
 
-| Prop               | 类型                  | 默认          | 说明                                         |
-|--------------------|-----------------------|---------------|----------------------------------------------|
-| `model`            | `ModelSource \| null` | `null`        | model3.json URL、`npm:…` 或 core 内联 source |
-| `width` / `height` | `number`              | 320           | 容器与 Canvas 尺寸（px）                     |
-| `prefer`           | `RendererKind[]`      | Canvas2D 优先 | 渲染后端探测顺序                             |
-| `autoplay`         | `boolean`             | `true`        | 挂载后自动 RAF                               |
-| `autoSway`         | `boolean`             | `true`        | 自动轻微摇头                                 |
-| `showProgress`     | `boolean`             | `true`        | 内置加载进度 overlay                         |
-
-## 事件（emit）
-
-组件在加载与运行时会抛出进度、帧剖析等事件（详见组件 `defineEmits`）。典型用法：
+Use a template ref for runtime-level controls:
 
 ```vue
-<Live2D
-  model="npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json"
-  @loadprogress="(p) => console.log(p.stage, p.progress)"
-/>
+<script setup lang="ts">
+import { ref } from "vue";
+import { Live2D } from "vue-plugin-live2d";
+
+const actor = ref<InstanceType<typeof Live2D> | null>(null);
+
+function lookLeft() {
+  actor.value?.setParameter("PARAM_ANGLE_X", -15);
+}
+</script>
+
+<template>
+  <Live2D ref="actor" model="/models/character.model3.json" />
+  <button type="button" @click="lookLeft">Look left</button>
+</template>
 ```
 
-## 暴露的运行时（ref）
+The component exposes runtime access, parameter operations, parameter listing, manual-angle reset, and reload behavior
+supported by the current implementation.
 
-通过 `ref` 可访问底层 `Live2DRuntime`（`createLive2D` 返回值），用于 `playMotion`、`setParameter` 等 imperative 调用。详见组件
-`defineExpose`。
+## 🔄 Lifecycle
 
-## 与 widget / Hexo 的区别
+The component creates and destroys its runtime with the Vue component lifecycle. Model, size, renderer preference, and
+autoplay changes can remount the canvas or reload the model depending on the affected state.
 
-| 包                           | 用途                           |
-|------------------------------|--------------------------------|
-| **vue-plugin-live2d**        | Vue 单页应用内嵌组件           |
-| **@doki-land/live2d-widget** | 框架无关看板娘壳（气泡工具栏） |
-| **hexo-plugin-live2d**       | Hexo 静态站注入，零 Vue 依赖   |
+Avoid rapidly changing the model prop without handling loading and error states. Remote model requests may complete out
+of order unless the runtime cancels stale generations.
 
-## 仓库
+## 🎮 Game Engine Guidance
 
-[github.com/doki-land/live2d.ts](https://github.com/doki-land/live2d.ts) · `projects/adaptors/vue-plugin-live2d`
+Do not use this adapter merely because a game editor or shell contains Vue. If the game engine already owns the canvas
+and frame loop, integrate `@doki-land/live2d` directly so the engine controls scheduling, input, resize, and resource
+lifetime.
+
+## 🧪 Development
+
+```bash
+pnpm --filter vue-plugin-live2d typecheck
+pnpm --filter vue-plugin-live2d test
+```
+
+Tests should cover repeated mount/unmount, prop-driven reloads, stale loads, pointer coordinates, event forwarding, and
+resource cleanup.
+
+## 🤝 Contributing
+
+Keep the adapter thin. Shared pointer, stage, actor, animation, and rendering semantics belong in the runtime rather
+than being reimplemented for Vue.
+
+## 📄 License
+
+See the repository license.
