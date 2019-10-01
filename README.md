@@ -288,5 +288,11 @@ Report security-sensitive issues privately to the maintainers rather than publis
 
 ## 📄 License
 
+All shaders, graphics pipelines, model-execution code, mask and blend paths, and renderer optimizations in this repository are independently designed and handwritten as a clean-room implementation. They are not copied, translated, ported, derived from, or linked against an official Cubism SDK implementation. The project does not load or bundle an official Cubism Core binary and does not call an official Cubism SDK at build time or runtime.
+
+Format compatibility and descriptive references to external model formats do not imply a shared codebase, implementation lineage, partnership, endorsement, affiliation, sponsorship, or employment relationship. This project and its contributors are independent and are not employed by or acting on behalf of the official Cubism SDK vendor.
+
+Contributions must preserve this clean-room boundary. Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime. Compatibility-sensitive work must be supported by public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+
 See the repository license for source-code terms. Model files, textures, motions, expressions, audio, and character
 artwork may have separate licenses and are not automatically covered by the runtime license.

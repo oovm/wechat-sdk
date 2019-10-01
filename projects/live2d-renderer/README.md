@@ -157,4 +157,12 @@ changes. Generated bundles must be rebuilt from source.
 
 ## 📄 License
 
+Every shader, graphics pipeline, mask path, blend path, model-execution routine, and renderer optimization in this package is independently designed and handwritten as a clean-room implementation. This includes WGSL and GLSL shaders, WebGPU pipelines, WebGL2 programs and framebuffer paths, Canvas2D mesh rendering, clipping and mask-atlas logic, resource lifecycle, and GPU submission optimizations.
+
+No part of this package is copied, translated, ported, derived from, or linked against an official Cubism renderer, Core binary, SDK wrapper, shader source, pipeline implementation, or internal API. External format names describe interoperability targets only.
+
+The maintainers and contributors are independent and are not employed by, affiliated with, sponsored by, endorsed by, or acting on behalf of the official Cubism SDK vendor.
+
+Contributions must preserve this clean-room boundary. Official SDK source, official shader source, disassembly-derived implementations, mechanically translated code, and dependencies on an official runtime are not accepted. Compatibility patches should cite a public format fact, neutral fixture, reproducible independent observation, or independently authored technical rationale.
+
 See the repository license. Model assets used for local testing may have separate terms.

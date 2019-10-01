@@ -188,4 +188,10 @@ Keep the facade small. Model-format behavior belongs in `@doki-land/live2d-rende
 
 ## 📄 License
 
+This package composes an independently developed clean-room runtime. It does not load, link against, wrap, translate, port, or derive its implementation from an official Cubism SDK or Core binary. Supporting compatible model assets is an interoperability goal and does not imply a shared implementation, official endorsement, affiliation, sponsorship, or employment relationship.
+
+The project and its contributors are independent and are not employed by or acting on behalf of the official Cubism SDK vendor.
+
+Contributions must preserve this clean-room boundary. Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime. Compatibility-sensitive work must be supported by public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+
 See the repository license. Model and artwork licenses are separate from the runtime license.
