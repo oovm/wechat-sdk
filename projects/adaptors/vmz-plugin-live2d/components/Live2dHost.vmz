@@ -1,0 +1,159 @@
+<template>
+  <div class="live2d-host" style={hostStyle}>
+    <div class="live2d-host__mount" id={hostId}></div>
+    <div if={showProgress && loading} class="live2d-host__progress" role="progressbar" aria-valuenow={progressPercent} aria-valuemin="0" aria-valuemax="100">
+      <span>{progressLabel} · {progressPercent}%</span>
+    </div>
+  </div>
+</template>
+
+<style>
+.live2d-host { position: relative; display: inline-block; }
+.live2d-host__mount { width: 100%; height: 100%; }
+.live2d-host__mount canvas { display: block; width: 100%; height: 100%; }
+.live2d-host__progress {
+  position: absolute; inset: auto 0 0; padding: 0.35rem 0.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  font: 600 0.75rem/1.2 ui-monospace, monospace; color: #377ba8;
+}
+</style>
+
+<script client>
+import { createLive2D } from '@doki-land/live2d';
+
+let hostSeq = 0;
+
+export default class Live2dHost {
+  public model = null;
+  public width = 320;
+  public height = 320;
+  public prefer = ['canvas2d', 'webgl2', 'webgpu'];
+  public autoplay = true;
+  public autoSway = false;
+  public showProgress = true;
+  public exposeCaptureApi = false;
+  public capturePresetId = '';
+
+  hostId = `live2d-host-${++hostSeq}`;
+  hostStyle = '';
+  loading = false;
+  progressPercent = 0;
+  progressLabel = 'Loading…';
+  runtime = null;
+  _raf = 0;
+  _lastTs = 0;
+
+  onMount() {
+    this.hostStyle = `width:${this.width}px;height:${this.height}px`;
+    if (this.exposeCaptureApi && typeof window !== 'undefined') {
+      window.__LIVE2D_CAPTURE__ = {
+        ready: false,
+        error: null,
+        presetId: this.capturePresetId || '',
+        pngBase64: null,
+      };
+    }
+    void this.boot();
+  }
+
+  onDestroy() {
+    this.stopLoop();
+    void this.runtime?.destroy?.();
+    this.runtime = null;
+  }
+
+  stopLoop() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    this._raf = 0;
+    this._lastTs = 0;
+  }
+
+  tick(ts) {
+    if (!this.runtime) return;
+    const dt = this._lastTs ? (ts - this._lastTs) / 1000 : 0;
+    this._lastTs = ts;
+    this.runtime.update(dt);
+    this._raf = requestAnimationFrame((t) => this.tick(t));
+  }
+
+  ensureCanvas() {
+    const host = document.getElementById(this.hostId);
+    if (!host) return null;
+    host.replaceChildren();
+    const canvas = document.createElement('canvas');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(this.width * dpr));
+    canvas.height = Math.max(1, Math.round(this.height * dpr));
+    canvas.style.width = `${this.width}px`;
+    canvas.style.height = `${this.height}px`;
+    host.appendChild(canvas);
+    return canvas;
+  }
+
+  async capturePng(opts = {}) {
+    if (!this.runtime) throw new Error('Live2dHost: runtime not ready');
+    return this.runtime.capturePng(opts);
+  }
+
+  async boot() {
+    if (!this.model) return;
+    this.loading = true;
+    try {
+      this.stopLoop();
+      void this.runtime?.destroy?.();
+      const canvas = this.ensureCanvas();
+      if (!canvas) return;
+      const runtime = createLive2D({ prefer: this.prefer, updateMode: 'manual' });
+      runtime.events.on('progress', (p) => this.onProgress(p));
+      runtime.events.on('ready', () => {
+        this.loading = false;
+        if (this.autoplay) {
+          this._lastTs = 0;
+          this._raf = requestAnimationFrame((t) => this.tick(t));
+        }
+        if (this.exposeCaptureApi) void this.publishCapture();
+      });
+      runtime.events.on('error', (p) => {
+        this.loading = false;
+        if (this.exposeCaptureApi && typeof window !== 'undefined') {
+          const api = window.__LIVE2D_CAPTURE__;
+          if (api) api.error = String(p?.error || 'load error');
+        }
+      });
+      await runtime.mount(canvas);
+      await runtime.load(this.model);
+      this.runtime = runtime;
+    } catch {
+      this.loading = false;
+    }
+  }
+
+  onProgress(p) {
+    const progress = p?.progress ?? 0;
+    this.progressLabel = p?.stage || 'loading';
+    this.progressPercent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
+  }
+
+  async publishCapture() {
+    const api = typeof window !== 'undefined' ? window.__LIVE2D_CAPTURE__ : null;
+    if (!api) return;
+    try {
+      await new Promise((r) => setTimeout(r, 400));
+      const blob = await this.capturePng();
+      const buf = await blob.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      api.pngBase64 = btoa(binary);
+      api.ready = true;
+      api.error = null;
+    } catch (err) {
+      api.error = String(err);
+      api.ready = false;
+    }
+  }
+}
+</script>
