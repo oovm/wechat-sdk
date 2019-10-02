@@ -86,4 +86,28 @@ describe("hexo-plugin-live2d", () => {
             }),
         ).toContain("doki-live2d-hexo.js");
     });
+
+    it("collectAssetRoutes reports missing vendor for esm when not built", () => {
+        const result = cjs.collectAssetRoutes({
+            loader: "esm",
+            pluginRootPath: "live2dw/",
+        });
+        expect(["vendor", "bootstrap"]).toContain(result.missing);
+    });
+
+    it("collectAssetRoutes lists legacy bundle when loader is bundle", () => {
+        const result = cjs.collectAssetRoutes({
+            loader: "bundle",
+            pluginRootPath: "live2dw/",
+        });
+        if (result.missing === null) {
+            expect(
+                result.routes.some((r) =>
+                    r.path.includes("doki-live2d-hexo.js"),
+                ),
+            ).toBe(true);
+        } else {
+            expect(result.missing).toBe("legacy");
+        }
+    });
 });
