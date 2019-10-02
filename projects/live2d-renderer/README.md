@@ -152,17 +152,29 @@ contract justifies it.
 
 ## 🤝 Contributing
 
-Keep hot paths allocation-aware, preserve deterministic CPU behavior, and document the visual invariant behind renderer
-changes. Generated bundles must be rebuilt from source.
+### Renderer expectations
+
+- Keep hot paths allocation-aware.
+- Preserve deterministic CPU behavior.
+- Document the visual invariant behind renderer changes.
+- Add structural, pixel, or browser evidence appropriate to the change.
+- Rebuild generated bundles from source instead of editing them manually.
 
 ## 📄 License
 
-Every shader, graphics pipeline, mask path, blend path, model-execution routine, and renderer optimization in this package is independently designed and handwritten as a clean-room implementation. This includes WGSL and GLSL shaders, WebGPU pipelines, WebGL2 programs and framebuffer paths, Canvas2D mesh rendering, clipping and mask-atlas logic, resource lifecycle, and GPU submission optimizations.
+### Clean-room rendering
 
-No part of this package is copied, translated, ported, derived from, or linked against an official Cubism renderer, Core binary, SDK wrapper, shader source, pipeline implementation, or internal API. External format names describe interoperability targets only.
+- WGSL and GLSL shaders, graphics pipelines, mask and blend paths, model execution, Canvas2D mesh rendering, resource lifecycle, and GPU submission optimizations are independently designed and handwritten.
+- No implementation is copied, translated, ported, derived from, or linked against an official renderer, Core binary, SDK wrapper, shader source, pipeline implementation, or internal API.
+- External format names identify interoperability targets only.
+- The maintainers and contributors are independent and are not employed by, affiliated with, sponsored by, endorsed by, or acting on behalf of the official Cubism SDK vendor.
 
-The maintainers and contributors are independent and are not employed by, affiliated with, sponsored by, endorsed by, or acting on behalf of the official Cubism SDK vendor.
+### Contribution boundary
 
-Contributions must preserve this clean-room boundary. Official SDK source, official shader source, disassembly-derived implementations, mechanically translated code, and dependencies on an official runtime are not accepted. Compatibility patches should cite a public format fact, neutral fixture, reproducible independent observation, or independently authored technical rationale.
+- Do not submit official SDK or shader source, disassembly-derived implementations, mechanically translated code, or dependencies on an official runtime.
+- Support compatibility patches with a public format fact, neutral fixture, reproducible independent observation, or independently authored technical rationale.
 
-See the repository license. Model assets used for local testing may have separate terms.
+### Terms
+
+- See the repository license for source-code terms.
+- Model assets used for local testing may have separate terms.

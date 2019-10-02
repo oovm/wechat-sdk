@@ -183,15 +183,29 @@ applicable.
 
 ## 🤝 Contributing
 
-Keep the facade small. Model-format behavior belongs in `@doki-land/live2d-renderer`, source resolution belongs in
-`@doki-land/live2d-loader`, and webpage chrome belongs in `@doki-land/live2d-widget`.
+### Package ownership
+
+- Keep the facade small and host-independent.
+- Put model-format behavior in `@doki-land/live2d-renderer`.
+- Put source resolution in `@doki-land/live2d-loader`.
+- Put webpage chrome in `@doki-land/live2d-widget`.
+- Include tests for state transitions, cancellation, events, and resource cleanup where applicable.
 
 ## 📄 License
 
-This package composes an independently developed clean-room runtime. It does not load, link against, wrap, translate, port, or derive its implementation from an official Cubism SDK or Core binary. Supporting compatible model assets is an interoperability goal and does not imply a shared implementation, official endorsement, affiliation, sponsorship, or employment relationship.
+### Implementation independence
 
-The project and its contributors are independent and are not employed by or acting on behalf of the official Cubism SDK vendor.
+- This package composes an independently developed clean-room runtime.
+- It does not load, link against, wrap, translate, port, or derive its implementation from an official Cubism SDK or Core binary.
+- Compatible model support is an interoperability goal, not evidence of a shared implementation, endorsement, affiliation, sponsorship, or employment relationship.
+- The project and its contributors are independent and do not act on behalf of the official Cubism SDK vendor.
 
-Contributions must preserve this clean-room boundary. Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime. Compatibility-sensitive work must be supported by public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+### Contribution boundary
 
-See the repository license. Model and artwork licenses are separate from the runtime license.
+- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime.
+- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+
+### Terms
+
+- See the repository license for source-code terms.
+- Model and artwork licenses are separate from the runtime license.

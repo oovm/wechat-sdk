@@ -2,7 +2,7 @@
  * Map Live2D blend modes to WebGL / Canvas compositing.
  */
 
-import { BlendMode } from "./types.js";
+import { BlendMode } from "../types.js";
 
 /** Apply premultiplied-friendly Live2D blend factors on a WebGL2 context. */
 export function applyWebGl2BlendMode(

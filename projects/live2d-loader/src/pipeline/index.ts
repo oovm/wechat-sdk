@@ -11,7 +11,7 @@ import { detectModelSettingsFormat } from "@doki-land/live2d-core";
 import {
     fetchArrayBufferWithProgress,
     fetchJsonWithProgress,
-} from "./fetch-progress.js";
+} from "../fetch/progress.js";
 
 /** Resolve a relative asset URL against the model settings URL. */
 export function resolveAssetUrl(baseUrl: string, relative: string): string {

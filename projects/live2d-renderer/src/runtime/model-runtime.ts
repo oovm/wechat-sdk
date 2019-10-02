@@ -5,7 +5,7 @@ import type {
     ModelFormat,
     ModelSettings,
 } from "@doki-land/live2d-core";
-import type { DrawableMesh, Renderer } from "./types.js";
+import type { DrawableMesh, Renderer } from "../types.js";
 
 /**
  * Model-format runtime contract (moc2 / moc3 / cpu-program).

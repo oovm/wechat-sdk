@@ -23,7 +23,7 @@ import {
     compileSharedModelCompile,
     selectModelBackend,
 } from "@doki-land/live2d-renderer";
-import { loadTextureData, releaseTextureData } from "../load-textures.js";
+import { loadTextureData, releaseTextureData } from "./assets/load-textures.js";
 import type { Motion3Clip } from "../motion/index.js";
 import { resolveModelAssetKey } from "./model-asset-key.js";
 

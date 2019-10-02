@@ -30,7 +30,7 @@ export {
     applyWebGl2BlendMode,
     canvasCompositeForBlendMode,
     webGpuBlendState,
-} from "./blend.js";
+} from "./render/blend.js";
 export {
     buildClippingContexts,
     type ClippingContext,
@@ -53,7 +53,7 @@ export {
     maskChannelVec4,
     maskLayoutVec4,
     partitionForClipping,
-} from "./clipping.js";
+} from "./render/clipping.js";
 export {
     CPU_PROGRAM_KIND,
     type CpuProgramFile,
@@ -71,7 +71,7 @@ export {
 export {
     type CreateRendererOptions,
     createRenderer,
-} from "./create-renderer.js";
+} from "./runtime/create-renderer.js";
 export {
     detectMocBinaryFormat,
     detectModelSettingsFormat,
@@ -102,13 +102,13 @@ export {
     type ParameterBinding,
     type SharedModelCompile,
     selectModelBackend,
-} from "./model-runtime.js";
+} from "./runtime/model-runtime.js";
 export {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
-} from "./preview-style.js";
-export { compileSharedModelCompile } from "./shared-compile.js";
+} from "./render/preview-style.js";
+export { compileSharedModelCompile } from "./runtime/shared-compile.js";
 export {
     BlendMode,
     type DrawableMesh,

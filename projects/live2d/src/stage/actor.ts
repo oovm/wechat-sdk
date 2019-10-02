@@ -8,7 +8,7 @@ import type {
     PlayMotionActorOptions,
 } from "@doki-land/live2d-core";
 import type { DrawableMesh, Renderer } from "@doki-land/live2d-renderer";
-import { focusParameterUpdates } from "../focus.js";
+import { focusParameterUpdates } from "./assets/focus.js";
 import type { PlayMotionOptions } from "../motion/index.js";
 import { ActorModelSlot } from "./actor-model-slot.js";
 import type { ModelAssetRegistry } from "./model-asset-registry.js";
