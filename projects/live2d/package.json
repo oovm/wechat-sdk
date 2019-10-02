@@ -64,6 +64,7 @@
         "@doki-land/live2d-renderer": "workspace:*"
     },
     "devDependencies": {
+        "happy-dom": "15",
         "tsup": "^8.5.1",
         "typescript": "^5.8.0",
         "vitest": "^2.1.8"

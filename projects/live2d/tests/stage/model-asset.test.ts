@@ -1,61 +1,24 @@
 import type { AssetResolver, ModelSource } from "@doki-land/live2d-core";
-import {
-    createMoc3Backend,
-    createQuadProgram,
-    serializeCpuProgram,
-} from "@doki-land/live2d-renderer";
+import { createMoc3Backend } from "@doki-land/live2d-renderer";
 import { describe, expect, it } from "vitest";
 import { ModelAssetRegistry } from "../../src/stage/model-asset-registry.js";
+import {
+    cpuProgramBytes,
+    createCountingResolver,
+    inlineCpuModelSource,
+} from "../fixtures/cpu-model-fixture.js";
 
-const MODEL_JSON = {
-    Version: 3,
-    FileReferences: {
-        Moc: "quad.program.json",
-        Textures: [],
-        Motions: {},
-    },
-};
-
-function createCountingResolver(
-    programBytes: ArrayBuffer,
-): AssetResolver & { mocFetches: number } {
-    let mocFetches = 0;
-    return {
-        baseUrl: "https://fixture.test/",
-        resolve: (key) => `https://fixture.test/${key}`,
-        fetchJson: async (key) => {
-            if (key.endsWith("model3.json")) return MODEL_JSON;
-            throw new Error(`unexpected json key: ${key}`);
-        },
-        fetchBytes: async (key) => {
-            if (key === "quad.program.json") {
-                mocFetches += 1;
-                return programBytes.slice(0);
-            }
-            throw new Error(`unexpected bytes key: ${key}`);
-        },
-        get mocFetches() {
-            return mocFetches;
-        },
-    };
-}
-
-function inlineSource(): ModelSource {
-    return {
-        kind: "json",
-        json: MODEL_JSON,
-        baseUrl: "https://fixture.test/model3.json",
-    };
+function createRegistryResolver(): AssetResolver & { mocFetches: number } {
+    return createCountingResolver(cpuProgramBytes());
 }
 
 describe("ModelAssetRegistry", () => {
     it("dedupes moc fetch for concurrent acquires of the same source", async () => {
-        const programBytes = serializeCpuProgram(createQuadProgram());
-        const resolver = createCountingResolver(programBytes);
+        const resolver = createRegistryResolver();
         const registry = new ModelAssetRegistry({
             backends: [createMoc3Backend()],
         });
-        const source = inlineSource();
+        const source = inlineCpuModelSource();
 
         const [leaseA, leaseB] = await Promise.all([
             registry.acquire(source, resolver),
@@ -71,12 +34,11 @@ describe("ModelAssetRegistry", () => {
     });
 
     it("shares compile via stage.assets.load and acquireExisting", async () => {
-        const programBytes = serializeCpuProgram(createQuadProgram());
-        const resolver = createCountingResolver(programBytes);
+        const resolver = createRegistryResolver();
         const registry = new ModelAssetRegistry({
             backends: [createMoc3Backend()],
         });
-        const source = inlineSource();
+        const source = inlineCpuModelSource();
 
         const asset = await registry.load(source, resolver);
         const leaseA = registry.acquireExisting(asset);
@@ -91,12 +53,11 @@ describe("ModelAssetRegistry", () => {
     });
 
     it("evicts cached entry when the last lease is released", async () => {
-        const programBytes = serializeCpuProgram(createQuadProgram());
-        const resolver = createCountingResolver(programBytes);
+        const resolver = createRegistryResolver();
         const registry = new ModelAssetRegistry({
             backends: [createMoc3Backend()],
         });
-        const source = inlineSource();
+        const source = inlineCpuModelSource();
 
         const leaseA = await registry.acquire(source, resolver);
         const leaseB = registry.acquireExisting(leaseA.asset);
@@ -108,15 +69,16 @@ describe("ModelAssetRegistry", () => {
 
         registry.destroy();
     });
-});
 
-describe("resolveModelAssetKey", () => {
-    it("stabilizes inline json keys", async () => {
-        const { resolveModelAssetKey } = await import(
-            "../../src/stage/model-asset-key.js"
-        );
-        const a = resolveModelAssetKey(inlineSource());
-        const b = resolveModelAssetKey(inlineSource());
-        expect(a).toBe(b);
+    it("load without acquire does not hold a lease refCount", async () => {
+        const resolver = createRegistryResolver();
+        const registry = new ModelAssetRegistry({
+            backends: [createMoc3Backend()],
+        });
+        await registry.load(inlineCpuModelSource(), resolver);
+        const lease = await registry.acquire(inlineCpuModelSource(), resolver);
+        expect(resolver.mocFetches).toBe(1);
+        lease.release();
+        registry.destroy();
     });
 });
