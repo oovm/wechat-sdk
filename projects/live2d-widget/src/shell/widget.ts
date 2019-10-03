@@ -9,9 +9,9 @@ import {
     type ChromeSession,
     mountChrome,
     type WidgetChromeOptions,
-} from "./chrome.js";
+} from "../chrome/chrome.js";
 
-export type { WidgetChromeOptions, WidgetToolId } from "./chrome.js";
+export type { WidgetChromeOptions, WidgetToolId } from "../chrome/chrome.js";
 
 export interface WidgetOptions extends CreateLive2DOptions {
     /** CSS selector or element to host the canvas. */

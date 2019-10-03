@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeModelSettings } from "../src/pipeline.js";
+import { normalizeModelSettings } from "../src/pipeline/index.js";
 
 describe("normalizeModelSettings", () => {
     it("normalizes moc3 model3.json", () => {

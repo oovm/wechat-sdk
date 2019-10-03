@@ -1,11 +1,11 @@
-import { canvasCompositeForBlendMode } from "../blend.js";
+import { canvasCompositeForBlendMode } from "../render/blend.js";
 import {
     fitClippingContexts,
     type MaskLayoutRect,
     partitionForClipping,
-} from "../clipping.js";
-import { modelXToCanvasPixelX, modelYUpToCanvasPixelY } from "../coords.js";
-import { PREVIEW_FILL, PREVIEW_STROKE } from "../preview-style.js";
+} from "../render/clipping.js";
+import { modelXToCanvasPixelX, modelYUpToCanvasPixelY } from "../render/coords.js";
+import { PREVIEW_FILL, PREVIEW_STROKE } from "../render/preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,

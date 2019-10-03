@@ -5,7 +5,7 @@
  * multiply drawable alpha by the mask (or 1−mask when inverted).
  */
 
-import { applyWebGl2BlendMode } from "../blend.js";
+import { applyWebGl2BlendMode } from "../render/blend.js";
 import {
     fitClippingContexts,
     type LaidOutClippingContext,
@@ -13,12 +13,12 @@ import {
     maskChannelVec4,
     maskLayoutVec4,
     partitionForClipping,
-} from "../clipping.js";
+} from "../render/clipping.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
-} from "../preview-style.js";
+} from "../render/preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,

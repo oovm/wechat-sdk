@@ -7,13 +7,13 @@ export {
     DEFAULT_WELCOME,
     ensureChromeStyles,
     mountChrome,
-} from "./chrome.js";
+} from "./chrome/chrome.js";
 export {
     Live2DWidget,
     mountWidget,
     type WidgetChromeOptions,
     type WidgetOptions,
     type WidgetToolId,
-} from "./widget.js";
+} from "./shell/widget.js";
 
 export const LIVE2D_WIDGET_VERSION = "0.0.0" as const;

@@ -6,7 +6,7 @@
  * atlas layout; endFrame submits.
  */
 
-import { webGpuBlendState } from "../blend.js";
+import { webGpuBlendState } from "../render/blend.js";
 import {
     fitClippingContexts,
     type LaidOutClippingContext,
@@ -14,12 +14,12 @@ import {
     maskChannelVec4,
     maskLayoutVec4,
     partitionForClipping,
-} from "../clipping.js";
+} from "../render/clipping.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
-} from "../preview-style.js";
+} from "../render/preview-style.js";
 import type {
     DrawableMesh,
     ModelDrawPass,

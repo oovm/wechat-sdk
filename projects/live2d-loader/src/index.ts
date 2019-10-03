@@ -6,7 +6,7 @@ export {
     type FetchProgressHandler,
     fetchArrayBufferWithProgress,
     fetchJsonWithProgress,
-} from "./fetch-progress.js";
+} from "./fetch/progress.js";
 export {
     createUrlAssetResolver,
     detectModelFormat,
@@ -17,12 +17,12 @@ export {
     resolveAssetUrl,
     runLoadPipeline,
     type UrlAssetResolverOptions,
-} from "./pipeline.js";
+} from "./pipeline/index.js";
 export {
     DEFAULT_NPM_CDN,
     type ResolveModelSourceOptions,
     resolveModelSourceUrl,
     resolveNpmSpecifier,
-} from "./resolve-source.js";
+} from "./resolve/source.js";
 
 export const LIVE2D_LOADER_VERSION = "0.0.0" as const;

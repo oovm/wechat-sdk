@@ -17,7 +17,7 @@ import type {
     ModelBackend,
     ModelBackendOptions,
     ParameterBinding,
-} from "../model-runtime.js";
+} from "../runtime/model-runtime.js";
 import type { BlendMode, DrawableMesh } from "../types.js";
 import { cascadedPartOpacity, readMoc3PartTables } from "./moc3-parts.js";
 import { type Moc3Document, parseMoc3Document } from "./moc3-reader.js";

@@ -15,7 +15,7 @@ import type {
     ModelBackend,
     ModelBackendOptions,
     ParameterBinding,
-} from "../model-runtime.js";
+} from "../runtime/model-runtime.js";
 import type { BlendMode, DrawableMesh } from "../types.js";
 import { type Moc2ModelImpl, Moc2Parser } from "./moc2-objects.js";
 import {

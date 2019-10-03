@@ -1,6 +1,6 @@
 import type { ParameterBinding } from "@doki-land/live2d-renderer";
 import { describe, expect, it } from "vitest";
-import { focusParameterUpdates } from "../src/focus.js";
+import { focusParameterUpdates } from "../src/stage/assets/focus.js";
 
 function param(
     id: string,

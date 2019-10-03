@@ -67,7 +67,7 @@ export {
     MotionPriority,
     type PlayMotionOptions,
 } from "./create-live2d.js";
-export { focusParameterUpdates } from "./focus.js";
+export { focusParameterUpdates } from "./stage/assets/focus.js";
 export {
     blendMotionLayers,
     evaluateCurve,

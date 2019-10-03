@@ -3,7 +3,7 @@ import {
     createTipMessage,
     DEFAULT_WELCOME,
     ensureChromeStyles,
-} from "../src/chrome.js";
+} from "../src/chrome/chrome.js";
 
 describe("widget chrome message", () => {
     it("injects stylesheet once", () => {

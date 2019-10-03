@@ -1,7 +1,7 @@
 import type { ModelProgram, ModelSettings } from "@doki-land/live2d-core";
-import { isCpuProgramBytes, parseCpuProgram } from "./cpu/cpu-program.js";
-import { Moc2Parser } from "./moc/moc2-objects.js";
-import { parseMoc3Document } from "./moc/moc3-reader.js";
+import { isCpuProgramBytes, parseCpuProgram } from "../cpu/cpu-program.js";
+import { Moc2Parser } from "../moc/moc2-objects.js";
+import { parseMoc3Document } from "../moc/moc3-reader.js";
 import type { SharedModelCompile } from "./model-runtime.js";
 
 /** One-time decode of moc bytes for stage-level {@link ModelAsset} sharing. */
