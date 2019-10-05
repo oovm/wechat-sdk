@@ -1,0 +1,66 @@
+<template>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div>
+        <p class="site-footer__tag"><span class="site-brand__mark" aria-hidden="true">✦</span> {footerTaglineLabel}</p>
+        <p>{footerCopyrightLabel}</p>
+      </div>
+      <nav aria-label="Footer">
+        <a href={docsRootHref}>{navDocsLabel}</a>
+        <a href="/gallery">{navGalleryLabel}</a>
+        <a href="/stage">{navStageLabel}</a>
+        <a href="/playground">{navPlaygroundLabel}</a>
+        <a href="https://github.com/doki-land/live2d.ts" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</template>
+
+<script client>
+import {
+  footerTagline,
+  footerCopyright,
+  navDocs,
+  navGallery,
+  navStage,
+  navPlayground,
+} from '#locales/common';
+import { docsPaths, readLocaleId, watchDocumentLocale, withLocaleHint } from '../lib/locale-copy.ts';
+
+export default class SiteFooter {
+  localeId = 'zh-hans';
+  footerTaglineLabel = '';
+  footerCopyrightLabel = '';
+  navDocsLabel = '';
+  navGalleryLabel = '';
+  navStageLabel = '';
+  navPlaygroundLabel = '';
+  docsRootHref = '/d/zh-hans/';
+  _unwatchLocale = null;
+
+  onMount() {
+    this.applyLocaleCopy();
+    this._unwatchLocale = watchDocumentLocale((id) => this.applyLocaleCopy(id));
+  }
+
+  onDestroy() {
+    if (typeof this._unwatchLocale === 'function') this._unwatchLocale();
+    this._unwatchLocale = null;
+  }
+
+  refreshCopy() {
+    this.footerTaglineLabel = footerTagline();
+    this.footerCopyrightLabel = footerCopyright();
+    this.navDocsLabel = navDocs();
+    this.navGalleryLabel = navGallery();
+    this.navStageLabel = navStage();
+    this.navPlaygroundLabel = navPlayground();
+    this.docsRootHref = docsPaths(this.localeId).docsRootHref;
+  }
+
+  applyLocaleCopy(preferred) {
+    this.localeId = readLocaleId(preferred);
+    withLocaleHint(this.localeId, () => this.refreshCopy());
+  }
+}
+</script>

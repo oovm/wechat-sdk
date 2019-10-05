@@ -1,0 +1,81 @@
+<template>
+  <div class="site landing">
+    <SiteHeader />
+    <main>
+      <section class="hero" aria-label="Introduction">
+        <div class="hero-inner">
+          <div>
+            <p class="kicker">{brandLabel}</p>
+            <h1>{headlineLabel}</h1>
+            <p class="lede">{ledeLabel}</p>
+            <div class="cta-row">
+              <Button type="button" onClick={() => this.go('/playground')}>{ctaPlaygroundLabel}</Button>
+              <Button type="button" variant="text" onClick={() => this.go(docsRootHref)}>{ctaDocsLabel}</Button>
+              <Button type="button" variant="text" onClick={() => this.openGithub()}>{ctaGithubLabel}</Button>
+            </div>
+          </div>
+          <Live2dHost model={heroModel} width={heroWidth} height={heroHeight} showProgress={false} />
+        </div>
+      </section>
+      <section class="page-head">
+        <h2>{finalTitleLabel}</h2>
+        <p class="lede">{finalLedeLabel}</p>
+      </section>
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script client>
+import {
+  brand,
+  landingHeadline,
+  landingLede,
+  landingCtaPlayground,
+  landingCtaDocs,
+  landingCtaGithub,
+  landingFinalTitle,
+  landingFinalLede,
+} from '#locales/common';
+import { landingHero, landingGithub } from '../lib/landing.ts';
+import { docsPaths, readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+
+export default class IndexPage {
+  brandLabel = '';
+  headlineLabel = '';
+  ledeLabel = '';
+  ctaPlaygroundLabel = '';
+  ctaDocsLabel = '';
+  ctaGithubLabel = '';
+  finalTitleLabel = '';
+  finalLedeLabel = '';
+  docsRootHref = '/d/zh-hans/';
+  heroModel = landingHero.model;
+  heroWidth = landingHero.width;
+  heroHeight = landingHero.height;
+
+  onMount() {
+    withLocaleHint(readLocaleId(), () => this.refreshCopy());
+  }
+
+  refreshCopy() {
+    this.brandLabel = brand();
+    this.headlineLabel = landingHeadline();
+    this.ledeLabel = landingLede();
+    this.ctaPlaygroundLabel = landingCtaPlayground();
+    this.ctaDocsLabel = landingCtaDocs();
+    this.ctaGithubLabel = landingCtaGithub();
+    this.finalTitleLabel = landingFinalTitle();
+    this.finalLedeLabel = landingFinalLede();
+    this.docsRootHref = docsPaths(readLocaleId()).docsRootHref;
+  }
+
+  go(href) {
+    if (typeof window !== 'undefined') window.location.assign(href);
+  }
+
+  openGithub() {
+    if (typeof window !== 'undefined') window.open(landingGithub, '_blank', 'noopener,noreferrer');
+  }
+}
+</script>

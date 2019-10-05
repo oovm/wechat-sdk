@@ -1,0 +1,83 @@
+<template>
+  <div class="capture" data-dogfood="plugin-live2d-capture">
+    <p class="meta">{presetId} · {status}</p>
+    <Live2dHost
+      if={source}
+      model={source}
+      width={width}
+      height={height}
+      prefer={prefer}
+      showProgress={false}
+      autoplay={true}
+      exposeCaptureApi={true}
+      capturePresetId={presetId}
+    />
+  </div>
+</template>
+
+<style>
+.capture {
+  margin: 0;
+  padding: 0;
+  background: #e8f4ff;
+  min-height: 100vh;
+}
+.meta {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  font: 600 12px/1.2 ui-monospace, monospace;
+  color: #377ba8;
+}
+</style>
+
+<script client>
+import { fetchCatalog } from '../lib/catalog.ts';
+
+export default class CapturePage {
+  presetId = 'local-wanko';
+  width = 512;
+  height = 512;
+  source = null;
+  status = 'boot';
+  prefer = ['canvas2d', 'webgl2'];
+
+  onMount() {
+    void this.boot();
+  }
+
+  async boot() {
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    this.presetId = params.get('preset') || 'local-wanko';
+    this.width = Math.max(64, Number(params.get('w') || 512) || 512);
+    this.height = Math.max(64, Number(params.get('h') || 512) || 512);
+    try {
+      const catalog = await fetchCatalog();
+      const hit = catalog.models.find((m) => m.id === this.presetId);
+      if (!hit) {
+        this.fail(`unknown preset: ${this.presetId}`);
+        return;
+      }
+      if (!hit.source.startsWith('/')) {
+        this.fail(`preset ${this.presetId} is remote; skip offline capture`);
+        return;
+      }
+      this.source = hit.source;
+      this.status = 'loading';
+    } catch (err) {
+      this.fail(String(err));
+    }
+  }
+
+  fail(message) {
+    this.status = 'error';
+    if (typeof window !== 'undefined') {
+      window.__LIVE2D_CAPTURE__ = {
+        ready: false,
+        error: message,
+        presetId: this.presetId,
+        pngBase64: null,
+      };
+    }
+  }
+}
+</script>

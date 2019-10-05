@@ -1,0 +1,108 @@
+<template>
+  <div class="site">
+    <SiteHeader />
+    <main>
+      <header class="page-head">
+        <p class="kicker">Stage</p>
+        <h1>{titleLabel}</h1>
+        <p class="lede">{ledeLabel}</p>
+      </header>
+      <div class="stage-layout">
+        <aside class="stage-panel">
+          <Select label={addLabel} controlId="stage-model" value={selectedId} options={modelOptions} onChange={(e) => this.onModelPick(e)} />
+          <Button type="button" onClick={() => this.addActor()}>{addLabel}</Button>
+          <p if={!actorCount}>{emptyLabel}</p>
+          <p if={actorCount}>Actors: {actorCount}</p>
+        </aside>
+        <div class="stage-canvas-wrap" id={stageHostId}></div>
+      </div>
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script client>
+import { stageTitle, stageLede, stageAdd, stageEmpty } from '#locales/common';
+import { createLive2dStage } from '@doki-land/live2d';
+import { displayNameFor, fetchCatalog, type CatalogModel } from '../lib/catalog.ts';
+import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+
+let stageSeq = 0;
+
+export default class StagePage {
+  titleLabel = '';
+  ledeLabel = '';
+  addLabel = '';
+  emptyLabel = '';
+  selectedId = '';
+  modelOptions = [{ value: '', label: '—' }];
+  catalogModels: CatalogModel[] = [];
+  actorCount = 0;
+  stageHostId = `live2d-stage-${++stageSeq}`;
+  stage = null;
+  _canvas = null;
+
+  onMount() {
+    withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    void this.init();
+  }
+
+  onDestroy() {
+    void this.stage?.destroy?.();
+    this.stage = null;
+    this._canvas = null;
+  }
+
+  refreshCopy() {
+    this.titleLabel = stageTitle();
+    this.ledeLabel = stageLede();
+    this.addLabel = stageAdd();
+    this.emptyLabel = stageEmpty();
+  }
+
+  ensureStageCanvas(host) {
+    host.replaceChildren();
+    const canvas = document.createElement('canvas');
+    const rect = host.getBoundingClientRect();
+    const w = Math.max(320, Math.round(rect.width || 640));
+    const h = Math.max(320, Math.round(rect.height || 480));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(w * dpr));
+    canvas.height = Math.max(1, Math.round(h * dpr));
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    host.appendChild(canvas);
+    this._canvas = canvas;
+    return canvas;
+  }
+
+  async init() {
+    const catalog = await fetchCatalog();
+    this.catalogModels = catalog.models;
+    const locale = readLocaleId();
+    this.modelOptions = catalog.models.map((m) => ({
+      value: m.id,
+      label: displayNameFor(m, locale),
+    }));
+    if (this.modelOptions.length) this.selectedId = this.modelOptions[0].value;
+    const host = document.getElementById(this.stageHostId);
+    if (!host) return;
+    const canvas = this.ensureStageCanvas(host);
+    this.stage = createLive2dStage({ updateMode: 'auto' });
+    await this.stage.mount(canvas);
+  }
+
+  onModelPick(e) {
+    this.selectedId = e?.target?.value ? String(e.target.value) : '';
+  }
+
+  async addActor() {
+    if (!this.stage || !this.selectedId) return;
+    const hit = this.catalogModels.find((m) => m.id === this.selectedId);
+    if (!hit) return;
+    const actor = this.stage.createActor();
+    await actor.load(hit.source);
+    this.actorCount += 1;
+  }
+}
+</script>

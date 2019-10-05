@@ -1,0 +1,40 @@
+{
+    "entries": [
+        {
+            "key": { "path": ["action", "primary", "background"] },
+            "value": "#1677FF"
+        },
+        {
+            "key": { "path": ["action", "primary", "foreground"] },
+            "value": "#FFFFFF"
+        },
+        {
+            "key": { "path": ["action", "primary", "hover"] },
+            "value": "#4096FF"
+        },
+        {
+            "key": { "path": ["action", "primary", "active"] },
+            "value": "#0958D9"
+        },
+        {
+            "key": { "path": ["action", "secondary", "background"] },
+            "value": "#FFFFFF"
+        },
+        {
+            "key": { "path": ["action", "secondary", "foreground"] },
+            "value": "#141414"
+        },
+        {
+            "key": { "path": ["action", "secondary", "border"] },
+            "value": "#D9D9D9"
+        },
+        {
+            "key": { "path": ["action", "secondary", "hover"] },
+            "value": "#F5F5F5"
+        },
+        {
+            "key": { "path": ["focus", "ring"] },
+            "value": "color-mix(in srgb, #1677FF 20%, transparent)"
+        }
+    ]
+}

@@ -1,0 +1,92 @@
+<template>
+  <div class="site">
+    <SiteHeader />
+    <main>
+      <header class="page-head">
+        <p class="kicker">Playground</p>
+        <h1>{titleLabel}</h1>
+        <p class="lede">{ledeLabel}</p>
+      </header>
+      <div class="playground-layout">
+        <aside class="stage-panel">
+          <Select label="Model" controlId="pg-preset" value={presetId} options={presetOptions} onChange={(e) => this.onPreset(e)} />
+          <Button type="button" onClick={() => this.reload()}>{loadLabel}</Button>
+          <p if={status}>{status}</p>
+        </aside>
+        <Live2dHost if={showHost} model={modelSource} width={480} height={480} prefer={prefer} />
+      </div>
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script client>
+import { playgroundTitle, playgroundLede, playgroundLoad } from '#locales/common';
+import { displayNameFor, fetchCatalog } from '../lib/catalog.ts';
+import { landingHero } from '../lib/landing.ts';
+import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+
+export default class PlaygroundPage {
+  titleLabel = '';
+  ledeLabel = '';
+  loadLabel = '';
+  presetId = '';
+  presetOptions = [];
+  catalogModels = [];
+  modelSource = landingHero.model;
+  prefer = ['canvas2d', 'webgl2'];
+  status = '';
+  showHost = true;
+
+  onMount() {
+    withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    void this.loadPresets();
+  }
+
+  refreshCopy() {
+    this.titleLabel = playgroundTitle();
+    this.ledeLabel = playgroundLede();
+    this.loadLabel = playgroundLoad();
+  }
+
+  async loadPresets() {
+    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const presetFromUrl = params?.get('preset') || '';
+    try {
+      const catalog = await fetchCatalog();
+      this.catalogModels = catalog.models;
+      const locale = readLocaleId();
+      this.presetOptions = catalog.models.map((m) => ({
+        value: m.id,
+        label: displayNameFor(m, locale),
+      }));
+      const pick = presetFromUrl || this.presetOptions[0]?.value || '';
+      this.presetId = pick;
+      this.applyPreset(pick);
+    } catch {
+      this.presetId = 'local-wanko';
+      this.modelSource = landingHero.model;
+    }
+  }
+
+  onPreset(e) {
+    const next = e?.target?.value ? String(e.target.value) : '';
+    this.presetId = next;
+    this.applyPreset(next);
+  }
+
+  applyPreset(id) {
+    const hit = this.catalogModels.find((m) => m.id === id);
+    this.modelSource = hit?.source || landingHero.model;
+  }
+
+  reload() {
+    this.status = 'loading…';
+    this.showHost = false;
+    queueMicrotask(() => {
+      this.showHost = true;
+      this.status = '';
+    });
+  }
+}
+</script>
