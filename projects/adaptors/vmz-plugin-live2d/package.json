@@ -1,0 +1,37 @@
+{
+    "name": "@vmz/plugin-live2d",
+    "version": "0.0.0",
+    "description": "VMZ Live2D adapter — <Live2dHost> for @doki-land/live2d in VMZ applications",
+    "type": "module",
+    "license": "MIT",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/adaptors/vmz-plugin-live2d"
+    },
+    "keywords": ["vmz", "plugin", "live2d", "doki-land"],
+    "main": "./vmz.plugin.ts",
+    "types": "./vmz.plugin.ts",
+    "exports": {
+        ".": {
+            "types": "./vmz.plugin.ts",
+            "default": "./vmz.plugin.ts"
+        }
+    },
+    "files": ["components", "vmz.plugin.ts", "README.md"],
+    "publishConfig": { "access": "public" },
+    "scripts": {
+        "test": "vitest run --passWithNoTests"
+    },
+    "dependencies": {
+        "@doki-land/live2d": "workspace:*",
+        "@vmz/plugin": "^0.1.8"
+    },
+    "peerDependencies": {
+        "@doki-land/live2d": ">=0.0.1"
+    },
+    "peerDependenciesMeta": {
+        "@doki-land/live2d": { "optional": false }
+    }
+}
