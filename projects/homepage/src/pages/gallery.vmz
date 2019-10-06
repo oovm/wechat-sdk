@@ -1,0 +1,74 @@
+<template>
+  <div class="site">
+    <SiteHeader />
+    <main>
+      <header class="page-head">
+        <p class="kicker">Gallery</p>
+        <h1>{titleLabel}</h1>
+        <p class="lede">{ledeLabel}</p>
+      </header>
+      <p if={loading} class="page-head">{loadingLabel}</p>
+      <p if={!loading && !models.length} class="page-head">{emptyLabel}</p>
+      <div class="gallery-grid">
+        <article each={models} as="item" key={item.id} class="gallery-card">
+          <img src={item.previewUrl} alt={item.displayLabel} loading="lazy" />
+          <strong>{item.displayLabel}</strong>
+          <small>{item.id}</small>
+          <Button type="button" onClick={() => this.openPlayground(item.id)}>{openLabel}</Button>
+        </article>
+      </div>
+    </main>
+    <SiteFooter />
+  </div>
+</template>
+
+<script client>
+import { galleryTitle, galleryLede, galleryLoading, galleryEmpty, galleryOpenPlayground } from '#locales/common';
+import { displayNameFor, fetchCatalog, previewUrlFor } from '../lib/catalog.ts';
+import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+
+export default class GalleryPage {
+  titleLabel = '';
+  ledeLabel = '';
+  loadingLabel = '';
+  emptyLabel = '';
+  openLabel = '';
+  loading = true;
+  models = [];
+
+  onMount() {
+    withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    void this.loadCatalog();
+  }
+
+  refreshCopy() {
+    this.titleLabel = galleryTitle();
+    this.ledeLabel = galleryLede();
+    this.loadingLabel = galleryLoading();
+    this.emptyLabel = galleryEmpty();
+    this.openLabel = galleryOpenPlayground();
+  }
+
+  async loadCatalog() {
+    try {
+      const catalog = await fetchCatalog();
+      const locale = readLocaleId();
+      this.models = catalog.models.map((m) => ({
+        id: m.id,
+        displayLabel: displayNameFor(m, locale),
+        previewUrl: previewUrlFor(m),
+      }));
+    } catch {
+      this.models = [];
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  openPlayground(id) {
+    if (typeof window !== 'undefined') {
+      window.location.assign(`/playground?preset=${encodeURIComponent(id)}`);
+    }
+  }
+}
+</script>

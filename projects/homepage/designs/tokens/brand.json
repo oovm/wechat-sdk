@@ -1,0 +1,49 @@
+{
+    "brand": {
+        "primary": "#1677c8",
+        "energy": "#55d6be"
+    },
+    "scale": {
+        "50": "#eef6fc",
+        "100": "#cfe3f1",
+        "200": "#b8b5f4",
+        "300": "#91caff",
+        "400": "#4096ff",
+        "500": "#1677c8",
+        "600": "#0958d9",
+        "700": "#377ba8",
+        "800": "#24233a",
+        "900": "#17304a",
+        "950": "#001d66"
+    },
+    "surface": {
+        "paper": "#fbfdff",
+        "mist": "#eaf4ff",
+        "page": "#fbfdff",
+        "ink": "#24233a",
+        "graphite": "#65647b"
+    },
+    "text": {
+        "ink": "#24233a",
+        "steel": "#65647b",
+        "on-brand": "#ffffff",
+        "on-ink": "#fbfdff"
+    },
+    "line": {
+        "default": "#cfe3f1",
+        "subtle": "#eaf4ff",
+        "strong": "#377ba8"
+    },
+    "status": {
+        "success": "#55d6be",
+        "warning": "#b8b5f4",
+        "error": "#ff4d4f",
+        "analysis": "#1677c8",
+        "runtime": "#247a69"
+    },
+    "font": {
+        "sans": "\"Noto Sans SC\", \"Inter Tight\", \"Microsoft YaHei\", sans-serif",
+        "mono": "ui-monospace, Consolas, monospace",
+        "display": "\"Inter Tight\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif"
+    }
+}
