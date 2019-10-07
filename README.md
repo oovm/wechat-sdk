@@ -269,16 +269,6 @@ When reporting a model issue, include:
 
 Do not include proprietary model assets in public issues without permission.
 
-## 🤝 Contributing
-
-Contributions should preserve package ownership and include tests proportional to the change.
-
-- Runtime behavior belongs in the facade, core, loader, or renderer rather than a host adapter.
-- Format fixes should include a minimal neutral fixture or reproducible model case.
-- Rendering fixes should include structural assertions or pixel evidence where practical.
-- Public APIs should remain small and host-independent.
-- Generated bundles should be rebuilt from source instead of edited manually.
-
 ## 🔒 Security
 
 Treat remote model URLs as untrusted input. Applications should restrict allowed origins, validate response sizes, apply
@@ -286,13 +276,33 @@ a suitable content-security policy, and avoid exposing privileged tokens through
 
 Report security-sensitive issues privately to the maintainers rather than publishing exploit details in a public issue.
 
+## 🤝 Contributing
+
+### Engineering expectations
+
+- Preserve package ownership: runtime behavior belongs in the facade, core, loader, or renderer rather than a host adapter.
+- Include tests proportional to the change.
+- Accompany format fixes with a minimal neutral fixture or reproducible model case.
+- Accompany rendering fixes with structural assertions or pixel evidence where practical.
+- Keep public APIs small and host-independent.
+- Rebuild generated bundles from source instead of editing them manually.
+
 ## 📄 License
 
-All shaders, graphics pipelines, model-execution code, mask and blend paths, and renderer optimizations in this repository are independently designed and handwritten as a clean-room implementation. They are not copied, translated, ported, derived from, or linked against an official Cubism SDK implementation. The project does not load or bundle an official Cubism Core binary and does not call an official Cubism SDK at build time or runtime.
+### Clean-room implementation
 
-Format compatibility and descriptive references to external model formats do not imply a shared codebase, implementation lineage, partnership, endorsement, affiliation, sponsorship, or employment relationship. This project and its contributors are independent and are not employed by or acting on behalf of the official Cubism SDK vendor.
+- Shaders, graphics pipelines, model-execution code, mask and blend paths, and renderer optimizations are independently designed and handwritten.
+- No implementation is copied, translated, ported, derived from, or linked against an official Cubism SDK implementation.
+- The project does not load or bundle an official Cubism Core binary or call an official Cubism SDK at build time or runtime.
+- Format compatibility and descriptive format names identify interoperability targets only; they do not imply shared code, implementation lineage, partnership, endorsement, affiliation, sponsorship, or employment.
+- The project and its contributors are independent and do not act on behalf of the official Cubism SDK vendor.
 
-Contributions must preserve this clean-room boundary. Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime. Compatibility-sensitive work must be supported by public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+### Contribution boundary
 
-See the repository license for source-code terms. Model files, textures, motions, expressions, audio, and character
-artwork may have separate licenses and are not automatically covered by the runtime license.
+- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime.
+- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+
+### Source and asset terms
+
+- See the repository license for source-code terms.
+- Model files, textures, motions, expressions, audio, and character artwork may have separate licenses and are not automatically covered by the runtime license.
