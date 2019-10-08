@@ -37,6 +37,7 @@ const PACKAGES = [
     { dir: "projects/adaptors/vue-plugin-live2d", build: false },
     { dir: "projects/adaptors/hexo-plugin-live2d", build: true },
     { dir: "projects/adaptors/cocos-plugin-live2d", build: false },
+    { dir: "projects/adaptors/vmz-plugin-live2d", build: false },
 ];
 
 const args = process.argv.slice(2);

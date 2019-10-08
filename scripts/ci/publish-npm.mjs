@@ -30,6 +30,7 @@ const PACKAGES = [
     { dir: "projects/adaptors/vue-plugin-live2d" },
     { dir: "projects/adaptors/hexo-plugin-live2d" },
     { dir: "projects/adaptors/cocos-plugin-live2d" },
+    { dir: "projects/adaptors/vmz-plugin-live2d" },
 ];
 
 function fail(msg) {

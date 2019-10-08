@@ -50,19 +50,12 @@ async function waitHttp(url, attempts = 60) {
 
 function startServer() {
     const dist = join(homepageRoot, "dist");
-    const cmd = useDev || !existsSync(dist) ? "dev" : "preview";
+    const cmd = useDev || !existsSync(dist) ? "dev" : "serve";
     const args =
         cmd === "dev"
-            ? ["exec", "vite", "--port", String(port), "--strictPort"]
-            : [
-                  "exec",
-                  "vite",
-                  "preview",
-                  "--port",
-                  String(port),
-                  "--strictPort",
-              ];
-    console.log(`[previews] starting vite ${cmd} on :${port}`);
+            ? ["run", "dev", "--", "--port", String(port)]
+            : ["run", "serve", "--", "--port", String(port)];
+    console.log(`[previews] starting vmz ${cmd} on :${port}`);
     const child = spawn("pnpm", args, {
         cwd: homepageRoot,
         stdio: ["ignore", "pipe", "pipe"],

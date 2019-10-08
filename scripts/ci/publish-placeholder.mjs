@@ -81,6 +81,7 @@ const JS_STUBS = [
     "vue-plugin-live2d",
     "hexo-plugin-live2d",
     "cocos-plugin-live2d",
+    "@vmz/plugin-live2d",
 ];
 
 const NATIVE_STUBS = [];
