@@ -12,6 +12,11 @@ projects/homepage/public/models/quad/
 coverage/
 .turbo/
 
+# VMZ plugin materialized into src/components/ during build (do not commit)
+projects/homepage/src/components/Live2dHost.vmz
+projects/homepage/src/components/Live2dStage.vmz
+projects/homepage/src/components/MarkdownIt.vmz
+
 # Node
 node_modules/
 dist/

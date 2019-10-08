@@ -104,9 +104,6 @@ importers:
 
   projects/homepage:
     dependencies:
-      '@doki-land/live2d':
-        specifier: workspace:*
-        version: link:../live2d
       '@vmz/core':
         specifier: ^0.1.8
         version: 0.1.8
@@ -120,9 +117,12 @@ importers:
         specifier: ^0.1.8
         version: 0.1.8(@vmz/ui@0.1.8)
     devDependencies:
+      '@vmz/plugin-markdown-it':
+        specifier: ^0.1.8
+        version: 0.1.8
       '@vmz/vmz':
         specifier: ^0.1.8
-        version: 0.1.8(typescript@5.9.3)
+        version: 0.1.8(@vmz/plugin-markdown-it@0.1.8)(typescript@5.9.3)
 
   projects/live2d:
     dependencies:
@@ -1040,6 +1040,9 @@ packages:
   '@vmz/core@0.1.8':
     resolution: {integrity: sha512-TsjDYZXODJgYtaPRuAhhRkbOYjQD6+Z2TgDmoi+iATdQLwbF+zhT/redGMe20AKwEwfOGPbEi8xO1BVzMKxA0A==}
 
+  '@vmz/plugin-markdown-it@0.1.8':
+    resolution: {integrity: sha512-PlOAQZSgJxUd6FFhJeslFFbmmiSuGxSX0FtoQfiU8uNcuniofiyC0XcUuJ6okd5t7+TEhQGr4D9zKlPnSalsMg==}
+
   '@vmz/plugin@0.1.8':
     resolution: {integrity: sha512-mqJaR6Xznqf1J+j21EE+s3U3XsgeNvfExoL2hbBXPWLWWgIyvy8sstSKI49A5EK2vBClfZ4psxD7j2O/VDfdKw==}
 
@@ -1608,6 +1611,9 @@ packages:
       canvas:
         optional: true
 
+  linkify-it@5.0.2:
+    resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
+
   load-tsconfig@0.2.5:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -1620,6 +1626,13 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
+
+  markdown-it@14.3.0:
+    resolution: {integrity: sha512-RCEsPjR+sr0x+AuYp601tKTkgFG4YEPLCzHST3cQ/fhlJkqAkz1L2/Qbp1j9qw5SBwQHFBoW8+hoN5xssOF0Tw==}
+    hasBin: true
+
+  mdurl@2.1.0:
+    resolution: {integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==}
 
   micro-memoize@4.2.0:
     resolution: {integrity: sha512-dRxIsNh0XosO9sd3aASUabKOzG9dloLO41g74XUGThpHBoGm1ttakPT5in14CuW/EDedkniaShFHbymmmKGOQA==}
@@ -1760,6 +1773,10 @@ packages:
 
   prismjs@1.30.0:
     resolution: {integrity: sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw==}
+    engines: {node: '>=6'}
+
+  punycode.js@2.3.1:
+    resolution: {integrity: sha512-uxFIHU0YlHYhDQtV4R9J6a52SLx28BCjT+4ieh7IGbgwVJWO+km431c4yRlREUAsAmt/uMjQUyQHNEPf0M39CA==}
     engines: {node: '>=6'}
 
   readable-stream@3.6.2:
@@ -1924,6 +1941,9 @@ packages:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
     hasBin: true
+
+  uc.micro@2.1.0:
+    resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
   ufo@1.6.4:
     resolution: {integrity: sha512-JFNbkD1Svwe0KvGi8GOeLcP4kAWQ609twvCdcHxq1oSL8svv39ZuSvajcD8B+5D0eL4+s1Is2D/O6KN3qcTeRA==}
@@ -2586,6 +2606,11 @@ snapshots:
     transitivePeerDependencies:
       - canvas
 
+  '@vmz/plugin-markdown-it@0.1.8':
+    dependencies:
+      '@vmz/plugin': 0.1.8
+      markdown-it: 14.3.0
+
   '@vmz/plugin@0.1.8':
     dependencies:
       '@vmz/protocol': 0.1.8
@@ -2607,7 +2632,7 @@ snapshots:
   '@vmz/vmz-win32-x64@0.1.8':
     optional: true
 
-  '@vmz/vmz@0.1.8(typescript@5.9.3)':
+  '@vmz/vmz@0.1.8(@vmz/plugin-markdown-it@0.1.8)(typescript@5.9.3)':
     dependencies:
       '@vmz/core': 0.1.8
       '@vmz/plugin': 0.1.8
@@ -2615,6 +2640,7 @@ snapshots:
       jiti: 2.7.0
       json5: 2.2.3
     optionalDependencies:
+      '@vmz/plugin-markdown-it': 0.1.8
       '@vmz/vmz-darwin-arm64': 0.1.8
       '@vmz/vmz-linux-x64': 0.1.8
       '@vmz/vmz-win32-x64': 0.1.8
@@ -3217,6 +3243,10 @@ snapshots:
       htmlparser2: 10.1.0
       uhyphen: 0.2.0
 
+  linkify-it@5.0.2:
+    dependencies:
+      uc.micro: 2.1.0
+
   load-tsconfig@0.2.5: {}
 
   loupe@3.2.1: {}
@@ -3228,6 +3258,17 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  markdown-it@14.3.0:
+    dependencies:
+      argparse: 2.0.1
+      entities: 4.5.0
+      linkify-it: 5.0.2
+      mdurl: 2.1.0
+      punycode.js: 2.3.1
+      uc.micro: 2.1.0
+
+  mdurl@2.1.0: {}
 
   micro-memoize@4.2.0: {}
 
@@ -3342,6 +3383,8 @@ snapshots:
   pretty-hrtime@1.0.3: {}
 
   prismjs@1.30.0: {}
+
+  punycode.js@2.3.1: {}
 
   readable-stream@3.6.2:
     dependencies:
@@ -3533,6 +3576,8 @@ snapshots:
       - yaml
 
   typescript@5.9.3: {}
+
+  uc.micro@2.1.0: {}
 
   ufo@1.6.4: {}
 

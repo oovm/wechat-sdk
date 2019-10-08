@@ -17,13 +17,13 @@
         "document:check": "vmz document check . --strict"
     },
     "dependencies": {
-        "@doki-land/live2d": "workspace:*",
         "@vmz/core": "^0.1.8",
         "@vmz/plugin-live2d": "workspace:*",
         "@vmz/ui": "^0.1.8",
         "@vmz/ui-icons": "^0.1.8"
     },
     "devDependencies": {
+        "@vmz/plugin-markdown-it": "^0.1.8",
         "@vmz/vmz": "^0.1.8"
     }
 }
