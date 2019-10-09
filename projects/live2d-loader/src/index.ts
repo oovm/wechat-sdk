@@ -1,12 +1,17 @@
 /**
  * `@doki-land/live2d-loader` — model JSON fetch and load pipeline.
+ *
+ * Layout:
+ * - `fetch/`     — progress-aware fetch helpers
+ * - `pipeline/`  — normalize settings + load middleware
+ * - `resolve/`   — npm: / URL source resolution
  */
 
 export {
     type FetchProgressHandler,
     fetchArrayBufferWithProgress,
     fetchJsonWithProgress,
-} from "./fetch/progress.js";
+} from "./fetch/index.js";
 export {
     createUrlAssetResolver,
     detectModelFormat,
@@ -23,6 +28,6 @@ export {
     type ResolveModelSourceOptions,
     resolveModelSourceUrl,
     resolveNpmSpecifier,
-} from "./resolve/source.js";
+} from "./resolve/index.js";
 
 export const LIVE2D_LOADER_VERSION = "0.0.0" as const;

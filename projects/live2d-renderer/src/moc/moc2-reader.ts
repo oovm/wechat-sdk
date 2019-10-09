@@ -1,6 +1,6 @@
 /**
  * moc2 binary stream reader (7-bit varints, big-endian ints/floats).
- * Clean-room layout from observed `.moc` bytes + public format notes — no Core code.
+ * Covers the record layout exercised by the repository's supported fixtures.
  */
 
 export const MOC2_REF_TYPE = 33;

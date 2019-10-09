@@ -1,5 +1,5 @@
 /**
- * Optional official/sample MOC binaries for integration tests.
+ * Optional redistributable sample MOC binaries for integration tests.
  * CI lacks `live2d-ts-ref-repos`; only catalog entries with `local: true`
  * are part of the offline corpus — suites must `describe.skipIf(!bytes)`
  * when these resolve to null.

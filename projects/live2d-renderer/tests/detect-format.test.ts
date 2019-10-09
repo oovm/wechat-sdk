@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     detectMocBinaryFormat,
     detectModelSettingsFormat,
-} from "../src/detect-format.js";
+} from "../src/format/detect-format.js";
 
 describe("detectModelSettingsFormat", () => {
     it("detects moc3 from FileReferences.Moc", () => {

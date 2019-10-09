@@ -1,6 +1,12 @@
 /**
  * `@doki-land/live2d` — public facade.
  *
+ * Layout:
+ * - `facade/`    — `createLive2D()` default stage + actor entry
+ * - `motion/`    — motion3 parse + playback
+ * - `stage/`     — multi-actor stage, assets, transforms
+ * - `reexports/` — optional subpath `@doki-land/live2d/{core,loader,renderer}`
+ *
  * ```ts
  * import { createLive2D } from "@doki-land/live2d";
  * ```
@@ -66,7 +72,7 @@ export {
     type Live2DRuntime,
     MotionPriority,
     type PlayMotionOptions,
-} from "./create-live2d.js";
+} from "./facade/create-live2d.js";
 export { focusParameterUpdates } from "./stage/assets/focus.js";
 export {
     blendMotionLayers,

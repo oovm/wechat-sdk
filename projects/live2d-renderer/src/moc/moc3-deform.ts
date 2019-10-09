@@ -1,7 +1,7 @@
 /**
  * moc3 deformer bake: warp grids + rotation affines along parent chains.
  *
- * Coordinate contract (observed on official MOC3 / Wanko):
+ * Coordinate contract covered by the Wanko regression fixture:
  * - Root rotations author scale ≈ 1/pixelsPerUnit; children stay in pixels.
  * - Nested rotation under rotation: mulAffine; origins/children share parent units.
  * - Rotation under warp: origin is warp UV; fold 1/ppu into the local linear

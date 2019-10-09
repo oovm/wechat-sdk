@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
     resolveModelSourceUrl,
     resolveNpmSpecifier,
-} from "../src/resolve/source.js";
+} from "../src/resolve/index.js";
 
 describe("resolveNpmSpecifier", () => {
     it("resolves unscoped package with version and path", () => {

@@ -23,7 +23,7 @@ function readMagic(bytes: ArrayBuffer): string {
     return String.fromCharCode(...new Uint8Array(bytes, 0, 4));
 }
 
-/** Decode official moc2 (`.moc`) bytes into a default-pose ModelProgram. */
+/** Decode binary moc2 (`.moc`) bytes into a default-pose ModelProgram. */
 export async function decodeMoc2(bytes: ArrayBuffer): Promise<DecodedMoc2> {
     if (bytes.byteLength < 4) {
         throw new Error("@doki-land/live2d-renderer: truncated moc2 header");
@@ -48,7 +48,7 @@ export async function decodeMoc2(bytes: ArrayBuffer): Promise<DecodedMoc2> {
 }
 
 /**
- * Decode official moc3 bytes into a ModelProgram.
+ * Decode binary moc3 bytes into a ModelProgram.
  * Applies keyform blending + warp/rotation deformer chains at the given pose
  * (defaults when called via decodeMoc3).
  */

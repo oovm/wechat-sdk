@@ -5,6 +5,9 @@
  * - `backends/`  — graphics only (webgpu / webgl2 / canvas2d)
  * - `moc/`       — moc2 / moc3 decode + model runtimes (not graphics backends)
  * - `cpu/`       — CPU evaluate + cpu-program fixture codec
+ * - `render/`    — blend, clipping, coords, preview styling helpers
+ * - `runtime/`   — renderer factory + model runtime glue
+ * - `format/`    — moc binary / settings format peek (shared with core)
  * - `tests/`     — all vitest suites (package root)
  */
 
@@ -75,7 +78,7 @@ export {
 export {
     detectMocBinaryFormat,
     detectModelSettingsFormat,
-} from "./detect-format.js";
+} from "./format/detect-format.js";
 export {
     type DecodedMoc2,
     type DecodedMoc3,

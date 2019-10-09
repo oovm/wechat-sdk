@@ -1,10 +1,7 @@
 /**
- * Official MOC3 section layout (clean-room).
- *
- * Header (64) + Section Offset Table (160 × u32) + body arrays.
- * Layout order follows public MOC3 memory-map descriptions (OpenL2D hexpat /
- * independent format notes). Deformer evaluation is deferred — default pose
- * uses each art mesh's first keyform only.
+ * MOC3 section layout used by the decoder: a 64-byte header, a section-offset
+ * table of 160 u32 entries, and the referenced body arrays. Deformer evaluation
+ * is deferred; the initial pose uses each art mesh's first keyform.
  */
 
 export const MOC3_MAGIC = "MOC3";

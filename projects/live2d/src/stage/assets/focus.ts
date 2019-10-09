@@ -1,11 +1,11 @@
 import type { ParameterBinding } from "@doki-land/live2d-renderer";
 
 /**
- * Map canvas focus (-1..1, Y-up) onto standard Cubism drag parameters.
+ * Map canvas focus (-1..1, Y-up) onto commonly used model parameter IDs.
  *
- * Matches the Cubism sample / community widget weights:
- * ANGLE_X/Y full range, ANGLE_Z = -dragX*dragY, BODY_ANGLE_X, EYE_BALL_*.
- * Missing ids on a given model are skipped.
+ * ANGLE_X/Y use the full declared range, ANGLE_Z combines both axes, and body
+ * and eye parameters receive the corresponding normalized axis. Parameters not
+ * declared by a model are skipped.
  */
 export function focusParameterUpdates(
     parameters: readonly ParameterBinding[],
@@ -26,8 +26,7 @@ export function focusParameterUpdates(
     set("PARAM_ANGLE_X", x);
     set("PARAM_ANGLE_Y", y);
     set("PARAM_ANGLE_Z", clampUnit(x * y * -1));
-    // Official sample uses dragX*10 vs ANGLE's *30; BODY range is typically ±10,
-    // so full-range normalized drag still matches that relative weight.
+    // Each binding maps normalized input through its own declared range.
     set("PARAM_BODY_ANGLE_X", x);
     set("PARAM_BODY_ANGLE_Y", y);
     set("PARAM_EYE_BALL_X", x);

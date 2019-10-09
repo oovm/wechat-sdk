@@ -4,7 +4,10 @@ import {
     type MaskLayoutRect,
     partitionForClipping,
 } from "../render/clipping.js";
-import { modelXToCanvasPixelX, modelYUpToCanvasPixelY } from "../render/coords.js";
+import {
+    modelXToCanvasPixelX,
+    modelYUpToCanvasPixelY,
+} from "../render/coords.js";
 import { PREVIEW_FILL, PREVIEW_STROKE } from "../render/preview-style.js";
 import type {
     DrawableMesh,

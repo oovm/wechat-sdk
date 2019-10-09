@@ -38,11 +38,9 @@ function normalizePositions(
     canvasHeight: number,
     pixelsPerUnit: number,
 ): Float32Array {
-    // Cubism deformer output is in logical units (canvas / ppu), center origin.
-    // Authoring Y grows upward in the editor, but the runtime draw path that
-    // matches Cubism Web samples presents with Y flipped into our shared
-    // Y-up NDC (head / bowl toward +Y). Negate Y once here — same contract as
-    // moc2 after top-left pixel normalization.
+    // Deformer output uses logical canvas/ppu units around the model center.
+    // Convert the decoded authoring orientation once into the renderer's shared
+    // Y-up NDC contract, matching the moc2 path after top-left normalization.
     const ppu = pixelsPerUnit > 0 ? pixelsPerUnit : 1;
     const hw = canvasWidth > 0 ? (canvasWidth / ppu) * 0.5 : 0.5;
     const hh = canvasHeight > 0 ? (canvasHeight / ppu) * 0.5 : 0.5;

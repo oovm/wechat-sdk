@@ -47,7 +47,7 @@ describe("moc3 CPU golden (cpu-program)", () => {
         expect(fingerprintSnapshot(frame)).toBe(goldenMax);
     });
 
-    it("rejects truncated official MOC3 with a clear diagnostic", async () => {
+    it("rejects truncated binary MOC3 with a clear diagnostic", async () => {
         const buf = new ArrayBuffer(16);
         const view = new DataView(buf);
         view.setUint8(0, 0x4d);

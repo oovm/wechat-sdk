@@ -1,5 +1,5 @@
 /**
- * Parse official MOC3 bytes into typed section tables (no deform evaluation).
+ * Parse binary MOC3 input into typed section tables (no deform evaluation).
  */
 
 import {
