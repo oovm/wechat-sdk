@@ -189,8 +189,11 @@ pnpm --filter hexo-plugin-live2d test
 pnpm --filter hexo-plugin-live2d build
 ```
 
-Package verification should include the generated browser bundle and a clean Hexo fixture site, not only unit tests for
-configuration merging.
+**Test boundary:** this package's vitest suite covers plugin logic only (config merge, import map, inject HTML, asset
+route diagnostics with isolated temp `browserRoot`). It does **not** prove a real Hexo site loads models in the browser.
+
+For `hexo generate`, theme DOM/CSS, and ESM runtime smoke checks, use the **`hexo-theme-fate`** demo site
+(`pnpm build && pnpm verify:live2d` there). See `规划设计/live2d/06` §6.
 
 ## 🤝 Contributing
 
