@@ -15,7 +15,7 @@ separate model renderer.
 - Optional speech bubble and toolbar.
 - Pointer tracking and click feedback.
 - Site-wide floating character or custom target element.
-- No Pixi, Three.js, or official obfuscated runtime dependency.
+- No dependency on a general-purpose scene graph.
 
 ## 📦 Installation
 
@@ -106,6 +106,7 @@ When `target` is left as `#doki-live2d`, the plugin injects a default fixed-posi
 element, create the element in the theme and configure its selector:
 
 ```html
+
 <aside id="site-character" aria-label="Site character"></aside>
 ```
 
@@ -198,4 +199,12 @@ behavior belong in their respective packages.
 
 ## 📄 License
 
-See the repository license. Model assets and third-party content retain their own licenses.
+### Runtime boundary
+
+- This adapter consumes the repository's independently developed clean-room runtime.
+- It does not add, wrap, load, or require an official obfuscated runtime.
+
+### Terms
+
+- See the repository license for source-code terms.
+- Model assets and third-party content retain their own licenses.

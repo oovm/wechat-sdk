@@ -14,7 +14,9 @@ export function docsPaths(localeId: string) {
     };
 }
 
-export function watchDocumentLocale(cb: (id: string) => void): (() => void) | null {
+export function watchDocumentLocale(
+    cb: (id: string) => void,
+): (() => void) | null {
     if (typeof document === "undefined") return null;
     const obs = new MutationObserver(() => {
         cb(readLocaleId());
