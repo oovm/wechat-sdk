@@ -10,7 +10,12 @@
         "url": "git+https://github.com/doki-land/live2d.ts.git",
         "directory": "projects/adaptors/vmz-plugin-live2d"
     },
-    "keywords": ["vmz", "plugin", "live2d", "doki-land"],
+    "keywords": [
+        "vmz",
+        "plugin",
+        "live2d",
+        "doki-land"
+    ],
     "main": "./vmz.plugin.ts",
     "types": "./vmz.plugin.ts",
     "exports": {
@@ -19,19 +24,19 @@
             "default": "./vmz.plugin.ts"
         }
     },
-    "files": ["components", "vmz.plugin.ts", "README.md"],
-    "publishConfig": { "access": "public" },
+    "files": [
+        "components",
+        "vmz.plugin.ts",
+        "README.md"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "test": "vitest run --passWithNoTests"
     },
     "dependencies": {
         "@doki-land/live2d": "workspace:*",
         "@vmz/plugin": "^0.1.8"
-    },
-    "peerDependencies": {
-        "@doki-land/live2d": ">=0.0.1"
-    },
-    "peerDependenciesMeta": {
-        "@doki-land/live2d": { "optional": false }
     }
 }

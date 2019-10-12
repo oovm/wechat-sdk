@@ -13,8 +13,8 @@ order: 0
 - [模型来源](./guide/sources) — 本地 / URL / `npm:`
 - [包结构](./runtime/packages) — 各包职责
 - [模型格式](./runtime/formats) — cpu-program / moc2 / moc3
-- [Vue 适配](./adaptors/vue) · [Hexo 适配](./adaptors/hexo) · [Cocos 适配](./adaptors/cocos)
+- [Vue 适配](./adaptors/vue) · [Hexo 适配](./adaptors/hexo) · [Cocos 适配](./adaptors/cocos) · [VMZ 插件](../runtime/packages)
 
 ## 在线试用
 
-打开 [Playground](/playground) 加载本地 CPU fixture、样例模型或远程 / npm 源。
+从站点导航进入 **Playground**，加载本地 CPU fixture、样例模型或远程 / npm 源。

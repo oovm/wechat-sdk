@@ -13,8 +13,8 @@ Pure TypeScript Live2D runtime with WebGPU / WebGL2 / Canvas2D, plus Vue, Hexo, 
 - [Model sources](./guide/sources) — local / URL / `npm:`
 - [Packages](./runtime/packages) — package responsibilities
 - [Formats](./runtime/formats) — cpu-program / moc2 / moc3
-- [Vue adaptor](./adaptors/vue) · [Hexo adaptor](./adaptors/hexo) · [Cocos adaptor](./adaptors/cocos)
+- [Vue adaptor](./adaptors/vue) · [Hexo adaptor](./adaptors/hexo) · [Cocos adaptor](./adaptors/cocos) · [VMZ plugin](../runtime/packages)
 
 ## Try it
 
-Open the [Playground](/playground) to load the local CPU fixture, sample models, or remote / npm sources.
+Use the site nav **Playground** to load the local CPU fixture, sample models, or remote / npm sources.
