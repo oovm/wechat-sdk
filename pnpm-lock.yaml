@@ -9,7 +9,7 @@ importers:
   .:
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.4.8
+        specifier: 2.5.10
         version: 2.5.10
       '@webgpu/types':
         specifier: ^0.1.64

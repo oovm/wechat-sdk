@@ -241,6 +241,16 @@ Install workspace dependencies:
 pnpm install
 ```
 
+Local gate (Biome + typecheck + tests + builds + homepage）：
+
+```bash
+pnpm verify
+```
+
+`pnpm verify` includes `hexo-plugin-live2d` unit tests (plugin logic only). Hexo site / ESM inject acceptance lives in sibling `hexo-theme-fate` (`npm run build && npm run verify:live2d`).
+
+Real npm semver releases are **only** via GitHub Actions Trusted Publisher：push tag `vX.Y.Z` → `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
+
 Run type checking and renderer tests:
 
 ```bash

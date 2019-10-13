@@ -44,8 +44,14 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Test hexo plugin (logic only; not Hexo product readiness)
+        run: pnpm --filter hexo-plugin-live2d test
+
       - name: Build packages
         run: pnpm build
+
+      - name: Build hexo plugin browser assets
+        run: pnpm --filter hexo-plugin-live2d build
 
       - name: Build homepage
         run: pnpm build:homepage

@@ -16,7 +16,6 @@ export type {
     SessionState,
 } from "./contracts.js";
 export { modelSourceUrl } from "./contracts.js";
-export { detectModelSettingsFormat } from "./format/detect-format.js";
 export {
     EventEmitter,
     type FrameProfile,
@@ -26,6 +25,7 @@ export {
     type LoadProgress,
     type LoadProgressStage,
 } from "./events.js";
+export { detectModelSettingsFormat } from "./format/detect-format.js";
 export {
     FrameBlendMode,
     type FrameDrawable,

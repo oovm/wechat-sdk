@@ -73,7 +73,6 @@ export {
     MotionPriority,
     type PlayMotionOptions,
 } from "./facade/create-live2d.js";
-export { focusParameterUpdates } from "./stage/assets/focus.js";
 export {
     blendMotionLayers,
     evaluateCurve,
@@ -83,6 +82,7 @@ export {
     MotionPlayer,
     parseMotion3,
 } from "./motion/index.js";
+export { focusParameterUpdates } from "./stage/assets/focus.js";
 export {
     type CreateLive2dStageFullOptions,
     createLive2dStage,

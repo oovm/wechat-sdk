@@ -30,6 +30,44 @@ export {
     type WebGpuRendererOptions,
 } from "./backends/webgpu.js";
 export {
+    CPU_PROGRAM_KIND,
+    type CpuProgramFile,
+    createQuadProgram,
+    isCpuProgramBytes,
+    parseCpuProgram,
+    serializeCpuProgram,
+} from "./cpu/cpu-program.js";
+export {
+    createModelInstance,
+    evaluateFrame,
+    fingerprintSnapshot,
+    setParameterValue,
+} from "./cpu/evaluate.js";
+export {
+    detectMocBinaryFormat,
+    detectModelSettingsFormat,
+} from "./format/detect-format.js";
+export {
+    type DecodedMoc2,
+    type DecodedMoc3,
+    decodeMoc2,
+    decodeMoc3,
+} from "./moc/decode.js";
+export {
+    decodeMoc2ColorComposition,
+    decodeMoc3DrawableFlags,
+    Moc3DrawableFlag,
+} from "./moc/drawable-flags.js";
+export { createMoc2Backend, Moc2Backend } from "./moc/moc2.js";
+export { createMoc3Backend, Moc3Backend } from "./moc/moc3.js";
+export {
+    applyMoc3Glues,
+    loadMoc3Glues,
+    type Moc3GlueDef,
+    type Moc3GluePair,
+    meanGlueSeamDistance,
+} from "./moc/moc3-glue.js";
+export {
     applyWebGl2BlendMode,
     canvasCompositeForBlendMode,
     webGpuBlendState,
@@ -58,47 +96,14 @@ export {
     partitionForClipping,
 } from "./render/clipping.js";
 export {
-    CPU_PROGRAM_KIND,
-    type CpuProgramFile,
-    createQuadProgram,
-    isCpuProgramBytes,
-    parseCpuProgram,
-    serializeCpuProgram,
-} from "./cpu/cpu-program.js";
-export {
-    createModelInstance,
-    evaluateFrame,
-    fingerprintSnapshot,
-    setParameterValue,
-} from "./cpu/evaluate.js";
+    PREVIEW_FILL,
+    PREVIEW_STROKE,
+    triangleEdgesToLineList,
+} from "./render/preview-style.js";
 export {
     type CreateRendererOptions,
     createRenderer,
 } from "./runtime/create-renderer.js";
-export {
-    detectMocBinaryFormat,
-    detectModelSettingsFormat,
-} from "./format/detect-format.js";
-export {
-    type DecodedMoc2,
-    type DecodedMoc3,
-    decodeMoc2,
-    decodeMoc3,
-} from "./moc/decode.js";
-export {
-    decodeMoc2ColorComposition,
-    decodeMoc3DrawableFlags,
-    Moc3DrawableFlag,
-} from "./moc/drawable-flags.js";
-export { createMoc2Backend, Moc2Backend } from "./moc/moc2.js";
-export { createMoc3Backend, Moc3Backend } from "./moc/moc3.js";
-export {
-    applyMoc3Glues,
-    loadMoc3Glues,
-    type Moc3GlueDef,
-    type Moc3GluePair,
-    meanGlueSeamDistance,
-} from "./moc/moc3-glue.js";
 export {
     type ModelBackend,
     type ModelBackendOptions,
@@ -106,11 +111,6 @@ export {
     type SharedModelCompile,
     selectModelBackend,
 } from "./runtime/model-runtime.js";
-export {
-    PREVIEW_FILL,
-    PREVIEW_STROKE,
-    triangleEdgesToLineList,
-} from "./render/preview-style.js";
 export { compileSharedModelCompile } from "./runtime/shared-compile.js";
 export {
     BlendMode,
