@@ -6,10 +6,6 @@ engines.
 `live2d.ts` provides a focused model runtime instead of wrapping a general-purpose scene graph. It owns model loading,
 CPU evaluation, rendering, interaction, and host integration while keeping the public entry point small.
 
-> [!IMPORTANT]
-> The project does not load the official obfuscated Live2D runtime. Model execution is implemented in readable
-TypeScript and rendered through browser-native graphics APIs.
-
 ## ✨ Highlights
 
 - Pure TypeScript runtime with no native addon requirement.
@@ -280,7 +276,8 @@ Report security-sensitive issues privately to the maintainers rather than publis
 
 ### Engineering expectations
 
-- Preserve package ownership: runtime behavior belongs in the facade, core, loader, or renderer rather than a host adapter.
+- Preserve package ownership: runtime behavior belongs in the facade, core, loader, or renderer rather than a host
+  adapter.
 - Include tests proportional to the change.
 - Accompany format fixes with a minimal neutral fixture or reproducible model case.
 - Accompany rendering fixes with structural assertions or pixel evidence where practical.
@@ -291,18 +288,25 @@ Report security-sensitive issues privately to the maintainers rather than publis
 
 ### Clean-room implementation
 
-- Shaders, graphics pipelines, model-execution code, mask and blend paths, and renderer optimizations are independently designed and handwritten.
-- No implementation is copied, translated, ported, derived from, or linked against an official Cubism SDK implementation.
-- The project does not load or bundle an official Cubism Core binary or call an official Cubism SDK at build time or runtime.
-- Format compatibility and descriptive format names identify interoperability targets only; they do not imply shared code, implementation lineage, partnership, endorsement, affiliation, sponsorship, or employment.
+- Shaders, graphics pipelines, model-execution code, mask and blend paths, and renderer optimizations are independently
+  designed and handwritten.
+- No implementation is copied, translated, ported, derived from, or linked against an official Cubism SDK
+  implementation.
+- The project does not load or bundle an official Cubism Core binary or call an official Cubism SDK at build time or
+  runtime.
+- Format compatibility and descriptive format names identify interoperability targets only; they do not imply shared
+  code, implementation lineage, partnership, endorsement, affiliation, sponsorship, or employment.
 - The project and its contributors are independent and do not act on behalf of the official Cubism SDK vendor.
 
 ### Contribution boundary
 
-- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime.
-- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or
+  changes that require an official runtime.
+- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent
+  observations, or independently authored technical rationale.
 
 ### Source and asset terms
 
 - See the repository license for source-code terms.
-- Model files, textures, motions, expressions, audio, and character artwork may have separate licenses and are not automatically covered by the runtime license.
+- Model files, textures, motions, expressions, audio, and character artwork may have separate licenses and are not
+  automatically covered by the runtime license.
