@@ -49,7 +49,7 @@ function paramFingerprint(values: ArrayLike<number>): string {
 }
 
 interface Moc3State {
-    /** Present for official MOC3; null for cpu-program fixtures. */
+    /** Present for binary MOC3 input; null for cpu-program fixtures. */
     doc: Moc3Document | null;
     instance: ModelInstance;
     lastFrame: FrameSnapshot | null;
@@ -82,7 +82,7 @@ function bakePose(state: Moc3State): void {
     state.lastFrame = evaluateFrame(next);
 }
 
-/** moc3 model backend — official `.moc3` or CPU `.program.json` fixture. */
+/** moc3 model backend for binary `.moc3` input or CPU `.program.json` fixtures. */
 export class Moc3Backend implements ModelBackend {
     readonly format = "moc3" as const;
 

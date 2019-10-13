@@ -1,5 +1,11 @@
 /**
  * `@doki-land/live2d-core` — types, events, session contracts.
+ *
+ * Layout:
+ * - `format/`  — settings JSON format detection
+ * - `model/`   — settings / asset / actor instance types
+ * - `stage/`   — stage + actor contracts
+ * - root       — contracts, events, frame, program, session
  */
 
 export type {
@@ -10,7 +16,7 @@ export type {
     SessionState,
 } from "./contracts.js";
 export { modelSourceUrl } from "./contracts.js";
-export { detectModelSettingsFormat } from "./detect-format.js";
+export { detectModelSettingsFormat } from "./format/detect-format.js";
 export {
     EventEmitter,
     type FrameProfile,
@@ -32,12 +38,12 @@ export type {
     ModelFormat,
     ModelSettings,
     MotionDefinition,
-} from "./model.js";
+} from "./model/model.js";
 export type {
     ActorInstance,
     Live2dStageAssets,
     ModelAsset,
-} from "./model-asset.js";
+} from "./model/model-asset.js";
 export type {
     DrawableProgram,
     ModelInstance,
@@ -60,7 +66,7 @@ export type {
     PointerTrackingPolicy,
     StagePointerEvent,
     StageUpdateMode,
-} from "./stage.js";
-export { DEFAULT_ACTOR_TRANSFORM } from "./stage.js";
+} from "./stage/stage.js";
+export { DEFAULT_ACTOR_TRANSFORM } from "./stage/stage.js";
 
 export const LIVE2D_CORE_VERSION = "0.0.0" as const;

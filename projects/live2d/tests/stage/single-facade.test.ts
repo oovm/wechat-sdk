@@ -2,7 +2,7 @@
 
 import { createMoc3Backend } from "@doki-land/live2d-renderer";
 import { describe, expect, it } from "vitest";
-import { createLive2D } from "../../src/create-live2d.js";
+import { createLive2D } from "../../src/facade/create-live2d.js";
 import {
     cpuProgramBytes,
     createCountingResolver,

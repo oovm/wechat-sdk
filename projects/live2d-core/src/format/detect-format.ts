@@ -3,7 +3,7 @@
  * Shared by loader normalize and renderer backends — keep binary peek in renderer.
  */
 
-import type { ModelFormat } from "./model.js";
+import type { ModelFormat } from "../model/model.js";
 
 /** Detect moc2 vs moc3 from model settings JSON shape. Returns null if unknown. */
 export function detectModelSettingsFormat(json: unknown): ModelFormat | null {

@@ -1,6 +1,6 @@
 /**
  * moc2 default-pose deformer bake: affine + mesh-warp parent chain.
- * Clean-room from public moc2 layout / observed keyform semantics.
+ * Evaluates the parsed keyform tables into drawable-space positions.
  */
 
 import { interpolateKeyforms, resolveKeyformBlend } from "./moc2-keyforms.js";

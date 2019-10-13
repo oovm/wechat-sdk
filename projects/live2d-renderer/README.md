@@ -19,12 +19,15 @@ Applications should normally use these capabilities through `@doki-land/live2d`.
 
 ## 🧭 Package Role
 
-The source tree separates three concerns:
+The source tree separates execution concerns:
 
 ```text
-src/moc/       model formats, deformation, and ModelBackend implementations
-src/cpu/       model program parsing and CPU frame evaluation
 src/backends/  WebGPU, WebGL2, and Canvas2D graphics backends
+src/moc/       MOC2/MOC3 decode, deformation, and ModelBackend implementations
+src/cpu/       model program parsing and CPU frame evaluation
+src/render/    blend modes, clipping, coords, preview styling
+src/runtime/   renderer factory and model-runtime glue
+src/format/    moc binary and settings format peek helpers
 ```
 
 MOC2 and MOC3 are model formats, not graphics backends. WebGPU, WebGL2, and Canvas2D are graphics backends, not model
@@ -42,10 +45,10 @@ pipelines.
 ## 🚀 Creating a Renderer
 
 ```ts
-import { createRenderer } from "@doki-land/live2d-renderer";
+import {createRenderer} from "@doki-land/live2d-renderer";
 
 const renderer = createRenderer({
-  prefer: ["webgpu", "webgl2", "canvas2d"],
+    prefer: ["webgpu", "webgl2", "canvas2d"],
 });
 
 await renderer.initialize(canvas);
@@ -164,15 +167,20 @@ contract justifies it.
 
 ### Clean-room rendering
 
-- WGSL and GLSL shaders, graphics pipelines, mask and blend paths, model execution, Canvas2D mesh rendering, resource lifecycle, and GPU submission optimizations are independently designed and handwritten.
-- No implementation is copied, translated, ported, derived from, or linked against an official renderer, Core binary, SDK wrapper, shader source, pipeline implementation, or internal API.
+- WGSL and GLSL shaders, graphics pipelines, mask and blend paths, model execution, Canvas2D mesh rendering, resource
+  lifecycle, and GPU submission optimizations are independently designed and handwritten.
+- No implementation is copied, translated, ported, derived from, or linked against an official renderer, Core binary,
+  SDK wrapper, shader source, pipeline implementation, or internal API.
 - External format names identify interoperability targets only.
-- The maintainers and contributors are independent and are not employed by, affiliated with, sponsored by, endorsed by, or acting on behalf of the official Cubism SDK vendor.
+- The maintainers and contributors are independent and are not employed by, affiliated with, sponsored by, endorsed by,
+  or acting on behalf of the official Cubism SDK vendor.
 
 ### Contribution boundary
 
-- Do not submit official SDK or shader source, disassembly-derived implementations, mechanically translated code, or dependencies on an official runtime.
-- Support compatibility patches with a public format fact, neutral fixture, reproducible independent observation, or independently authored technical rationale.
+- Do not submit official SDK or shader source, disassembly-derived implementations, mechanically translated code, or
+  dependencies on an official runtime.
+- Support compatibility patches with a public format fact, neutral fixture, reproducible independent observation, or
+  independently authored technical rationale.
 
 ### Terms
 

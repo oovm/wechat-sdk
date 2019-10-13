@@ -34,7 +34,7 @@ export interface ParameterBinding {
 /** Shared read-only decode payload (renderer-internal; set by stage asset cache). */
 export interface SharedModelCompile {
     readonly mocBytes: ArrayBuffer;
-    /** moc3 official `.moc3` document. */
+    /** Parsed binary `.moc3` document. */
     readonly moc3Doc?: unknown;
     /** moc3 CPU `.program.json` program. */
     readonly cpuProgram?: import("@doki-land/live2d-core").ModelProgram;

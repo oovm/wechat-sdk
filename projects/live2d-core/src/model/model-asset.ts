@@ -1,4 +1,4 @@
-import type { AssetResolver, ModelSource } from "./contracts.js";
+import type { AssetResolver, ModelSource } from "../contracts.js";
 import type { InternalModel, ModelSettings } from "./model.js";
 
 /**

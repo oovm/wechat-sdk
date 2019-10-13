@@ -3,22 +3,22 @@ import {
     createMoc3Backend,
     createRenderer,
 } from "@doki-land/live2d-renderer";
-import { allocateActorId } from "./stage/actor.js";
+import { allocateActorId } from "../stage/actor.js";
 import {
     type CreateLive2DOptions,
     createSingleActorFacade,
     type Live2DRuntime,
-} from "./stage/single-facade.js";
-import { createLive2dStage } from "./stage/stage.js";
+} from "../stage/single-facade.js";
+import { createLive2dStage } from "../stage/stage.js";
 
 export type {
     CreateLive2DOptions,
     Live2DRuntime,
-} from "./stage/single-facade.js";
+} from "../stage/single-facade.js";
 export {
     MotionPriority,
     type PlayMotionOptions,
-} from "./stage/single-facade.js";
+} from "../stage/single-facade.js";
 
 /** Wire moc backends and a renderer into one single-actor session. */
 export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
@@ -31,9 +31,9 @@ export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
         renderer:
             options.renderer ?? createRenderer({ prefer: options.prefer }),
         updateMode: options.updateMode ?? "manual",
-    }) as import("./stage/stage.js").Live2dStageImpl;
+    }) as import("../stage/stage.js").Live2dStageImpl;
     const actor = stage.createActor({
         id: allocateActorId("default"),
-    }) as import("./stage/actor.js").Live2dActorImpl;
+    }) as import("../stage/actor.js").Live2dActorImpl;
     return createSingleActorFacade(stage, actor, backends);
 }

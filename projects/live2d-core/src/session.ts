@@ -1,7 +1,7 @@
 import type { AssetResolver, ModelSource, SessionState } from "./contracts.js";
 import { EventEmitter } from "./events.js";
 import type { FrameSnapshot } from "./frame.js";
-import type { InternalModel } from "./model.js";
+import type { InternalModel } from "./model/model.js";
 
 /** High-level runtime session for one mounted surface. */
 export interface Live2DSession {

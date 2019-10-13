@@ -4,7 +4,7 @@
 
 import { FrameBlendMode } from "@doki-land/live2d-core";
 
-/** Cubism Core constant drawable flag bits (moc3 art_mesh.drawable_flags). */
+/** Drawable flag bits decoded from the supported MOC3 art-mesh records. */
 export const Moc3DrawableFlag = {
     BlendAdditive: 1 << 0,
     BlendMultiplicative: 1 << 1,

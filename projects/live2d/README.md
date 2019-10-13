@@ -25,19 +25,28 @@ pnpm add @doki-land/live2d
 
 The implementation packages are installed transitively. Most applications should not depend on them directly.
 
+## 🧭 Source Layout
+
+```text
+src/facade/    createLive2D() — default stage + single actor
+src/motion/    motion3 parse, curves, MotionPlayer
+src/stage/     Live2dStage, actors, asset registry, transforms
+src/reexports/ optional subpath exports for core / loader / renderer
+```
+
 ## 🚀 Quick Start
 
 ```ts
-import { createLive2D } from "@doki-land/live2d";
+import {createLive2D} from "@doki-land/live2d";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#live2d");
 
 if (!canvas) {
-  throw new Error("Missing Live2D canvas");
+    throw new Error("Missing Live2D canvas");
 }
 
 const runtime = createLive2D({
-  prefer: ["webgpu", "webgl2", "canvas2d"],
+    prefer: ["webgpu", "webgl2", "canvas2d"],
 });
 
 runtime.mount(canvas);
@@ -46,9 +55,9 @@ await runtime.loadModel("/models/character.model3.json");
 let previous = performance.now();
 
 function frame(now: number) {
-  runtime.update((now - previous) / 1000);
-  previous = now;
-  requestAnimationFrame(frame);
+    runtime.update((now - previous) / 1000);
+    previous = now;
+    requestAnimationFrame(frame);
 }
 
 requestAnimationFrame(frame);
@@ -60,7 +69,7 @@ The runtime does not require ownership of `requestAnimationFrame`. Drive it from
 
 ```ts
 engine.onUpdate((deltaTime) => {
-  runtime.update(deltaTime);
+    runtime.update(deltaTime);
 });
 ```
 
@@ -73,11 +82,11 @@ animation and physics once those systems are enabled.
 await runtime.loadModel("/models/actor.model3.json");
 
 await runtime.loadModel(
-  "https://cdn.example.com/models/actor.model3.json",
+    "https://cdn.example.com/models/actor.model3.json",
 );
 
 await runtime.loadModel(
-  "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+    "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
 );
 ```
 
@@ -97,8 +106,8 @@ Remote servers must allow cross-origin access to settings, model binaries, and t
 runtime.setParameter("PARAM_ANGLE_X", 15);
 
 const angleX = runtime
-  .listParameters()
-  .find((parameter) => parameter.id === "PARAM_ANGLE_X");
+    .listParameters()
+    .find((parameter) => parameter.id === "PARAM_ANGLE_X");
 
 console.log(angleX);
 ```
@@ -113,7 +122,7 @@ Parameter availability and ranges belong to the loaded model. Do not assume ever
 const area = runtime.hitTest(modelX, modelY);
 
 if (area) {
-  console.log("Hit", area);
+    console.log("Hit", area);
 }
 ```
 
@@ -143,8 +152,8 @@ Advanced applications can provide a renderer or model backends:
 
 ```ts
 const runtime = createLive2D({
-  renderer: customRenderer,
-  backends: [customBackend],
+    renderer: customRenderer,
+    backends: [customBackend],
 });
 ```
 
@@ -196,14 +205,18 @@ applicable.
 ### Implementation independence
 
 - This package composes an independently developed clean-room runtime.
-- It does not load, link against, wrap, translate, port, or derive its implementation from an official Cubism SDK or Core binary.
-- Compatible model support is an interoperability goal, not evidence of a shared implementation, endorsement, affiliation, sponsorship, or employment relationship.
+- It does not load, link against, wrap, translate, port, or derive its implementation from an official Cubism SDK or
+  Core binary.
+- Compatible model support is an interoperability goal, not evidence of a shared implementation, endorsement,
+  affiliation, sponsorship, or employment relationship.
 - The project and its contributors are independent and do not act on behalf of the official Cubism SDK vendor.
 
 ### Contribution boundary
 
-- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or changes that require an official runtime.
-- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent observations, or independently authored technical rationale.
+- Do not submit official SDK or shader source, disassembly-derived code, mechanically translated implementation code, or
+  changes that require an official runtime.
+- Support compatibility-sensitive work with public format facts, neutral fixtures, reproducible independent
+  observations, or independently authored technical rationale.
 
 ### Terms
 
