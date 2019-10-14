@@ -135,7 +135,11 @@ ${scriptTag}
 function collectAssetRoutes(config) {
     const pluginRootPath = config.pluginRootPath || DEFAULTS.pluginRootPath;
     const loader = resolveLoader(config);
-    const browserRoot = path.join(__dirname, "browser");
+    /** @internal test hook — not read from site `_config.yml` */
+    const browserRoot =
+        typeof config.browserRoot === "string"
+            ? config.browserRoot
+            : path.join(__dirname, "browser");
     /** @type {{ path: string; data: () => import('node:fs').ReadStream }[]} */
     const out = [];
 
