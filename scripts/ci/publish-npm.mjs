@@ -3,7 +3,8 @@
  *
  * - tag vX.Y.Z → version X.Y.Z (next developer preview: 0.0.11)
  * - Idempotent: target version already on registry → skip (success)
- * - No NPM_TOKEN; OIDC Trusted Publisher (permissions.id-token: write)
+ * - CI: No NPM_TOKEN; OIDC Trusted Publisher (permissions.id-token: write)
+ * - Local: optional TOTP via `.env.placeholder.local` (same as placeholder scripts)
  * - Contract: file=publish-npm.yml env=NPM_PUBLISH repo=doki-land/live2d.ts
  *
  * Prerequisite: packages claimed via `pnpm placeholder:publish` (0.0.0 stubs).
@@ -14,6 +15,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { currentOtp, otpAuthMode } from "./npm-otp.mjs";
 
 const ROOT = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -126,7 +128,7 @@ function isAlreadyPublished(blob) {
 }
 
 function isAuthFailure(blob) {
-    return /ENEEDAUTH|Unable to authenticate|not authorized|OIDC|trusted publisher|two-factor|need to be logged|login|identity token|do not have permission to access it|Access token expired or revoked/i.test(
+    return /ENEEDAUTH|Unable to authenticate|not authorized|OIDC|trusted publisher|two-factor|need to be logged|login|identity token|do not have permission to access it|Access token expired or revoked|EOTP|one-time password|auth\/cli/i.test(
         blob,
     );
 }
@@ -143,6 +145,8 @@ function isMissingPackage(blob) {
  */
 function npmPublish(stagingDir, name, version) {
     const args = ["publish", "--access", "public"];
+    const otp = currentOtp();
+    if (otp) args.push(`--otp=${otp}`);
     console.log(`\n=== ${name}@${version} npm ${args.join(" ")} ===`);
     const r = run("npm", args, { cwd: stagingDir });
     if (r.stdout) process.stdout.write(`${r.stdout}\n`);
@@ -279,7 +283,7 @@ function publishJs(version) {
             skipped += 1;
         } else if (outcome === "auth") {
             fail(
-                `OIDC/auth failed for ${name}. Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=doki-land/live2d.ts`,
+                `auth failed for ${name}. CI: Trusted Publisher publish-npm.yml env=NPM_PUBLISH. Local: set NPM_TOTP_SECRET in .env.placeholder.local`,
             );
         } else if (outcome === "missing") {
             fail(
@@ -293,12 +297,15 @@ function publishJs(version) {
 const version = resolveVersion();
 console.log(`ci-publish-npm: version=${version}`);
 console.log(` GITHUB_REF=${process.env.GITHUB_REF ?? "(none)"}`);
+console.log(` local otp mode=${otpAuthMode()}`);
 console.log(
     " Trusted Publisher: publish-npm.yml + NPM_PUBLISH (doki-land/live2d.ts)\n",
 );
 
-delete process.env.NODE_AUTH_TOKEN;
-delete process.env.NPM_TOKEN;
+if (process.env.GITHUB_ACTIONS === "true") {
+    delete process.env.NODE_AUTH_TOKEN;
+    delete process.env.NPM_TOKEN;
+}
 
 const js = publishJs(version);
 console.log(
