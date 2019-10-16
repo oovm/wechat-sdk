@@ -23,8 +23,8 @@ import {
     compileSharedModelCompile,
     selectModelBackend,
 } from "@doki-land/live2d-renderer";
-import { loadTextureData, releaseTextureData } from "./assets/load-textures.js";
 import type { Motion3Clip } from "../motion/index.js";
+import { loadTextureData, releaseTextureData } from "./assets/load-textures.js";
 import { resolveModelAssetKey } from "./model-asset-key.js";
 
 function lerp(a: number, b: number, t: number): number {

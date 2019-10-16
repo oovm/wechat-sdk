@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { decodeMoc3 } from "../src/moc/decode.js";
 import {
     buildClippingContexts,
     partitionForClipping,
 } from "../src/render/clipping.js";
-import { decodeMoc3 } from "../src/moc/decode.js";
 import {
     CLIPPING_MOC3_CANDIDATES,
     HARU_MOC3_CANDIDATES,

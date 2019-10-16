@@ -8,8 +8,8 @@
  * - Do NOT CSS `scaleY(-1)` the canvas; that inverts hit-testing and tracking.
  */
 import { describe, expect, it } from "vitest";
-import { modelYUpToCanvasPixelY } from "../src/render/coords.js";
 import { decodeMoc2, decodeMoc3 } from "../src/moc/decode.js";
+import { modelYUpToCanvasPixelY } from "../src/render/coords.js";
 import {
     HIJIKI_MOC2_CANDIDATES,
     tryReadFixture,
