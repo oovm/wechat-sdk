@@ -36,7 +36,7 @@ export interface TextureData {
 export interface ModelDrawPass {
     setTextures(textures: TextureData[]): void;
 
-    draw(drawables: DrawableMesh[], modelMatrix: Float32Array): void;
+    draw(drawables: readonly DrawableMesh[], modelMatrix: Float32Array): void;
 
     destroy(): void;
 }

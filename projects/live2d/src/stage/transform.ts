@@ -133,29 +133,96 @@ export function compareActorsForHit<
     return compareActorsForDraw(b, a, definedLayers);
 }
 
+/**
+ * Resident scratch for {@link transformDrawablesForStage}: stable mesh objects
+ * and vertex buffers (no per-frame `map` / `{...d}` / `new Float32Array`).
+ * Safe to reuse across actors when each transformed list is drawn before the
+ * next `transform` call.
+ */
+export class StageDrawableScratch {
+    readonly #meshes: DrawableMesh[] = [];
+    #view: DrawableMesh[] = [];
+
+    transform(
+        drawables: readonly DrawableMesh[],
+        transform: ActorTransform,
+        opacity: number,
+    ): readonly DrawableMesh[] {
+        const alpha = Math.min(1, Math.max(0, opacity));
+        const n = drawables.length;
+        while (this.#meshes.length < n) {
+            this.#meshes.push(createScratchMesh());
+        }
+        if (this.#view.length !== n) {
+            this.#view = this.#meshes.slice(0, n);
+        }
+        for (let i = 0; i < n; i++) {
+            const src = drawables[i]!;
+            const dst = this.#meshes[i]!;
+            copyMeshMeta(src, dst);
+            if (!src.visible || alpha <= 0) {
+                dst.visible = false;
+                dst.opacity = 0;
+                continue;
+            }
+            const len = src.vertexPositions.length;
+            let pos = dst.vertexPositions;
+            if (pos.length !== len) {
+                pos = new Float32Array(len);
+                dst.vertexPositions = pos;
+            }
+            for (let j = 0; j < len; j += 2) {
+                const { stageX, stageY } = modelNdcToStage(
+                    src.vertexPositions[j]!,
+                    src.vertexPositions[j + 1]!,
+                    transform,
+                );
+                pos[j] = stageX * 2 - 1;
+                pos[j + 1] = 1 - stageY * 2;
+            }
+            dst.opacity = src.opacity * alpha;
+            dst.visible = true;
+        }
+        return this.#view;
+    }
+}
+
+function createScratchMesh(): DrawableMesh {
+    return {
+        index: 0,
+        textureIndex: 0,
+        vertexPositions: new Float32Array(0),
+        uvs: new Float32Array(0),
+        indices: new Uint16Array(0),
+        opacity: 1,
+        blendMode: 0,
+        invertedMask: false,
+        renderOrder: 0,
+        dynamicFlag: true,
+        maskIndices: [],
+        visible: true,
+    };
+}
+
+function copyMeshMeta(src: DrawableMesh, dst: DrawableMesh): void {
+    dst.index = src.index;
+    dst.textureIndex = src.textureIndex;
+    dst.uvs = src.uvs;
+    dst.indices = src.indices;
+    dst.blendMode = src.blendMode;
+    dst.invertedMask = src.invertedMask;
+    dst.renderOrder = src.renderOrder;
+    dst.dynamicFlag = src.dynamicFlag;
+    dst.maskIndices = src.maskIndices;
+}
+
 /** Bake actor stage placement into drawable vertices (renderer stays single-pass). */
 export function transformDrawablesForStage(
     drawables: readonly DrawableMesh[],
     transform: ActorTransform,
     opacity: number,
-): DrawableMesh[] {
-    const alpha = Math.min(1, Math.max(0, opacity));
-    return drawables.map((d) => {
-        if (!d.visible || alpha <= 0) return { ...d, visible: false };
-        const pos = new Float32Array(d.vertexPositions.length);
-        for (let i = 0; i < pos.length; i += 2) {
-            const { stageX, stageY } = modelNdcToStage(
-                d.vertexPositions[i]!,
-                d.vertexPositions[i + 1]!,
-                transform,
-            );
-            pos[i] = stageX * 2 - 1;
-            pos[i + 1] = 1 - stageY * 2;
-        }
-        return {
-            ...d,
-            vertexPositions: pos,
-            opacity: d.opacity * alpha,
-        };
-    });
+    scratch?: StageDrawableScratch,
+): readonly DrawableMesh[] {
+    const pool = scratch ?? new StageDrawableScratch();
+    return pool.transform(drawables, transform, opacity);
 }

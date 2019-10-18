@@ -23,8 +23,18 @@ import {
     clientToStage,
     compareActorsForDraw,
     compareActorsForHit,
-    transformDrawablesForStage,
+    StageDrawableScratch,
 } from "./transform.js";
+
+/** Resident identity model matrix — backends currently ignore it; never alloc per frame. */
+export const IDENTITY_MAT4 = /* @__PURE__ */ (() => {
+    const m = new Float32Array(16);
+    m[0] = 1;
+    m[5] = 1;
+    m[10] = 1;
+    m[15] = 1;
+    return m;
+})();
 
 export interface CreateLive2dStageFullOptions extends CreateLive2dStageOptions {
     backends?: ModelBackend[];
@@ -55,6 +65,8 @@ export class Live2dStageImpl implements Live2dStage {
         ["pointermove", new Set()],
         ["pointerup", new Set()],
     ]);
+    readonly #drawScratch = new StageDrawableScratch();
+    readonly #sortedActors: Live2dActorImpl[] = [];
 
     #canvas: HTMLCanvasElement | null = null;
     #initPromise: Promise<void> | null = null;
@@ -178,7 +190,12 @@ export class Live2dStageImpl implements Live2dStage {
 
     render(): void {
         if (this.#destroyed || !this.#canvas) return;
-        const sorted = [...this.#actors.values()].sort((a, b) =>
+        const sorted = this.#sortedActors;
+        sorted.length = 0;
+        for (const actor of this.#actors.values()) {
+            sorted.push(actor);
+        }
+        sorted.sort((a, b) =>
             compareActorsForDraw(a, b, this.#definedLayers),
         );
 
@@ -188,12 +205,12 @@ export class Live2dStageImpl implements Live2dStage {
             const drawables = actor.lastDrawables;
             const pass = actor.slot.drawPass;
             if (!drawables || !pass) continue;
-            const placed = transformDrawablesForStage(
+            const placed = this.#drawScratch.transform(
                 drawables,
                 actor.getTransform(),
                 actor.opacity,
             );
-            pass.draw(placed, new Float32Array(16));
+            pass.draw(placed, IDENTITY_MAT4);
         }
         this.#renderer.endFrame();
     }
