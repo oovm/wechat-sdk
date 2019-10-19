@@ -49,11 +49,12 @@ export function moc2ParamGetterFromValues(
     return (id: string) => byId.get(id) ?? 0;
 }
 
-function normalizePositions(
+function normalizePositionsInto(
     positions: Float32Array,
     canvasWidth: number,
     canvasHeight: number,
-): Float32Array {
+    out: Float32Array,
+): void {
     // moc2 draw coords are canvas pixels with origin at the **top-left**
     // (Y increases downward), matching Live2D Cubism 2 canvas space.
     // Map to Y-up NDC so WebGL/WebGPU/Canvas2D share one convention:
@@ -61,12 +62,97 @@ function normalizePositions(
     //   y: [0, h] → [1, -1]  (top of canvas → NDC +Y)
     const w = canvasWidth > 0 ? canvasWidth : 1;
     const h = canvasHeight > 0 ? canvasHeight : 1;
-    const out = new Float32Array(positions.length);
     for (let i = 0; i + 1 < positions.length; i += 2) {
         out[i] = (positions[i]! / w) * 2 - 1;
         out[i + 1] = 1 - (positions[i + 1]! / h) * 2;
     }
+}
+
+function normalizePositions(
+    positions: Float32Array,
+    canvasWidth: number,
+    canvasHeight: number,
+): Float32Array {
+    const out = new Float32Array(positions.length);
+    normalizePositionsInto(positions, canvasWidth, canvasHeight, out);
     return out;
+}
+
+/**
+ * Evaluate moc2 keyforms/deformers into resident {@link DrawableMesh} buffers.
+ * Mesh object identity and shared `uvs`/`indices`/`maskIndices` are preserved
+ * when vertex counts are unchanged.
+ */
+export function evaluateMoc2PoseInto(
+    model: Moc2ModelImpl,
+    getParam: (id: string) => number,
+    byId: ReadonlyMap<string, import("../types.js").DrawableMesh>,
+): void {
+    const ops = bakeDeformerOps(model, getParam);
+    const w = model.canvasWidth;
+    const h = model.canvasHeight;
+    for (const part of model.parts) {
+        for (const mesh of part.drawData) {
+            const sink = byId.get(mesh.id);
+            if (!sink) continue;
+            const floatCount = mesh.numPoints * 2;
+            const local = interpolateKeyforms(
+                mesh.keyforms,
+                mesh.pivotManager,
+                getParam,
+                floatCount,
+            );
+            const world = transformDrawablePositions(mesh, local, ops);
+            let pos = sink.vertexPositions;
+            if (pos.length !== world.length) {
+                pos = new Float32Array(world.length);
+                sink.vertexPositions = pos;
+            }
+            normalizePositionsInto(world, w, h, pos);
+            sink.opacity = interpolateScalarTable(
+                mesh.opacities,
+                mesh.pivotManager,
+                getParam,
+                1,
+            );
+            sink.renderOrder = Math.round(
+                interpolateScalarTable(
+                    mesh.drawOrders,
+                    mesh.pivotManager,
+                    getParam,
+                    mesh.averageDrawOrder,
+                ),
+            );
+            sink.visible = part.visible;
+        }
+    }
+}
+
+/** Collect drawable ids in the same order {@link moc2ModelToProgram} assigns indices. */
+export function moc2DrawableIdsInProgramOrder(
+    model: Moc2ModelImpl,
+    getParam?: (id: string) => number,
+): string[] {
+    const paramDefs = model.paramDefSet?.params ?? [];
+    const gp = getParam ?? buildParamGetter(paramDefs);
+    const drafts: { id: string; renderOrder: number }[] = [];
+    for (const part of model.parts) {
+        for (const mesh of part.drawData) {
+            drafts.push({
+                id: mesh.id,
+                renderOrder: Math.round(
+                    interpolateScalarTable(
+                        mesh.drawOrders,
+                        mesh.pivotManager,
+                        gp,
+                        mesh.averageDrawOrder,
+                    ),
+                ),
+            });
+        }
+    }
+    drafts.sort((a, b) => a.renderOrder - b.renderOrder);
+    return drafts.map((d) => d.id);
 }
 
 interface DraftDrawable {
