@@ -1,0 +1,13 @@
+# Keep Biome / CI line endings stable on Windows checkouts.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.moc binary
+*.moc3 binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
