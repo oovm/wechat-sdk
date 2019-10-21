@@ -6,10 +6,7 @@ import type {
     ModelSettings,
 } from "@doki-land/live2d-core";
 import { detectModelSettingsFormat } from "@doki-land/live2d-core";
-import {
-    createModelInstance,
-    setParameterValue,
-} from "../cpu/evaluate.js";
+import { createModelInstance, setParameterValue } from "../cpu/evaluate.js";
 import type {
     ModelBackend,
     ModelBackendOptions,
@@ -102,9 +99,7 @@ function refreshDrawView(state: Moc2State): void {
     const view = state.drawView;
     view.length = 0;
     for (const m of state.meshes) view.push(m);
-    view.sort(
-        (a, b) => a.renderOrder - b.renderOrder || a.index - b.index,
-    );
+    view.sort((a, b) => a.renderOrder - b.renderOrder || a.index - b.index);
 }
 
 /** Re-bake moc2 geometry for current parameter values into resident meshes. */
@@ -172,7 +167,10 @@ export class Moc2Backend implements ModelBackend {
         const program = moc2ModelToProgram(moc);
         const instance = createModelInstance(program);
         const drawableIds = moc2DrawableIdsInProgramOrder(moc);
-        const { meshes, byId } = allocateMeshesFromProgram(program, drawableIds);
+        const { meshes, byId } = allocateMeshesFromProgram(
+            program,
+            drawableIds,
+        );
         const { bindings, paramIndexById } = buildBindings(instance);
         const drawView: DrawableMesh[] = [];
         const model: InternalModel = {
@@ -220,6 +218,15 @@ export class Moc2Backend implements ModelBackend {
         const state = stateByModel.get(model);
         if (!state) return;
         setParameterValue(state.instance, id, value);
+        const index = state.paramIndexById.get(id);
+        if (index !== undefined) {
+            const binding = state.bindings[index];
+            if (binding) {
+                (binding as { value: number }).value =
+                    state.instance.parameterValues[index] ??
+                    binding.defaultValue;
+            }
+        }
         state.poseDirty = true;
     }
 

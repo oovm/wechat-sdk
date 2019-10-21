@@ -117,6 +117,21 @@ export interface Live2dActor {
         value: number;
     }>;
 
+    /** Load-time stable id → binding map (binding.value updated on setParameter). */
+    parameterMap(): ReadonlyMap<
+        string,
+        {
+            id: string;
+            min: number;
+            max: number;
+            defaultValue: number;
+            value: number;
+        }
+    >;
+
+    /** Resolve parameter id → index (O(1) after load). */
+    resolveParameter(id: string): number | undefined;
+
     listMotionGroups(): Record<string, readonly MotionDefinition[]>;
 
     playMotion(

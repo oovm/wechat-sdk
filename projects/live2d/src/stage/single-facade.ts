@@ -33,6 +33,9 @@ export interface Live2DRuntime extends Live2DSession {
 
     setParameter(id: string, value: number): void;
     listParameters(): readonly ParameterBinding[];
+    /** Stable load-time parameter map for focus / hosts (no per-frame rebuild). */
+    parameterMap(): ReadonlyMap<string, ParameterBinding>;
+    resolveParameter(id: string): number | undefined;
     hitTest(x: number, y: number): string | null;
     listMotionGroups(): Record<
         string,
@@ -140,6 +143,12 @@ export function createSingleActorFacade(
         },
         listParameters() {
             return actor.listParameters();
+        },
+        parameterMap() {
+            return actor.parameterMap();
+        },
+        resolveParameter(id) {
+            return actor.resolveParameter(id);
         },
         listMotionGroups() {
             return actor.listMotionGroups();

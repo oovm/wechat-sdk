@@ -6,13 +6,25 @@ import type { ParameterBinding } from "@doki-land/live2d-renderer";
  * ANGLE_X/Y use the full declared range, ANGLE_Z combines both axes, and body
  * and eye parameters receive the corresponding normalized axis. Parameters not
  * declared by a model are skipped.
+ *
+ * Prefer a stable `Map` from load-time bindings to avoid per-frame Map rebuild.
  */
 export function focusParameterUpdates(
-    parameters: readonly ParameterBinding[],
+    parameters:
+        | readonly ParameterBinding[]
+        | ReadonlyMap<string, ParameterBinding>,
     dragX: number,
     dragY: number,
 ): Array<{ id: string; value: number }> {
-    const byId = new Map(parameters.map((p) => [p.id, p]));
+    const byId =
+        parameters instanceof Map || isParamMap(parameters)
+            ? parameters
+            : new Map(
+                  (parameters as readonly ParameterBinding[]).map((p) => [
+                      p.id,
+                      p,
+                  ]),
+              );
     const x = clampUnit(dragX);
     const y = clampUnit(dragY);
     const out: Array<{ id: string; value: number }> = [];
@@ -33,6 +45,18 @@ export function focusParameterUpdates(
     set("PARAM_EYE_BALL_Y", y);
 
     return out;
+}
+
+function isParamMap(
+    value: unknown,
+): value is ReadonlyMap<string, ParameterBinding> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as Map<string, unknown>).get === "function" &&
+        typeof (value as Map<string, unknown>).keys === "function" &&
+        !Array.isArray(value)
+    );
 }
 
 function clampUnit(n: number): number {

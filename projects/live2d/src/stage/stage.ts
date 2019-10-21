@@ -195,9 +195,7 @@ export class Live2dStageImpl implements Live2dStage {
         for (const actor of this.#actors.values()) {
             sorted.push(actor);
         }
-        sorted.sort((a, b) =>
-            compareActorsForDraw(a, b, this.#definedLayers),
-        );
+        sorted.sort((a, b) => compareActorsForDraw(a, b, this.#definedLayers));
 
         this.#renderer.beginFrame();
         for (const actor of sorted) {

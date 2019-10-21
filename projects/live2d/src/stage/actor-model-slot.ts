@@ -52,6 +52,8 @@ export class ActorModelSlot {
     #backend: ModelBackend | null = null;
     #lease: ModelAssetLease | null = null;
     #loadGeneration = 0;
+    readonly #paramById = new Map<string, ParameterBinding>();
+    readonly #paramIndexById = new Map<string, number>();
 
     constructor(options: ActorModelSlotOptions) {
         this.#assets = options.assets;
@@ -111,16 +113,46 @@ export class ActorModelSlot {
                 this.#backend.setParameter(this.#model, s.id, s.value);
                 continue;
             }
-            const cur =
-                this.#backend
-                    .listParameters?.(this.#model)
-                    .find((p) => p.id === s.id)?.value ?? s.value;
+            const cur = this.#paramById.get(s.id)?.value ?? s.value;
             this.#backend.setParameter(
                 this.#model,
                 s.id,
                 cur + (s.value - cur) * s.weight,
             );
         }
+    }
+
+    #rebuildParamCache(): void {
+        this.#paramById.clear();
+        this.#paramIndexById.clear();
+        if (!this.#model || !this.#backend?.listParameters) return;
+        const list = this.#backend.listParameters(this.#model);
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i]!;
+            this.#paramById.set(p.id, p);
+            const resolved = this.#backend.resolveParameter?.(
+                this.#model,
+                p.id,
+            );
+            this.#paramIndexById.set(p.id, resolved ?? i);
+        }
+    }
+
+    #clearParamCache(): void {
+        this.#paramById.clear();
+        this.#paramIndexById.clear();
+    }
+
+    /** Load-time stable id → binding map (binding.value updated on setParameter). */
+    parameterMap(): ReadonlyMap<string, ParameterBinding> {
+        return this.#paramById;
+    }
+
+    resolveParameter(id: string): number | undefined {
+        if (this.#model && this.#backend?.resolveParameter) {
+            return this.#backend.resolveParameter(this.#model, id);
+        }
+        return this.#paramIndexById.get(id);
     }
 
     async load(
@@ -193,6 +225,7 @@ export class ActorModelSlot {
         this.#lease = lease;
         this.#model = model;
         this.#backend = backend;
+        this.#rebuildParamCache();
         this.#report({
             stage: "ready",
             progress: 1,
@@ -317,6 +350,7 @@ export class ActorModelSlot {
         }
         this.#model = null;
         this.#backend = null;
+        this.#clearParamCache();
         this.#releaseLease();
         this.#drawPass?.setTextures([]);
         this.#drawPass?.destroy();

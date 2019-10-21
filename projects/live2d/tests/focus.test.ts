@@ -41,4 +41,16 @@ describe("focusParameterUpdates", () => {
         );
         expect(updates.map((u) => u.id)).toEqual(["PARAM_ANGLE_X"]);
     });
+
+    it("accepts a stable Map without rebuilding from an array", () => {
+        const map = new Map([
+            ["PARAM_ANGLE_X", param("PARAM_ANGLE_X", -30, 30)],
+            ["PARAM_ANGLE_Y", param("PARAM_ANGLE_Y", -30, 30)],
+        ]);
+        const updates = focusParameterUpdates(map, 1, -1);
+        expect(updates).toEqual([
+            { id: "PARAM_ANGLE_X", value: 30 },
+            { id: "PARAM_ANGLE_Y", value: -30 },
+        ]);
+    });
 });
