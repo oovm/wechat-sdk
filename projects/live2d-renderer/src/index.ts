@@ -96,6 +96,15 @@ export {
     partitionForClipping,
 } from "./render/clipping.js";
 export {
+    clippingTopologyKey,
+    fitClippingContextsInPlace,
+    ResidentClippingPlan,
+} from "./render/clipping-plan.js";
+export {
+    interleaveByteLength,
+    interleavePosUv,
+} from "./render/mesh-interleave.js";
+export {
     PREVIEW_FILL,
     PREVIEW_STROKE,
     triangleEdgesToLineList,
