@@ -7,13 +7,16 @@
 
 import { applyWebGl2BlendMode } from "../render/blend.js";
 import {
-    fitClippingContexts,
     type LaidOutClippingContext,
     type MaskLayoutRect,
     maskChannelVec4,
     maskLayoutVec4,
-    partitionForClipping,
 } from "../render/clipping.js";
+import { ResidentClippingPlan } from "../render/clipping-plan.js";
+import {
+    interleaveByteLength,
+    interleavePosUv,
+} from "../render/mesh-interleave.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
@@ -149,23 +152,6 @@ function linkProgram(
     return program;
 }
 
-function interleavePosUv(
-    positions: Float32Array,
-    uvs: Float32Array,
-): Float32Array {
-    const n = Math.floor(positions.length / 2);
-    const out = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) {
-        const o = i * 4;
-        const p = i * 2;
-        out[o] = positions[p]!;
-        out[o + 1] = positions[p + 1]!;
-        out[o + 2] = uvs[p] ?? 0;
-        out[o + 3] = uvs[p + 1] ?? 0;
-    }
-    return out;
-}
-
 function requireUniform(
     gl: WebGL2RenderingContext,
     program: WebGLProgram,
@@ -208,6 +194,13 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
     #maskTex: WebGLTexture | null = null;
     #maskW = 0;
     #maskH = 0;
+    readonly #clipPlan = new ResidentClippingPlan();
+    #interleaved: Float32Array<ArrayBufferLike> = new Float32Array(64);
+    #indicesRef: Uint16Array | null = null;
+    readonly #layoutScratch = new Float32Array(4);
+    readonly #boundsScratch = new Float32Array(4);
+    readonly #channelScratch = new Float32Array(4);
+    readonly #defaultChannel = new Float32Array([0, 0, 0, 1]);
 
     constructor(gl: WebGL2RenderingContext) {
         this.#gl = gl;
@@ -395,13 +388,25 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    #uploadMesh(d: DrawableMesh): void {
+    #uploadMesh(d: DrawableMesh, uploadIndices = true): void {
         const gl = this.#gl;
-        const interleaved = interleavePosUv(d.vertexPositions, d.uvs);
+        this.#interleaved = interleavePosUv(
+            d.vertexPositions,
+            d.uvs,
+            this.#interleaved,
+        );
+        const vBytes = interleaveByteLength(d.vertexPositions);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.#vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, interleaved, gl.DYNAMIC_DRAW);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            this.#interleaved.subarray(0, vBytes / 4),
+            gl.DYNAMIC_DRAW,
+        );
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.#ibo);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, d.indices, gl.DYNAMIC_DRAW);
+        if (uploadIndices && this.#indicesRef !== d.indices) {
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, d.indices, gl.STATIC_DRAW);
+            this.#indicesRef = d.indices;
+        }
     }
 
     #drawMeshColor(
@@ -434,19 +439,23 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
         );
         gl.uniform1f(this.#useMaskLoc, useMask ? 1 : 0);
         gl.uniform1f(this.#invertMaskLoc, invertMask ? 1 : 0);
-        const layoutVec = maskLayoutVec4(
-            layout ?? { x: 0, y: 0, width: 1, height: 1 },
+        gl.uniform4fv(
+            this.#maskLayoutLoc,
+            maskLayoutVec4(
+                layout ?? { x: 0, y: 0, width: 1, height: 1 },
+                this.#layoutScratch,
+            ),
         );
-        gl.uniform4fv(this.#maskLayoutLoc, layoutVec);
         gl.uniform4fv(
             this.#maskBoundsLoc,
             maskLayoutVec4(
                 modelBounds ?? { x: -1, y: -1, width: 2, height: 2 },
+                this.#boundsScratch,
             ),
         );
         gl.uniform4fv(
             this.#channelFlagLoc,
-            channelFlag ?? new Float32Array([0, 0, 0, 1]),
+            channelFlag ?? this.#defaultChannel,
         );
         if (useMask && this.#maskTex) {
             gl.activeTexture(gl.TEXTURE1);
@@ -467,6 +476,7 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
                 PREVIEW_STROKE.a * d.opacity,
             );
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, lines, gl.DYNAMIC_DRAW);
+            this.#indicesRef = null;
             gl.drawElements(gl.LINES, lines.length, gl.UNSIGNED_SHORT, 0);
         }
     }
@@ -486,8 +496,14 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
         gl.uniform1i(this.#maskTexLoc, 0);
         gl.uniform1f(this.#maskUseTexLoc, gpuTex ? 1 : 0);
         gl.uniform1f(this.#maskOpacityLoc, Math.max(d.opacity, 1));
-        gl.uniform4fv(this.#maskWriteLayoutLoc, maskLayoutVec4(layout));
-        gl.uniform4fv(this.#maskWriteBoundsLoc, maskLayoutVec4(modelBounds));
+        gl.uniform4fv(
+            this.#maskWriteLayoutLoc,
+            maskLayoutVec4(layout, this.#layoutScratch),
+        );
+        gl.uniform4fv(
+            this.#maskWriteBoundsLoc,
+            maskLayoutVec4(modelBounds, this.#boundsScratch),
+        );
         gl.uniform4fv(this.#maskWriteChannelLoc, channelFlag);
         gl.drawElements(gl.TRIANGLES, d.indices.length, gl.UNSIGNED_SHORT, 0);
     }
@@ -503,8 +519,8 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
         const byIndex = new Map<number, DrawableMesh>();
         for (const d of drawables) byIndex.set(d.index, d);
 
-        const partitioned = partitionForClipping(drawables);
-        const contexts = fitClippingContexts(partitioned.contexts, byIndex);
+        const partitioned = this.#clipPlan.resolveMeshes(drawables);
+        const contexts = partitioned.contexts;
         const { maskOnly } = partitioned;
 
         gl.bindVertexArray(this.#vao);
@@ -522,7 +538,10 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
                 gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ONE, gl.ONE);
 
                 for (const ctx of contexts) {
-                    const flag = maskChannelVec4(ctx.channelFlag);
+                    const flag = maskChannelVec4(
+                        ctx.channelFlag,
+                        this.#channelScratch,
+                    );
                     for (const mi of ctx.maskIndices) {
                         const maskMesh = byIndex.get(mi);
                         if (maskMesh) {
@@ -570,7 +589,7 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
                     clip.invertedMask,
                     clip.layout,
                     clip.modelBounds,
-                    maskChannelVec4(clip.channelFlag),
+                    maskChannelVec4(clip.channelFlag, this.#channelScratch),
                 );
             } else {
                 this.#drawMeshColor(d, false, false, null, null, null);
@@ -587,6 +606,8 @@ class WebGl2ModelDrawPass implements ModelDrawPass {
     destroy(): void {
         const gl = this.#gl;
         this.#clearGpuTextures();
+        this.#clipPlan.clear();
+        this.#indicesRef = null;
         if (this.#maskTex) gl.deleteTexture(this.#maskTex);
         if (this.#maskFbo) gl.deleteFramebuffer(this.#maskFbo);
         gl.deleteBuffer(this.#vbo);
