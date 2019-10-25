@@ -37,6 +37,10 @@ function tick() {
 requestAnimationFrame(tick);
 ```
 
+## 命中测试（当前限制）
+
+`hitTest` 在模型归一化坐标下做三角形命中。仅当设置里 HitArea 的 `Id` 为 `D_{drawableIndex}` 或纯数字索引时返回名称；否则回退为 `drawable:N`（多数样本模型如此）。完整命名映射尚未作为主路径。
+
 ## 接下来
 
 - [模型来源](./sources) — 本地、远程 URL、`npm:` 包

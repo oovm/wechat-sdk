@@ -116,7 +116,7 @@ Parameter availability and ranges belong to the loaded model. Do not assume ever
 
 ## 🖱️ Hit Testing
 
-`hitTest(x, y)` expects normalized model coordinates where both axes are approximately in the `-1..1` range:
+`hitTest(x, y)` expects **normalized model coordinates** (approximately `-1..1` on both axes). The single-actor facade returns a string area id; Stage APIs return structured `ActorHit`.
 
 ```ts
 const area = runtime.hitTest(modelX, modelY);
@@ -126,8 +126,16 @@ if (area) {
 }
 ```
 
-Current fallback hit testing can identify visible drawables. Semantic names such as `Head` or `Body` require
-corresponding model metadata and runtime support.
+### Current contract (`drawable:N` fallback)
+
+1. The runtime finds the front-most visible drawable triangle under the point.
+2. It then looks up `model.settings.hitAreas` for an entry whose `id` is exactly `D_{drawableIndex}` or `"{drawableIndex}"`.
+3. If that lookup succeeds, the returned string is the HitArea **name** (e.g. `Head`).
+4. Otherwise the string is **`drawable:{index}`** (example: `drawable:12`).
+
+Many Cubism sample settings use ids such as `HitArea` / `HitArea2` that **do not** match step 2, so dogfood models usually surface `drawable:N`. That is expected until a named HitArea mapping lands (planned after v0.0.21). Do not treat `drawable:N` as a stable product name for UI chrome.
+
+Stage `hitTest` / `hitTestAll` populate `ActorHit.area` with the same string; `drawableIndex` is set when `area` matches `/^drawable:(\d+)$/`.
 
 ## 📊 Frame Profiling
 
