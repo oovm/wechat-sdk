@@ -3,16 +3,22 @@
     <SiteHeader />
     <main>
       <header class="page-head">
-        <p class="kicker">Stage</p>
+        <p class="kicker">{kickerLabel}</p>
         <h1>{titleLabel}</h1>
         <p class="lede">{ledeLabel}</p>
       </header>
       <div class="stage-layout">
         <aside class="stage-panel">
-          <Select label={addLabel} controlId="stage-model" value={selectedId} options={modelOptions} onChange={(e) => this.onModelPick(e)} />
+          <Select
+            label={addLabel}
+            controlId="stage-model"
+            value={selectedId}
+            options={modelOptions}
+            onChange={(e) => this.onModelPick(e)}
+          />
           <Button type="button" onClick={() => this.addActor()}>{addLabel}</Button>
           <p if={!actorCount}>{emptyLabel}</p>
-          <p if={actorCount}>Actors: {actorCount}</p>
+          <p if={actorCount}>{actorsLabel}: {actorCount}</p>
         </aside>
         <Live2dStage sources={actorSources} updateMode="auto" />
       </div>
@@ -22,31 +28,52 @@
 </template>
 
 <script client>
-import { stageTitle, stageLede, stageAdd, stageEmpty } from '#locales/common';
+import {
+  stageTitle,
+  stageLede,
+  stageAdd,
+  stageEmpty,
+  stageKicker,
+  stageActors,
+} from '#locales/common';
 import { displayNameFor, fetchCatalog, type CatalogModel } from '../lib/catalog.ts';
-import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+import {
+  readLocaleId,
+  watchDocumentLocale,
+  withLocaleHint,
+} from '../lib/locale-copy.ts';
 
 export default class StagePage {
+  kickerLabel = '';
   titleLabel = '';
   ledeLabel = '';
   addLabel = '';
   emptyLabel = '';
+  actorsLabel = '';
   selectedId = '';
   modelOptions = [{ value: '', label: '—' }];
   catalogModels: CatalogModel[] = [];
   actorSources = [];
   actorCount = 0;
+  _unwatchLocale = null;
 
   onMount() {
     withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    this._unwatchLocale = watchDocumentLocale(() => this.refreshCopy());
     void this.loadCatalog();
   }
 
+  onDestroy() {
+    if (typeof this._unwatchLocale === 'function') this._unwatchLocale();
+  }
+
   refreshCopy() {
+    this.kickerLabel = stageKicker();
     this.titleLabel = stageTitle();
     this.ledeLabel = stageLede();
     this.addLabel = stageAdd();
     this.emptyLabel = stageEmpty();
+    this.actorsLabel = stageActors();
   }
 
   async loadCatalog() {

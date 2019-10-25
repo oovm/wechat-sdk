@@ -3,7 +3,7 @@
     <SiteHeader />
     <main>
       <header class="page-head">
-        <p class="kicker">Gallery</p>
+        <p class="kicker">{kickerLabel}</p>
         <h1>{titleLabel}</h1>
         <p class="lede">{ledeLabel}</p>
       </header>
@@ -23,11 +23,23 @@
 </template>
 
 <script client>
-import { galleryTitle, galleryLede, galleryLoading, galleryEmpty, galleryOpenPlayground } from '#locales/common';
+import {
+  galleryTitle,
+  galleryLede,
+  galleryLoading,
+  galleryEmpty,
+  galleryOpenPlayground,
+  galleryKicker,
+} from '#locales/common';
 import { displayNameFor, fetchCatalog, previewUrlFor } from '../lib/catalog.ts';
-import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+import {
+  readLocaleId,
+  watchDocumentLocale,
+  withLocaleHint,
+} from '../lib/locale-copy.ts';
 
 export default class GalleryPage {
+  kickerLabel = '';
   titleLabel = '';
   ledeLabel = '';
   loadingLabel = '';
@@ -35,13 +47,20 @@ export default class GalleryPage {
   openLabel = '';
   loading = true;
   models = [];
+  _unwatchLocale = null;
 
   onMount() {
     withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    this._unwatchLocale = watchDocumentLocale(() => this.refreshCopy());
     void this.loadCatalog();
   }
 
+  onDestroy() {
+    if (typeof this._unwatchLocale === 'function') this._unwatchLocale();
+  }
+
   refreshCopy() {
+    this.kickerLabel = galleryKicker();
     this.titleLabel = galleryTitle();
     this.ledeLabel = galleryLede();
     this.loadingLabel = galleryLoading();
