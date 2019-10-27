@@ -1,20 +1,40 @@
 <template>
   <div class="live2d-host" style={hostStyle}>
     <div class="live2d-host__mount" id={hostId}></div>
-    <div if={showProgress && loading} class="live2d-host__progress" role="progressbar" aria-valuenow={progressPercent} aria-valuemin="0" aria-valuemax="100">
+    <div
+      if={showProgress && loading}
+      class="live2d-host__progress"
+      role="progressbar"
+      aria-valuenow={progressPercent}
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
       <span>{progressLabel} · {progressPercent}%</span>
     </div>
   </div>
 </template>
 
 <style>
-.live2d-host { position: relative; display: inline-block; }
-.live2d-host__mount { width: 100%; height: 100%; }
-.live2d-host__mount canvas { display: block; width: 100%; height: 100%; }
+.live2d-host {
+  position: relative;
+  display: inline-block;
+}
+.live2d-host__mount {
+  width: 100%;
+  height: 100%;
+}
+.live2d-host__mount canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .live2d-host__progress {
-  position: absolute; inset: auto 0 0; padding: 0.35rem 0.5rem;
+  position: absolute;
+  inset: auto 0 0;
+  padding: 0.35rem 0.5rem;
   background: rgba(255, 255, 255, 0.92);
-  font: 600 0.75rem/1.2 ui-monospace, monospace; color: #377ba8;
+  font: 600 0.75rem/1.2 ui-monospace, monospace;
+  color: #377ba8;
 }
 </style>
 
@@ -33,6 +53,10 @@ export default class Live2dHost {
   public showProgress = true;
   public exposeCaptureApi = false;
   public capturePresetId = '';
+  /** Called with Live2DRuntime after loadModel succeeds. */
+  public onReady = null;
+  /** Optional frame profile listener. */
+  public onProfile = null;
 
   hostId = `live2d-host-${++hostSeq}`;
   hostStyle = '';
@@ -42,6 +66,7 @@ export default class Live2dHost {
   runtime = null;
   _raf = 0;
   _lastTs = 0;
+  _unsubProfile = null;
 
   onMount() {
     this.hostStyle = `width:${this.width}px;height:${this.height}px`;
@@ -57,8 +82,16 @@ export default class Live2dHost {
   }
 
   onDestroy() {
+    this.teardownRuntime();
+  }
+
+  teardownRuntime() {
     this.stopLoop();
-    void this.runtime?.destroy?.();
+    if (typeof this._unsubProfile === 'function') {
+      this._unsubProfile();
+      this._unsubProfile = null;
+    }
+    this.runtime?.destroy?.();
     this.runtime = null;
   }
 
@@ -90,6 +123,10 @@ export default class Live2dHost {
     return canvas;
   }
 
+  getRuntime() {
+    return this.runtime;
+  }
+
   async capturePng(opts = {}) {
     if (!this.runtime) throw new Error('Live2dHost: runtime not ready');
     return this.runtime.capturePng(opts);
@@ -98,20 +135,26 @@ export default class Live2dHost {
   async boot() {
     if (!this.model) return;
     this.loading = true;
+    this.progressPercent = 0;
+    this.progressLabel = 'loading';
     try {
-      this.stopLoop();
-      void this.runtime?.destroy?.();
+      this.teardownRuntime();
       const canvas = this.ensureCanvas();
       if (!canvas) return;
-      const runtime = createLive2D({ prefer: this.prefer, updateMode: 'manual' });
-      runtime.events.on('progress', (p) => this.onProgress(p));
+      const prefer = Array.isArray(this.prefer)
+        ? this.prefer
+        : ['canvas2d', 'webgl2', 'webgpu'];
+      const runtime = createLive2D({ prefer, updateMode: 'manual' });
       runtime.events.on('ready', () => {
         this.loading = false;
+        this.progressPercent = 100;
+        this.progressLabel = 'ready';
         if (this.autoplay) {
           this._lastTs = 0;
           this._raf = requestAnimationFrame((t) => this.tick(t));
         }
         if (this.exposeCaptureApi) void this.publishCapture();
+        if (typeof this.onReady === 'function') this.onReady(runtime);
       });
       runtime.events.on('error', (p) => {
         this.loading = false;
@@ -120,18 +163,18 @@ export default class Live2dHost {
           if (api) api.error = String(p?.error || 'load error');
         }
       });
-      await runtime.mount(canvas);
-      await runtime.load(this.model);
+      if (typeof this.onProfile === 'function') {
+        this._unsubProfile = runtime.events.on('profile', (profile) => {
+          this.onProfile(profile);
+        });
+      }
+      runtime.mount(canvas);
+      this.progressPercent = 35;
+      await runtime.loadModel(this.model);
       this.runtime = runtime;
     } catch {
       this.loading = false;
     }
-  }
-
-  onProgress(p) {
-    const progress = p?.progress ?? 0;
-    this.progressLabel = p?.stage || 'loading';
-    this.progressPercent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
   }
 
   async publishCapture() {

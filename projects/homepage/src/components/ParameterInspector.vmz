@@ -1,0 +1,47 @@
+<template>
+  <div class="param-inspector">
+    <h3 class="param-inspector__title">{title}</h3>
+    <p if={!rows.length} class="param-inspector__empty">{empty}</p>
+    <label each={rows} as="row" key={row.id} class="param-inspector__row">
+      <span class="param-inspector__id" title={row.id}>{row.id}</span>
+      <input
+        class="param-inspector__range"
+        type="range"
+        min={row.min}
+        max={row.max}
+        step={row.step}
+        value={row.value}
+        onInput={(e) => this.onSlide(row.id, e)}
+      />
+      <span class="param-inspector__val">{row.display}</span>
+    </label>
+  </div>
+</template>
+
+<script client>
+export default class ParameterInspector {
+  public title = 'Parameters';
+  public empty = '';
+  public rows = [];
+  public onChange = null;
+
+  onSlide(id, e) {
+    const raw = e?.target?.value;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) return;
+    if (typeof this.onChange === 'function') this.onChange(id, value);
+    const row = this.rows.find((r) => r.id === id);
+    if (row) {
+      row.value = value;
+      row.display = formatParam(value);
+      this.rows = this.rows.slice();
+    }
+  }
+}
+
+function formatParam(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return Math.abs(n) >= 10 ? n.toFixed(1) : n.toFixed(2);
+}
+</script>

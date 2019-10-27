@@ -3,17 +3,61 @@
     <SiteHeader />
     <main>
       <header class="page-head">
-        <p class="kicker">Playground</p>
+        <p class="kicker">{kickerLabel}</p>
         <h1>{titleLabel}</h1>
         <p class="lede">{ledeLabel}</p>
       </header>
       <div class="playground-layout">
-        <aside class="stage-panel">
-          <Select label="Model" controlId="pg-preset" value={presetId} options={presetOptions} onChange={(e) => this.onPreset(e)} />
-          <Button type="button" onClick={() => this.reload()}>{loadLabel}</Button>
-          <p if={status}>{status}</p>
+        <aside class="stage-panel playground-toolbar">
+          <Select
+            label={modelLabel}
+            controlId="pg-preset"
+            value={presetId}
+            options={presetOptions}
+            onChange={(e) => this.onPreset(e)}
+          />
+          <Select
+            label={rendererLabel}
+            controlId="pg-renderer"
+            value={backendId}
+            options={backendOptions}
+            onChange={(e) => this.onBackend(e)}
+          />
+          <Select
+            label={motionLabel}
+            controlId="pg-motion"
+            value={motionId}
+            options={motionOptions}
+            onChange={(e) => this.onMotionPick(e)}
+          />
+          <div class="playground-actions">
+            <Button type="button" onClick={() => this.playMotion()}>{playMotionLabel}</Button>
+            <Button type="button" onClick={() => this.reload()}>{loadLabel}</Button>
+          </div>
+          <p class="playground-status" if={status}>{status}</p>
+          <p class="playground-profile" if={profileText}>
+            <strong>{profileLabel}</strong>
+            {profileText}
+          </p>
+          <p class="playground-hit-hint">{hitHint}</p>
+          <ParameterInspector
+            title={paramsLabel}
+            empty={paramsEmpty}
+            rows={paramRows}
+            onChange={(id, value) => this.onParamChange(id, value)}
+          />
         </aside>
-        <Live2dHost if={showHost} model={modelSource} width={480} height={480} prefer={prefer} />
+        <div class="playground-stage">
+          <Live2dHost
+            if={showHost}
+            model={modelSource}
+            width={480}
+            height={480}
+            prefer={prefer}
+            onReady={(rt) => this.onHostReady(rt)}
+            onProfile={(p) => this.onHostProfile(p)}
+          />
+        </div>
       </div>
     </main>
     <SiteFooter />
@@ -21,36 +65,105 @@
 </template>
 
 <script client>
-import { playgroundTitle, playgroundLede, playgroundLoad } from '#locales/common';
+import {
+  playgroundTitle,
+  playgroundLede,
+  playgroundLoad,
+  playgroundKicker,
+  playgroundModel,
+  playgroundRenderer,
+  playgroundParams,
+  playgroundParamsEmpty,
+  playgroundMotion,
+  playgroundMotionNone,
+  playgroundPlayMotion,
+  playgroundProfile,
+  playgroundHitHint,
+  playgroundStatusLoading,
+  playgroundReady,
+} from '#locales/common';
 import { displayNameFor, fetchCatalog } from '../lib/catalog.ts';
 import { landingHero } from '../lib/landing.ts';
-import { readLocaleId, withLocaleHint } from '../lib/locale-copy.ts';
+import {
+  readLocaleId,
+  watchDocumentLocale,
+  withLocaleHint,
+} from '../lib/locale-copy.ts';
+
+const BACKEND_ORDER = ['canvas2d', 'webgl2', 'webgpu'];
 
 export default class PlaygroundPage {
+  kickerLabel = '';
   titleLabel = '';
   ledeLabel = '';
   loadLabel = '';
+  modelLabel = '';
+  rendererLabel = '';
+  paramsLabel = '';
+  paramsEmpty = '';
+  motionLabel = '';
+  playMotionLabel = '';
+  profileLabel = '';
+  hitHint = '';
+  statusLoading = '';
+  readyLabel = '';
+
   presetId = '';
   presetOptions = [];
   catalogModels = [];
   modelSource = landingHero.model;
-  prefer = ['canvas2d', 'webgl2'];
+  backendId = 'canvas2d';
+  backendOptions = [
+    { value: 'canvas2d', label: 'Canvas2D' },
+    { value: 'webgl2', label: 'WebGL2' },
+    { value: 'webgpu', label: 'WebGPU' },
+  ];
+  prefer = ['canvas2d', 'webgl2', 'webgpu'];
   status = '';
   showHost = true;
+  runtime = null;
+  paramRows = [];
+  motionId = '';
+  motionOptions = [{ value: '', label: '—' }];
+  profileText = '';
+  _unwatchLocale = null;
 
   onMount() {
     withLocaleHint(readLocaleId(), () => this.refreshCopy());
+    this._unwatchLocale = watchDocumentLocale(() => this.refreshCopy());
     void this.loadPresets();
   }
 
+  onDestroy() {
+    if (typeof this._unwatchLocale === 'function') this._unwatchLocale();
+    this.runtime = null;
+  }
+
   refreshCopy() {
+    this.kickerLabel = playgroundKicker();
     this.titleLabel = playgroundTitle();
     this.ledeLabel = playgroundLede();
     this.loadLabel = playgroundLoad();
+    this.modelLabel = playgroundModel();
+    this.rendererLabel = playgroundRenderer();
+    this.paramsLabel = playgroundParams();
+    this.paramsEmpty = playgroundParamsEmpty();
+    this.motionLabel = playgroundMotion();
+    this.playMotionLabel = playgroundPlayMotion();
+    this.profileLabel = playgroundProfile();
+    this.hitHint = playgroundHitHint();
+    this.statusLoading = playgroundStatusLoading();
+    this.readyLabel = playgroundReady();
+    if (!this.motionOptions.length || this.motionOptions[0]?.value === '') {
+      this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
+    }
   }
 
   async loadPresets() {
-    const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const params =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : null;
     const presetFromUrl = params?.get('preset') || '';
     try {
       const catalog = await fetchCatalog();
@@ -73,6 +186,14 @@ export default class PlaygroundPage {
     const next = e?.target?.value ? String(e.target.value) : '';
     this.presetId = next;
     this.applyPreset(next);
+    this.reload();
+  }
+
+  onBackend(e) {
+    const next = e?.target?.value ? String(e.target.value) : 'canvas2d';
+    this.backendId = next;
+    this.prefer = preferFromPrimary(next);
+    this.reload();
   }
 
   applyPreset(id) {
@@ -81,12 +202,102 @@ export default class PlaygroundPage {
   }
 
   reload() {
-    this.status = 'loading…';
+    this.status = this.statusLoading || 'loading…';
+    this.runtime = null;
+    this.paramRows = [];
+    this.motionId = '';
+    this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
+    this.profileText = '';
     this.showHost = false;
     queueMicrotask(() => {
       this.showHost = true;
-      this.status = '';
     });
   }
+
+  onHostReady(runtime) {
+    this.runtime = runtime;
+    this.status = this.readyLabel || 'ready';
+    this.refreshParams();
+    this.refreshMotions();
+  }
+
+  onHostProfile(profile) {
+    if (!profile) return;
+    const fps =
+      typeof profile.fpsSmooth === 'number'
+        ? profile.fpsSmooth.toFixed(0)
+        : '—';
+    const ms =
+      typeof profile.frameMs === 'number' ? profile.frameMs.toFixed(1) : '—';
+    this.profileText = ` ${fps} fps · ${ms} ms`;
+  }
+
+  refreshParams() {
+    const list = this.runtime?.listParameters?.() ?? [];
+    this.paramRows = list.map((p) => ({
+      id: p.id,
+      min: p.min,
+      max: p.max,
+      step: stepForRange(p.min, p.max),
+      value: p.value,
+      display: formatParam(p.value),
+    }));
+  }
+
+  refreshMotions() {
+    const groups = this.runtime?.listMotionGroups?.() ?? {};
+    const options = [];
+    for (const [group, defs] of Object.entries(groups)) {
+      const count = Array.isArray(defs) ? defs.length : 0;
+      for (let i = 0; i < count; i++) {
+        options.push({
+          value: `${group}:${i}`,
+          label: `${group} / ${i}`,
+        });
+      }
+    }
+    if (!options.length) {
+      this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
+      this.motionId = '';
+      return;
+    }
+    this.motionOptions = options;
+    this.motionId = options[0].value;
+  }
+
+  onMotionPick(e) {
+    this.motionId = e?.target?.value ? String(e.target.value) : '';
+  }
+
+  playMotion() {
+    if (!this.runtime || !this.motionId) return;
+    const sep = this.motionId.lastIndexOf(':');
+    if (sep < 0) return;
+    const group = this.motionId.slice(0, sep);
+    const index = Number(this.motionId.slice(sep + 1));
+    void this.runtime.playMotion?.(group, index);
+  }
+
+  onParamChange(id, value) {
+    this.runtime?.setParameter?.(id, value);
+  }
+}
+
+function preferFromPrimary(primary) {
+  const first = BACKEND_ORDER.includes(primary) ? primary : 'canvas2d';
+  return [first, ...BACKEND_ORDER.filter((b) => b !== first)];
+}
+
+function stepForRange(min, max) {
+  const span = Math.abs(max - min);
+  if (span <= 2) return 0.01;
+  if (span <= 20) return 0.1;
+  return 1;
+}
+
+function formatParam(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return Math.abs(n) >= 10 ? n.toFixed(1) : n.toFixed(2);
 }
 </script>
