@@ -31,13 +31,23 @@
             onChange={(e) => this.onMotionPick(e)}
           />
           <div class="playground-actions">
-            <Button type="button" onClick={() => this.playMotion()}>{playMotionLabel}</Button>
+            <Button
+              type="button"
+              disabled={!canPlayMotion}
+              onClick={() => this.playMotion()}
+            >
+              {playMotionLabel}
+            </Button>
             <Button type="button" onClick={() => this.reload()}>{loadLabel}</Button>
           </div>
           <p class="playground-status" if={status}>{status}</p>
           <p class="playground-profile" if={profileText}>
             <strong>{profileLabel}</strong>
             {profileText}
+          </p>
+          <p class="playground-hit-last">
+            <strong>{hitLastLabel}</strong>
+            {hitLastText}
           </p>
           <p class="playground-hit-hint">{hitHint}</p>
           <ParameterInspector
@@ -56,6 +66,8 @@
             prefer={prefer}
             onReady={(rt) => this.onHostReady(rt)}
             onProfile={(p) => this.onHostProfile(p)}
+            onError={(msg) => this.onHostError(msg)}
+            onHit={(area) => this.onHostHit(area)}
           />
         </div>
       </div>
@@ -79,8 +91,11 @@ import {
   playgroundPlayMotion,
   playgroundProfile,
   playgroundHitHint,
+  playgroundHitLast,
+  playgroundHitNone,
   playgroundStatusLoading,
   playgroundReady,
+  playgroundError,
 } from '#locales/common';
 import { displayNameFor, fetchCatalog } from '../lib/catalog.ts';
 import { landingHero } from '../lib/landing.ts';
@@ -91,6 +106,7 @@ import {
 } from '../lib/locale-copy.ts';
 
 const BACKEND_ORDER = ['canvas2d', 'webgl2', 'webgpu'];
+const PROFILE_THROTTLE_MS = 250;
 
 export default class PlaygroundPage {
   kickerLabel = '';
@@ -105,8 +121,11 @@ export default class PlaygroundPage {
   playMotionLabel = '';
   profileLabel = '';
   hitHint = '';
+  hitLastLabel = '';
+  hitNoneLabel = '';
   statusLoading = '';
   readyLabel = '';
+  errorLabel = '';
 
   presetId = '';
   presetOptions = [];
@@ -125,12 +144,18 @@ export default class PlaygroundPage {
   paramRows = [];
   motionId = '';
   motionOptions = [{ value: '', label: '—' }];
+  canPlayMotion = false;
   profileText = '';
+  hitLastText = '';
   _unwatchLocale = null;
+  _lastProfileAt = 0;
 
   onMount() {
     withLocaleHint(readLocaleId(), () => this.refreshCopy());
-    this._unwatchLocale = watchDocumentLocale(() => this.refreshCopy());
+    this._unwatchLocale = watchDocumentLocale(() => {
+      this.refreshCopy();
+      this.refreshPresetLabels();
+    });
     void this.loadPresets();
   }
 
@@ -152,11 +177,26 @@ export default class PlaygroundPage {
     this.playMotionLabel = playgroundPlayMotion();
     this.profileLabel = playgroundProfile();
     this.hitHint = playgroundHitHint();
+    this.hitLastLabel = playgroundHitLast();
+    this.hitNoneLabel = playgroundHitNone();
     this.statusLoading = playgroundStatusLoading();
     this.readyLabel = playgroundReady();
+    this.errorLabel = playgroundError();
+    if (!this.hitLastText || this.hitLastText.startsWith('(')) {
+      this.hitLastText = ` ${this.hitNoneLabel}`;
+    }
     if (!this.motionOptions.length || this.motionOptions[0]?.value === '') {
       this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
     }
+  }
+
+  refreshPresetLabels() {
+    if (!this.catalogModels.length) return;
+    const locale = readLocaleId();
+    this.presetOptions = this.catalogModels.map((m) => ({
+      value: m.id,
+      label: displayNameFor(m, locale),
+    }));
   }
 
   async loadPresets() {
@@ -165,17 +205,18 @@ export default class PlaygroundPage {
         ? new URLSearchParams(window.location.search)
         : null;
     const presetFromUrl = params?.get('preset') || '';
+    const backendFromUrl = params?.get('backend') || '';
     try {
       const catalog = await fetchCatalog();
       this.catalogModels = catalog.models;
-      const locale = readLocaleId();
-      this.presetOptions = catalog.models.map((m) => ({
-        value: m.id,
-        label: displayNameFor(m, locale),
-      }));
+      this.refreshPresetLabels();
       const pick = presetFromUrl || this.presetOptions[0]?.value || '';
       this.presetId = pick;
       this.applyPreset(pick);
+      if (BACKEND_ORDER.includes(backendFromUrl)) {
+        this.backendId = backendFromUrl;
+        this.prefer = preferFromPrimary(backendFromUrl);
+      }
     } catch {
       this.presetId = 'local-wanko';
       this.modelSource = landingHero.model;
@@ -186,6 +227,7 @@ export default class PlaygroundPage {
     const next = e?.target?.value ? String(e.target.value) : '';
     this.presetId = next;
     this.applyPreset(next);
+    this.syncUrl();
     this.reload();
   }
 
@@ -193,7 +235,21 @@ export default class PlaygroundPage {
     const next = e?.target?.value ? String(e.target.value) : 'canvas2d';
     this.backendId = next;
     this.prefer = preferFromPrimary(next);
+    this.syncUrl();
     this.reload();
+  }
+
+  syncUrl() {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (this.presetId) url.searchParams.set('preset', this.presetId);
+    else url.searchParams.delete('preset');
+    if (this.backendId && this.backendId !== 'canvas2d') {
+      url.searchParams.set('backend', this.backendId);
+    } else {
+      url.searchParams.delete('backend');
+    }
+    window.history.replaceState({}, '', url);
   }
 
   applyPreset(id) {
@@ -207,7 +263,10 @@ export default class PlaygroundPage {
     this.paramRows = [];
     this.motionId = '';
     this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
+    this.canPlayMotion = false;
     this.profileText = '';
+    this.hitLastText = ` ${this.hitNoneLabel || playgroundHitNone()}`;
+    this._lastProfileAt = 0;
     this.showHost = false;
     queueMicrotask(() => {
       this.showHost = true;
@@ -221,8 +280,25 @@ export default class PlaygroundPage {
     this.refreshMotions();
   }
 
+  onHostError(message) {
+    this.runtime = null;
+    this.canPlayMotion = false;
+    this.paramRows = [];
+    this.status = `${this.errorLabel || 'error'}: ${message}`;
+  }
+
+  onHostHit(area) {
+    this.hitLastText = area
+      ? ` ${area}`
+      : ` ${this.hitNoneLabel || playgroundHitNone()}`;
+  }
+
   onHostProfile(profile) {
     if (!profile) return;
+    const now =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this._lastProfileAt < PROFILE_THROTTLE_MS) return;
+    this._lastProfileAt = now;
     const fps =
       typeof profile.fpsSmooth === 'number'
         ? profile.fpsSmooth.toFixed(0)
@@ -259,14 +335,17 @@ export default class PlaygroundPage {
     if (!options.length) {
       this.motionOptions = [{ value: '', label: playgroundMotionNone() }];
       this.motionId = '';
+      this.canPlayMotion = false;
       return;
     }
     this.motionOptions = options;
     this.motionId = options[0].value;
+    this.canPlayMotion = true;
   }
 
   onMotionPick(e) {
     this.motionId = e?.target?.value ? String(e.target.value) : '';
+    this.canPlayMotion = Boolean(this.motionId);
   }
 
   playMotion() {
