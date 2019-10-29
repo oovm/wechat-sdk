@@ -161,6 +161,28 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)(happy-dom@15.11.7)(lightningcss@1.33.0)
 
+  projects/live2d-element:
+    dependencies:
+      '@doki-land/live2d':
+        specifier: workspace:*
+        version: link:../live2d
+    devDependencies:
+      '@webgpu/types':
+        specifier: ^0.1.64
+        version: 0.1.72
+      happy-dom:
+        specifier: '15'
+        version: 15.11.7
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.1)(happy-dom@15.11.7)(lightningcss@1.33.0)
+
   projects/live2d-loader:
     dependencies:
       '@doki-land/live2d-core':
@@ -186,6 +208,9 @@ importers:
       '@webgpu/types':
         specifier: ^0.1.64
         version: 0.1.72
+      happy-dom:
+        specifier: '15'
+        version: 15.11.7
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(typescript@5.9.3)

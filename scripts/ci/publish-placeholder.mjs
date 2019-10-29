@@ -78,6 +78,7 @@ const JS_STUBS = [
     "@doki-land/live2d-loader",
     "@doki-land/live2d-renderer",
     "@doki-land/live2d-widget",
+    "@doki-land/live2d-element",
     "vue-plugin-live2d",
     "hexo-plugin-live2d",
     "cocos-plugin-live2d",

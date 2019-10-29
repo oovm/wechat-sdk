@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>&lt;live-2d&gt; element fixture</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        gap: 1rem;
+        background: linear-gradient(160deg, #f7f3ea, #dce9f4);
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 650;
+      }
+      #log {
+        max-width: 40rem;
+        font: 0.85rem/1.4 ui-monospace, monospace;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>live2d.ts &lt;live-2d&gt; fixture</h1>
+    <!-- Point model at a served model3.json (homepage public models or CDN). -->
+    <live-2d
+      id="actor"
+      model="/models/samples/moc3-wanko/Wanko.model3.json"
+      renderer="auto"
+      width="320"
+      height="320"
+      autoplay
+    ></live-2d>
+    <pre id="log">waiting…</pre>
+    <script type="module">
+      // Dev: resolve via workspace package entry after `pnpm install`.
+      import "@doki-land/live2d-element";
+
+      const log = document.getElementById("log");
+      const el = document.getElementById("actor");
+      el.addEventListener("live2d-ready", (e) => {
+        log.textContent = `live2d-ready ${JSON.stringify(e.detail)}`;
+      });
+      el.addEventListener("live2d-error", (e) => {
+        log.textContent = `live2d-error ${e.detail?.error ?? e.detail}`;
+      });
+    </script>
+  </body>
+</html>

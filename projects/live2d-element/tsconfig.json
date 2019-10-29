@@ -1,0 +1,12 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "types": ["@webgpu/types"],
+        "paths": {
+            "@doki-land/live2d": ["../live2d/src/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "tests/**/*.ts"]
+}

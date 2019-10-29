@@ -29,6 +29,7 @@ const PACKAGES = [
     { dir: "projects/live2d-renderer" },
     { dir: "projects/live2d" },
     { dir: "projects/live2d-widget" },
+    { dir: "projects/live2d-element" },
     { dir: "projects/adaptors/vue-plugin-live2d" },
     { dir: "projects/adaptors/hexo-plugin-live2d" },
     { dir: "projects/adaptors/cocos-plugin-live2d" },
