@@ -68,8 +68,6 @@ export default class Live2dHost {
   progressPercent = 0;
   progressLabel = 'Loading…';
   runtime = null;
-  _raf = 0;
-  _lastTs = 0;
   _unsubProfile = null;
   _canvas = null;
   _boundPointer = null;
@@ -93,7 +91,11 @@ export default class Live2dHost {
   }
 
   teardownRuntime() {
-    this.stopLoop();
+    try {
+      this.runtime?.stage?.stop?.();
+    } catch {
+      /* updateMode may be manual on older callers */
+    }
     this.detachPointer();
     if (typeof this._unsubProfile === 'function') {
       this._unsubProfile();
@@ -102,12 +104,6 @@ export default class Live2dHost {
     this.runtime?.destroy?.();
     this.runtime = null;
     this._canvas = null;
-  }
-
-  stopLoop() {
-    if (this._raf) cancelAnimationFrame(this._raf);
-    this._raf = 0;
-    this._lastTs = 0;
   }
 
   detachPointer() {
@@ -133,14 +129,6 @@ export default class Live2dHost {
     const ny = 1 - ((event.clientY - rect.top) / rect.height) * 2;
     const area = runtime.hitTest?.(nx, ny) ?? null;
     this.onHit(area);
-  }
-
-  tick(ts) {
-    if (!this.runtime) return;
-    const dt = this._lastTs ? (ts - this._lastTs) / 1000 : 0;
-    this._lastTs = ts;
-    this.runtime.update(dt);
-    this._raf = requestAnimationFrame((t) => this.tick(t));
   }
 
   ensureCanvas() {
@@ -191,15 +179,18 @@ export default class Live2dHost {
       const prefer = Array.isArray(this.prefer)
         ? this.prefer
         : ['canvas2d', 'webgl2', 'webgpu'];
-      const runtime = createLive2D({ prefer, updateMode: 'manual' });
+      const runtime = createLive2D({ prefer, updateMode: 'auto' });
       runtime.events.on('ready', () => {
         if (generation !== this._bootGeneration) return;
         this.loading = false;
         this.progressPercent = 100;
         this.progressLabel = 'ready';
         if (this.autoplay) {
-          this._lastTs = 0;
-          this._raf = requestAnimationFrame((t) => this.tick(t));
+          try {
+            runtime.stage.start();
+          } catch {
+            /* already running */
+          }
         }
         this.attachPointer(canvas);
         if (this.exposeCaptureApi) void this.publishCapture();
