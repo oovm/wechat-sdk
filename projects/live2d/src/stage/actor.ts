@@ -160,6 +160,14 @@ export class Live2dActorImpl implements Live2dActor {
         return this.#slot.listPlayingMotions();
     }
 
+    listExpressions() {
+        return this.#slot.listExpressions();
+    }
+
+    setExpression(name: string | null) {
+        return this.#slot.setExpression(name);
+    }
+
     lookAt(stageX: number, stageY: number): void {
         const { dragX, dragY } = stageFocusDrag(
             stageX,

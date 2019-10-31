@@ -1,0 +1,4 @@
+{
+    "Type": "Live2D Pose",
+    "Groups": [[{ "Id": "PartA", "Link": [] }, { "Id": "PartB", "Link": [] }]]
+}

@@ -54,6 +54,10 @@ export interface Live2DRuntime extends Live2DSession {
         time: number;
         priority: number;
     }>;
+    listExpressions(): ReadonlyArray<
+        import("@doki-land/live2d-core").ExpressionDefinition
+    >;
+    setExpression(name: string | null): Promise<boolean>;
     capturePng(opts?: {
         mimeType?: "image/png";
         quality?: number;
@@ -161,6 +165,12 @@ export function createSingleActorFacade(
         },
         listPlayingMotions() {
             return actor.listPlayingMotions();
+        },
+        listExpressions() {
+            return actor.listExpressions();
+        },
+        setExpression(name) {
+            return actor.setExpression(name);
         },
         async capturePng(opts = {}) {
             if (!canvas) {

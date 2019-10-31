@@ -67,6 +67,13 @@ export {
     serializeCpuProgram,
 } from "@doki-land/live2d-renderer";
 export {
+    applyExpression3Clip,
+    type Expression3Clip,
+    type Expression3Parameter,
+    type ExpressionBlendMode,
+    parseExpression3,
+} from "./expression/index.js";
+export {
     type CreateLive2DOptions,
     createLive2D,
     type Live2DRuntime,
@@ -82,7 +89,14 @@ export {
     MotionPlayer,
     parseMotion3,
 } from "./motion/index.js";
+export {
+    applyPose3Activation,
+    type Pose3Clip,
+    parsePose3,
+} from "./pose/index.js";
+export { allocateActorId } from "./stage/actor.js";
 export { focusParameterUpdates } from "./stage/assets/focus.js";
+export { resolveHitAreaName } from "./stage/hit-area.js";
 export {
     type CreateLive2dStageFullOptions,
     createLive2dStage,

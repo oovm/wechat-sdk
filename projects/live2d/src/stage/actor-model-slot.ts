@@ -12,11 +12,22 @@ import type {
     Renderer,
 } from "@doki-land/live2d-renderer";
 import {
+    applyExpression3Clip,
+    type Expression3Clip,
+    parseExpression3,
+} from "../expression/index.js";
+import {
     MotionPlayer,
     MotionPriority,
     type PlayMotionOptions,
     parseMotion3,
 } from "../motion/index.js";
+import {
+    applyPose3Activation,
+    type Pose3Clip,
+    parsePose3,
+} from "../pose/index.js";
+import { resolveHitAreaName } from "./hit-area.js";
 import type {
     ModelAssetLease,
     ModelAssetRegistry,
@@ -54,6 +65,13 @@ export class ActorModelSlot {
     #loadGeneration = 0;
     readonly #paramById = new Map<string, ParameterBinding>();
     readonly #paramIndexById = new Map<string, number>();
+    #expressionCache = new Map<string, Expression3Clip>();
+    #activeExpression: {
+        name: string;
+        clip: Expression3Clip;
+        weight: number;
+    } | null = null;
+    #poseClip: Pose3Clip | null = null;
 
     constructor(options: ActorModelSlotOptions) {
         this.#assets = options.assets;
@@ -95,16 +113,9 @@ export class ActorModelSlot {
             if (s.weight <= 0) continue;
             if (s.target === "PartOpacity") {
                 if (!this.#backend.setPartOpacity) continue;
-                if (s.weight >= 1) {
-                    this.#backend.setPartOpacity(this.#model, s.id, s.value);
-                } else {
-                    const cur = 1;
-                    this.#backend.setPartOpacity(
-                        this.#model,
-                        s.id,
-                        cur + (s.value - cur) * s.weight,
-                    );
-                }
+                const value =
+                    s.weight >= 1 ? s.value : 1 + (s.value - 1) * s.weight;
+                this.#setPartOpacityWithPose(s.id, value);
                 continue;
             }
             if (s.target !== "Parameter" || !this.#backend.setParameter)
@@ -119,6 +130,60 @@ export class ActorModelSlot {
                 s.id,
                 cur + (s.value - cur) * s.weight,
             );
+        }
+        this.#syncParamCacheFromBackend();
+    }
+
+    #setPartOpacityWithPose(partId: string, opacity: number): void {
+        if (!this.#model || !this.#backend?.setPartOpacity) return;
+        if (this.#poseClip && opacity > 0) {
+            applyPose3Activation(this.#poseClip, partId, (id, value) => {
+                this.#backend?.setPartOpacity?.(this.#model!, id, value);
+            });
+            return;
+        }
+        this.#backend.setPartOpacity(this.#model, partId, opacity);
+    }
+
+    #syncParamCacheFromBackend(): void {
+        if (!this.#model || !this.#backend?.listParameters) return;
+        for (const p of this.#backend.listParameters(this.#model)) {
+            const cached = this.#paramById.get(p.id);
+            if (cached) (cached as { value: number }).value = p.value;
+        }
+    }
+
+    #tickExpression(deltaTimeSeconds: number): void {
+        if (!this.#activeExpression) return;
+        const fadeSeconds = 0.25;
+        const step = deltaTimeSeconds / Math.max(0.001, fadeSeconds);
+        this.#activeExpression.weight = Math.min(
+            1,
+            this.#activeExpression.weight + step,
+        );
+    }
+
+    #applyExpressionLayer(): void {
+        if (!this.#activeExpression || !this.#model || !this.#backend) return;
+        applyExpression3Clip(
+            this.#activeExpression.clip,
+            this.#activeExpression.weight,
+            this.#paramById,
+            (id, value) =>
+                this.#backend?.setParameter?.(this.#model!, id, value),
+        );
+        this.#syncParamCacheFromBackend();
+    }
+
+    async #loadPoseClip(): Promise<void> {
+        this.#poseClip = null;
+        const posePath = this.#model?.settings.pose;
+        if (!posePath || !this.#lease) return;
+        try {
+            const json = await this.#lease.resolver.fetchJson(posePath);
+            this.#poseClip = parsePose3(json);
+        } catch {
+            this.#poseClip = null;
         }
     }
 
@@ -208,6 +273,8 @@ export class ActorModelSlot {
         gen: number,
     ): Promise<InternalModel> {
         this.#motionPlayer.clear();
+        this.#activeExpression = null;
+        this.#poseClip = null;
         this.#releaseLease();
 
         const { model, backend } = await lease.createInstance(this.#renderer);
@@ -226,6 +293,7 @@ export class ActorModelSlot {
         this.#model = model;
         this.#backend = backend;
         this.#rebuildParamCache();
+        await this.#loadPoseClip();
         this.#report({
             stage: "ready",
             progress: 1,
@@ -249,6 +317,30 @@ export class ActorModelSlot {
         readonly import("@doki-land/live2d-core").MotionDefinition[]
     > {
         return this.#model?.settings.motionGroups ?? {};
+    }
+
+    listExpressions(): readonly import("@doki-land/live2d-core").ExpressionDefinition[] {
+        return this.#model?.settings.expressions ?? [];
+    }
+
+    async setExpression(name: string | null): Promise<boolean> {
+        if (!this.#model || !this.#lease) return false;
+        if (name === null) {
+            this.#activeExpression = null;
+            return true;
+        }
+        const def = this.#model.settings.expressions.find(
+            (item) => item.name === name,
+        );
+        if (!def) return false;
+        let clip = this.#expressionCache.get(def.file);
+        if (!clip) {
+            const json = await this.#lease.resolver.fetchJson(def.file);
+            clip = parseExpression3(json);
+            this.#expressionCache.set(def.file, clip);
+        }
+        this.#activeExpression = { name, clip, weight: 0 };
+        return true;
     }
 
     async playMotion(
@@ -301,6 +393,8 @@ export class ActorModelSlot {
     update(deltaTimeSeconds: number): DrawableMesh[] | null {
         if (!this.#model || !this.#backend || !this.#drawPass) return null;
         this.#applyMotionSamples(this.#motionPlayer.update(deltaTimeSeconds));
+        this.#tickExpression(deltaTimeSeconds);
+        this.#applyExpressionLayer();
         this.#backend.updateModel(this.#model, deltaTimeSeconds);
         return this.#backend.getDrawables(this.#model);
     }
@@ -332,10 +426,15 @@ export class ActorModelSlot {
                     (s >= 0 && s1 >= 0 && s2 >= 0) ||
                     (s <= 0 && s1 <= 0 && s2 <= 0)
                 ) {
-                    const hitArea = this.#model.settings.hitAreas.find(
-                        (h) => h.id === `D_${d.index}` || h.id === `${d.index}`,
+                    const artMeshId = this.#backend.getDrawableArtMeshId?.(
+                        this.#model,
+                        d.index,
                     );
-                    return hitArea?.name ?? `drawable:${d.index}`;
+                    return resolveHitAreaName({
+                        hitAreas: this.#model.settings.hitAreas,
+                        drawableIndex: d.index,
+                        artMeshId,
+                    });
                 }
             }
         }
@@ -345,6 +444,8 @@ export class ActorModelSlot {
     destroy(): void {
         this.#loadGeneration += 1;
         this.#motionPlayer.clear();
+        this.#activeExpression = null;
+        this.#poseClip = null;
         if (this.#model && this.#backend) {
             this.#backend.destroyModel(this.#model);
         }
