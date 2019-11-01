@@ -20,7 +20,11 @@ import type {
 } from "../runtime/model-runtime.js";
 import type { BlendMode, DrawableMesh } from "../types.js";
 import { cascadedPartOpacity, readMoc3PartTables } from "./moc3-parts.js";
-import { type Moc3Document, parseMoc3Document } from "./moc3-reader.js";
+import {
+    type Moc3Document,
+    moc3SectionStrings,
+    parseMoc3Document,
+} from "./moc3-reader.js";
 import {
     evaluateMoc3PoseInto,
     moc3ArtMeshIndicesInProgramOrder,
@@ -40,6 +44,8 @@ interface Moc3State {
     partOpacity: Map<string, number>;
     bindings: ParameterBinding[];
     paramIndexById: Map<string, number>;
+    /** Program-order art-mesh ids for HitArea resolution. */
+    drawableArtMeshIds: readonly string[];
 }
 
 const stateByModel = new WeakMap<InternalModel, Moc3State>();
@@ -191,12 +197,15 @@ export class Moc3Backend implements ModelBackend {
         const instance = createModelInstance(program);
         const meshes = allocateMeshesFromProgram(program);
         const byArtMesh = new Map<number, DrawableMesh>();
+        const drawableArtMeshIds: string[] = [];
         if (doc) {
+            const artMeshIds = moc3SectionStrings(doc, "art_mesh.ids");
             const artOrder = moc3ArtMeshIndicesInProgramOrder(doc);
             for (let i = 0; i < artOrder.length; i++) {
                 const art = artOrder[i]!;
                 const mesh = meshes[i];
                 if (mesh) byArtMesh.set(art, mesh);
+                drawableArtMeshIds.push(artMeshIds[art] ?? "");
             }
         }
         const poseOpacity = new Float32Array(meshes.length);
@@ -218,6 +227,7 @@ export class Moc3Backend implements ModelBackend {
             partOpacity: new Map(),
             bindings,
             paramIndexById,
+            drawableArtMeshIds,
         };
         bakePose(state);
         applyPartOpacity(state);
@@ -284,6 +294,16 @@ export class Moc3Backend implements ModelBackend {
         bakePose(state);
         syncBindingValues(state);
         return state.bindings;
+    }
+
+    getDrawableArtMeshId(
+        model: InternalModel,
+        drawableIndex: number,
+    ): string | undefined {
+        const state = stateByModel.get(model);
+        if (!state) return undefined;
+        const id = state.drawableArtMeshIds[drawableIndex];
+        return id || undefined;
     }
 
     hitTest(_model: InternalModel, _x: number, _y: number): string | null {

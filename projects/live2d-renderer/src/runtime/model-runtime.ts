@@ -76,6 +76,12 @@ export interface ModelBackend {
     resolveParameter?(model: InternalModel, id: string): number | undefined;
 
     listParameters?(model: InternalModel): readonly ParameterBinding[];
+
+    /** Drawable index → MOC art-mesh id (program order), when known. */
+    getDrawableArtMeshId?(
+        model: InternalModel,
+        drawableIndex: number,
+    ): string | undefined;
 }
 
 export function selectModelBackend(
