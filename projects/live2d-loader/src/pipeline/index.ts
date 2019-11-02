@@ -28,6 +28,7 @@ export function resolveAssetUrl(baseUrl: string, relative: string): string {
 }
 
 export interface UrlAssetResolverOptions {
+    signal?: AbortSignal;
     onBytesProgress?: (
         key: AssetKey,
         update: { bytesLoaded: number; bytesTotal: number | null },
@@ -45,15 +46,23 @@ export function createUrlAssetResolver(
         },
         async fetchJson(key: AssetKey) {
             const url = resolveAssetUrl(baseUrl, key);
-            return fetchJsonWithProgress(url, (update) => {
-                options.onBytesProgress?.(key, update);
-            });
+            return fetchJsonWithProgress(
+                url,
+                (update) => {
+                    options.onBytesProgress?.(key, update);
+                },
+                { signal: options.signal },
+            );
         },
         async fetchBytes(key: AssetKey) {
             const url = resolveAssetUrl(baseUrl, key);
-            return fetchArrayBufferWithProgress(url, (update) => {
-                options.onBytesProgress?.(key, update);
-            });
+            return fetchArrayBufferWithProgress(
+                url,
+                (update) => {
+                    options.onBytesProgress?.(key, update);
+                },
+                { signal: options.signal },
+            );
         },
     };
 }
@@ -91,8 +100,9 @@ export async function fetchModelJson(
         bytesLoaded: number;
         bytesTotal: number | null;
     }) => void,
+    init?: { signal?: AbortSignal },
 ): Promise<unknown> {
-    return fetchJsonWithProgress(url, onProgress);
+    return fetchJsonWithProgress(url, onProgress, init);
 }
 
 /** Detect moc2 vs moc3 from settings JSON shape (core helper; throws if unknown). */

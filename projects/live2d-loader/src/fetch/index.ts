@@ -1,11 +1,15 @@
 /**
- * Fetch helpers with optional byte-level progress.
+ * Fetch helpers with optional byte-level progress and AbortSignal.
  */
 
 export type FetchProgressHandler = (update: {
     bytesLoaded: number;
     bytesTotal: number | null;
 }) => void;
+
+export type FetchInit = {
+    signal?: AbortSignal;
+};
 
 function safeProgress(
     onProgress: FetchProgressHandler | undefined,
@@ -27,8 +31,9 @@ function safeProgress(
 export async function fetchArrayBufferWithProgress(
     url: string,
     onProgress?: FetchProgressHandler,
+    init?: FetchInit,
 ): Promise<ArrayBuffer> {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: init?.signal });
     if (!res.ok) {
         throw new Error(
             `@doki-land/live2d-loader: failed to fetch bytes (${res.status}): ${url}`,
@@ -82,8 +87,9 @@ export async function fetchArrayBufferWithProgress(
 export async function fetchJsonWithProgress(
     url: string,
     onProgress?: FetchProgressHandler,
+    init?: FetchInit,
 ): Promise<unknown> {
-    const bytes = await fetchArrayBufferWithProgress(url, onProgress);
+    const bytes = await fetchArrayBufferWithProgress(url, onProgress, init);
     const text = new TextDecoder().decode(bytes);
     return JSON.parse(text) as unknown;
 }

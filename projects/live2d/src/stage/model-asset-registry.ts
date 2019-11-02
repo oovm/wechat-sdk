@@ -103,8 +103,14 @@ export class ModelAssetRegistry implements Live2dStageAssets {
         source: ModelSource,
         resolver: AssetResolver | undefined,
         onProgress?: (payload: LoadProgress) => void,
+        options?: { signal?: AbortSignal },
     ): Promise<ModelAssetLease> {
-        const entry = await this.#ensureEntry(source, resolver, onProgress);
+        const entry = await this.#ensureEntry(
+            source,
+            resolver,
+            onProgress,
+            options,
+        );
         entry.refCount += 1;
         return this.#leaseFromEntry(entry);
     }
@@ -166,6 +172,7 @@ export class ModelAssetRegistry implements Live2dStageAssets {
         source: ModelSource,
         resolver?: AssetResolver,
         onProgress?: (payload: LoadProgress) => void,
+        options?: { signal?: AbortSignal },
     ): Promise<SharedModelAssetEntry> {
         const key = resolveModelAssetKey(source);
         const existing = this.#entries.get(key);
@@ -173,7 +180,13 @@ export class ModelAssetRegistry implements Live2dStageAssets {
 
         let pending = this.#inFlight.get(key);
         if (!pending) {
-            pending = this.#compileEntry(key, source, resolver, onProgress);
+            pending = this.#compileEntry(
+                key,
+                source,
+                resolver,
+                onProgress,
+                options,
+            );
             this.#inFlight.set(key, pending);
         }
         try {
@@ -190,8 +203,13 @@ export class ModelAssetRegistry implements Live2dStageAssets {
         source: ModelSource,
         resolver: AssetResolver | undefined,
         onProgress?: (payload: LoadProgress) => void,
+        options?: { signal?: AbortSignal },
     ): Promise<SharedModelAssetEntry> {
         const notify = (payload: LoadProgress) => onProgress?.(payload);
+        const signal = options?.signal;
+        if (signal?.aborted) {
+            throw new Error("@doki-land/live2d: load cancelled");
+        }
 
         notify({
             stage: "resolve",
@@ -231,21 +249,29 @@ export class ModelAssetRegistry implements Live2dStageAssets {
                 progress: 0.05,
                 detail: fetchUrl,
             });
-            json = await fetchModelJson(fetchUrl, (u) => {
-                const ratio =
-                    u.bytesTotal && u.bytesTotal > 0
-                        ? u.bytesLoaded / u.bytesTotal
-                        : 0;
-                notify({
-                    stage: "settings",
-                    progress: lerp(0.05, 0.22, ratio),
-                    detail: fetchUrl,
-                    bytesLoaded: u.bytesLoaded,
-                    bytesTotal: u.bytesTotal,
-                });
-            });
+            json = await fetchModelJson(
+                fetchUrl,
+                (u) => {
+                    const ratio =
+                        u.bytesTotal && u.bytesTotal > 0
+                            ? u.bytesLoaded / u.bytesTotal
+                            : 0;
+                    notify({
+                        stage: "settings",
+                        progress: lerp(0.05, 0.22, ratio),
+                        detail: fetchUrl,
+                        bytesLoaded: u.bytesLoaded,
+                        bytesTotal: u.bytesTotal,
+                    });
+                },
+                { signal },
+            );
             baseUrl = fetchUrl;
             settingsUrl = fetchUrl;
+        }
+
+        if (signal?.aborted) {
+            throw new Error("@doki-land/live2d: load cancelled");
         }
 
         const settings = normalizeModelSettings(json, settingsUrl);
@@ -258,6 +284,7 @@ export class ModelAssetRegistry implements Live2dStageAssets {
         const assetResolver =
             resolver ??
             createUrlAssetResolver(baseUrl, {
+                signal,
                 onBytesProgress: (assetKey, u) => {
                     const isMoc = assetKey === settings.moc;
                     const ratio =
@@ -292,6 +319,9 @@ export class ModelAssetRegistry implements Live2dStageAssets {
         });
 
         const mocBytes = await assetResolver.fetchBytes(settings.moc);
+        if (signal?.aborted) {
+            throw new Error("@doki-land/live2d: load cancelled");
+        }
         const sharedCompile = compileSharedModelCompile(settings, mocBytes);
 
         const textures: TextureData[] = [];
@@ -315,6 +345,10 @@ export class ModelAssetRegistry implements Live2dStageAssets {
                     },
                 })),
             );
+        }
+
+        if (signal?.aborted) {
+            throw new Error("@doki-land/live2d: load cancelled");
         }
 
         notify({
