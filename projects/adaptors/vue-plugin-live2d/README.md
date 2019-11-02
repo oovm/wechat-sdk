@@ -2,6 +2,10 @@
 
 A Vue 3 compatibility component for `@doki-land/live2d`.
 
+> **Runtime freeze (Developer Preview):** from v0.0.23 onward, do not add new runtime
+> logic here (RAF loops, hit test, parameter tracking, motion/expression eval).
+> Shared behavior belongs in `@doki-land/live2d` Stage/Actor APIs or CE/widget shells.
+
 This adapter helps existing Vue applications mount the browser-native runtime. It is not the architectural center of the
 project and does not replace the framework-independent facade used by game engines and other hosts.
 
