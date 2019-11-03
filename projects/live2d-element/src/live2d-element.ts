@@ -1,10 +1,23 @@
-import { createLive2D, type Live2DRuntime } from "@doki-land/live2d";
+import {
+    createLive2d,
+    type Live2dRuntime,
+    type PlayMotionOptions,
+} from "@doki-land/live2d";
 
 export const LIVE2D_ELEMENT_TAG = "live-2d" as const;
 
 export type Live2dElementRenderer = "auto" | "webgpu" | "webgl2" | "canvas2d";
+export type Live2dElementTracking = "pointer" | "none";
 
-const OBSERVED = ["model", "renderer", "width", "height", "autoplay"] as const;
+const OBSERVED = [
+    "model",
+    "renderer",
+    "width",
+    "height",
+    "autoplay",
+    "interactive",
+    "tracking",
+] as const;
 
 function preferFromRenderer(
     renderer: Live2dElementRenderer,
@@ -28,14 +41,14 @@ function parseBoolAttr(
 }
 
 /**
- * Thin `<live-2d>` host: attribute → createLive2D → Stage RAF → live2d-* events.
+ * Thin `<live-2d>` host: attribute → createLive2d → Stage RAF → live2d-* events.
  */
 export class Live2dElement extends HTMLElement {
     static get observedAttributes(): string[] {
         return [...OBSERVED];
     }
 
-    #runtime: Live2DRuntime | null = null;
+    #runtime: Live2dRuntime | null = null;
     #canvas: HTMLCanvasElement | null = null;
     #mountGen = 0;
     #model = "";
@@ -43,7 +56,11 @@ export class Live2dElement extends HTMLElement {
     #width = 320;
     #height = 320;
     #autoplay = true;
+    #interactive = false;
+    #tracking: Live2dElementTracking = "none";
     #connected = false;
+    #boundPointer: ((event: PointerEvent) => void) | null = null;
+    #unsubs: Array<() => void> = [];
 
     get model(): string {
         return this.#model;
@@ -83,16 +100,71 @@ export class Live2dElement extends HTMLElement {
         else this.removeAttribute("autoplay");
     }
 
-    get runtime(): Live2DRuntime | null {
+    get interactive(): boolean {
+        return this.#interactive;
+    }
+    set interactive(value: boolean) {
+        if (value) this.setAttribute("interactive", "");
+        else this.removeAttribute("interactive");
+    }
+
+    get tracking(): Live2dElementTracking {
+        return this.#tracking;
+    }
+    set tracking(value: Live2dElementTracking) {
+        this.setAttribute("tracking", value === "pointer" ? "pointer" : "none");
+    }
+
+    get runtime(): Live2dRuntime | null {
         return this.#runtime;
     }
 
     /** Imperative reload (also used when `model` attribute changes). */
-    async loadModel(source?: string): Promise<void> {
+    async loadModel(
+        source?: string,
+        opts?: { signal?: AbortSignal },
+    ): Promise<void> {
         if (source !== undefined) {
             this.model = String(source);
         }
-        await this.#boot();
+        await this.#boot(opts?.signal);
+    }
+
+    playMotion(
+        group: string,
+        index?: number,
+        options?: PlayMotionOptions,
+    ): Promise<boolean> {
+        return (
+            this.#runtime?.playMotion(group, index, options) ??
+            Promise.resolve(false)
+        );
+    }
+
+    setExpression(name: string | null): Promise<boolean> {
+        return this.#runtime?.setExpression(name) ?? Promise.resolve(false);
+    }
+
+    /** Stage-normalized look-at in [-1, 1] client-mapped coords (x right, y up). */
+    lookAt(x: number, y: number): void {
+        const stageX = (Number(x) + 1) / 2;
+        const stageY = (1 - Number(y)) / 2;
+        this.#runtime?.actor.lookAt(stageX, stageY);
+    }
+
+    pause(): void {
+        this.#runtime?.stage.pause();
+    }
+
+    resume(): void {
+        this.#runtime?.stage.resume();
+        if (this.#autoplay) {
+            try {
+                this.#runtime?.stage.start();
+            } catch {
+                /* already running */
+            }
+        }
     }
 
     connectedCallback(): void {
@@ -139,6 +211,16 @@ export class Live2dElement extends HTMLElement {
                 if (this.#autoplay) this.#runtime.stage.start();
                 else this.#runtime.stage.pause();
             }
+            return;
+        }
+        if (name === "interactive") {
+            this.#interactive = parseBoolAttr(this, "interactive", false);
+            this.#syncPointer();
+            return;
+        }
+        if (name === "tracking") {
+            this.#tracking = value === "pointer" ? "pointer" : "none";
+            this.#syncPointer();
         }
     }
 
@@ -163,6 +245,9 @@ export class Live2dElement extends HTMLElement {
             );
         }
         this.#autoplay = parseBoolAttr(this, "autoplay", true);
+        this.#interactive = parseBoolAttr(this, "interactive", false);
+        this.#tracking =
+            this.getAttribute("tracking") === "pointer" ? "pointer" : "none";
     }
 
     #ensureCanvas(): HTMLCanvasElement {
@@ -191,7 +276,67 @@ export class Live2dElement extends HTMLElement {
         this.#runtime?.stage.resize?.(this.#width, this.#height);
     }
 
+    #clearUnsubs(): void {
+        for (const off of this.#unsubs) {
+            try {
+                off();
+            } catch {
+                /* ignore */
+            }
+        }
+        this.#unsubs = [];
+    }
+
+    #detachPointer(): void {
+        if (this.#canvas && this.#boundPointer) {
+            this.#canvas.removeEventListener("pointerdown", this.#boundPointer);
+            this.#canvas.removeEventListener("pointermove", this.#boundPointer);
+        }
+        this.#boundPointer = null;
+    }
+
+    #syncPointer(): void {
+        this.#detachPointer();
+        const canvas = this.#canvas;
+        const runtime = this.#runtime;
+        if (!canvas || !runtime) return;
+        if (!this.#interactive && this.#tracking !== "pointer") return;
+
+        this.#boundPointer = (event: PointerEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return;
+            const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const ny = 1 - ((event.clientY - rect.top) / rect.height) * 2;
+            if (this.#tracking === "pointer" || event.type === "pointermove") {
+                this.lookAt(nx, ny);
+            }
+            if (this.#interactive && event.type === "pointerdown") {
+                const area = runtime.hitTest(nx, ny);
+                this.dispatchEvent(
+                    new CustomEvent("live2d-hit", {
+                        bubbles: true,
+                        composed: true,
+                        detail: {
+                            area,
+                            modelX: nx,
+                            modelY: ny,
+                            originalEvent: event,
+                        },
+                    }),
+                );
+            }
+        };
+        if (this.#interactive) {
+            canvas.addEventListener("pointerdown", this.#boundPointer);
+        }
+        if (this.#tracking === "pointer") {
+            canvas.addEventListener("pointermove", this.#boundPointer);
+        }
+    }
+
     #destroyRuntime(): void {
+        this.#clearUnsubs();
+        this.#detachPointer();
         try {
             this.#runtime?.stage.stop?.();
         } catch {
@@ -203,7 +348,7 @@ export class Live2dElement extends HTMLElement {
         this.removeAttribute("aria-busy");
     }
 
-    async #boot(): Promise<void> {
+    async #boot(signal?: AbortSignal): Promise<void> {
         if (!this.#connected) return;
         const model = this.#model.trim();
         if (!model) return;
@@ -211,12 +356,23 @@ export class Live2dElement extends HTMLElement {
         const gen = ++this.#mountGen;
         this.#destroyRuntime();
 
+        if (signal?.aborted) {
+            this.#emitError(signal.reason ?? new Error("aborted"));
+            return;
+        }
+
+        const onAbort = () => {
+            this.#mountGen += 1;
+            this.#destroyRuntime();
+        };
+        signal?.addEventListener("abort", onAbort, { once: true });
+
         const canvas = this.#ensureCanvas();
         this.setAttribute("data-phase", "loading");
         this.setAttribute("aria-busy", "true");
 
         try {
-            const runtime = createLive2D({
+            const runtime = createLive2d({
                 prefer: preferFromRenderer(this.#renderer),
                 updateMode: "auto",
             });
@@ -225,41 +381,75 @@ export class Live2dElement extends HTMLElement {
                 return;
             }
 
-            runtime.events.on("ready", () => {
-                if (gen !== this.#mountGen) return;
-                this.setAttribute("data-phase", "live");
-                this.setAttribute("aria-busy", "false");
-                if (this.#autoplay) {
-                    try {
-                        runtime.stage.start();
-                    } catch {
-                        /* already running */
+            this.#unsubs.push(
+                runtime.events.on("ready", () => {
+                    if (gen !== this.#mountGen) return;
+                    this.setAttribute("data-phase", "live");
+                    this.setAttribute("aria-busy", "false");
+                    if (this.#autoplay) {
+                        try {
+                            runtime.stage.start();
+                        } catch {
+                            /* already running */
+                        }
                     }
-                }
-                this.dispatchEvent(
-                    new CustomEvent("live2d-ready", {
-                        bubbles: true,
-                        composed: true,
-                        detail: { model },
-                    }),
-                );
-            });
+                    this.#syncPointer();
+                    this.dispatchEvent(
+                        new CustomEvent("live2d-ready", {
+                            bubbles: true,
+                            composed: true,
+                            detail: { model },
+                        }),
+                    );
+                }),
+            );
 
-            runtime.events.on("error", (payload) => {
-                if (gen !== this.#mountGen) return;
-                this.#emitError(payload?.error ?? "load error");
-            });
+            this.#unsubs.push(
+                runtime.events.on("error", (payload) => {
+                    if (gen !== this.#mountGen) return;
+                    this.#emitError(payload?.error ?? "load error");
+                }),
+            );
+
+            this.#unsubs.push(
+                runtime.events.on("motion:start", (payload) => {
+                    if (gen !== this.#mountGen) return;
+                    this.dispatchEvent(
+                        new CustomEvent("live2d-motion-start", {
+                            bubbles: true,
+                            composed: true,
+                            detail: payload,
+                        }),
+                    );
+                }),
+            );
+
+            this.#unsubs.push(
+                runtime.events.on("motion:finish", (payload) => {
+                    if (gen !== this.#mountGen) return;
+                    this.dispatchEvent(
+                        new CustomEvent("live2d-motion-finish", {
+                            bubbles: true,
+                            composed: true,
+                            detail: payload,
+                        }),
+                    );
+                }),
+            );
 
             runtime.mount(canvas);
-            await runtime.loadModel(model);
+            await runtime.loadModel(model, undefined, { signal });
             if (gen !== this.#mountGen) {
                 runtime.destroy();
                 return;
             }
             this.#runtime = runtime;
+            this.#syncPointer();
         } catch (err) {
             if (gen !== this.#mountGen) return;
             this.#emitError(err);
+        } finally {
+            signal?.removeEventListener("abort", onAbort);
         }
     }
 

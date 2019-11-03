@@ -1,12 +1,14 @@
 # `@doki-land/live2d-element`
 
-Official `<live-2d>` Custom Element — thin host over `@doki-land/live2d` with Stage-owned RAF.
+Official `<live-2d>` / `<live-2d-widget>` Custom Elements — thin hosts over
+`@doki-land/live2d` with Stage-owned RAF.
 
 ## Status (Developer Preview)
 
-v0.0.22 thin gate: pure TypeScript `customElements.define('live-2d', …)`. Zero VMZ runtime dependency on this package or on `@doki-land/live2d*`.
+Pure TypeScript `customElements.define`. Zero VMZ runtime dependency.
+Primary TS symbols use the `Live2d*` / `createLive2d*` spelling (see design `00` §4.4).
 
-HTML Custom Elements require a hyphen; the registered tag is **`live-2d`** (not unhyphenated `live2d`). Design `01` still targets eventual `vmz build --target custom-element` when that CLI target ships.
+HTML Custom Elements require a hyphen; tags are **`live-2d`** and **`live-2d-widget`**.
 
 ## Install
 
@@ -26,12 +28,19 @@ pnpm add @doki-land/live2d-element
   width="320"
   height="320"
   autoplay
+  interactive
+  tracking="pointer"
 ></live-2d>
 <script type="module">
   const el = document.querySelector("live-2d");
   el.addEventListener("live2d-ready", () => console.log("ready"));
+  el.addEventListener("live2d-hit", (e) => console.log(e.detail));
   el.addEventListener("live2d-error", (e) => console.error(e.detail));
+  // Methods: loadModel / playMotion / setExpression / lookAt / pause / resume
 </script>
 ```
+
+`<live-2d-widget>` nests an inner `<live-2d>` and forwards model/size attributes
+(product-shell chrome POC; no second Stage clock).
 
 See `fixtures/index.html` for a native HTML dogfood page.
