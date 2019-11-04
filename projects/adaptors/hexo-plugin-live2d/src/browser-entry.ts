@@ -5,7 +5,7 @@
  */
 import type { RendererKind } from "@doki-land/live2d";
 import {
-    Live2DWidget,
+    Live2dWidget,
     mountWidget,
     type WidgetChromeOptions,
 } from "@doki-land/live2d-widget";
@@ -27,14 +27,14 @@ declare global {
     var DokiLive2D:
         | {
               mountWidget: typeof mountWidget;
-              Live2DWidget: typeof Live2DWidget;
+              Live2dWidget: typeof Live2dWidget;
           }
         | undefined;
 }
 
 globalThis.DokiLive2D = {
     mountWidget,
-    Live2DWidget,
+    Live2dWidget,
 };
 
 const cfg = globalThis.__DOKI_LIVE2D_HEXO__ ?? {};

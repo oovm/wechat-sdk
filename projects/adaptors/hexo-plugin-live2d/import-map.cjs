@@ -21,15 +21,19 @@ function buildHexoImportMap(pluginRootPath) {
             "@doki-land/live2d-loader": `${root}vendor/live2d-loader/index.js`,
             "@doki-land/live2d-renderer": `${root}vendor/live2d-renderer/index.js`,
             "@doki-land/live2d-widget": `${root}vendor/live2d-widget/index.js`,
+            "@doki-land/live2d-element": `${root}vendor/live2d-element/index.js`,
         },
     };
 }
 
-/** @param {"esm" | "bundle"} loader @param {string} pluginRootPath */
+/** @param {"esm" | "bundle" | "ce"} loader @param {string} pluginRootPath */
 function defaultScriptUrl(loader, pluginRootPath) {
     const root = normalizePublicPrefix(pluginRootPath);
     if (loader === "bundle") {
         return `${root}doki-live2d-hexo.js`;
+    }
+    if (loader === "ce") {
+        return `${root}vendor/live2d-element/index.js`;
     }
     return `${root}doki-live2d-hexo.bootstrap.mjs`;
 }
