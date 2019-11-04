@@ -20,10 +20,10 @@ pnpm add vue-plugin-live2d
 ## Minimal usage
 
 ```ts
-import {createLive2D, createRenderer} from "@doki-land/live2d";
+import {createLive2d, createRenderer} from "@doki-land/live2d";
 
 const canvas = document.querySelector("canvas")!;
-const runtime = createLive2D({
+const runtime = createLive2d({
     renderer: createRenderer({prefer: ["canvas2d", "webgl2", "webgpu"]}),
 });
 runtime.mount(canvas);

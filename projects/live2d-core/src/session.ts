@@ -4,7 +4,7 @@ import type { FrameSnapshot } from "./frame.js";
 import type { InternalModel } from "./model/model.js";
 
 /** High-level runtime session for one mounted surface. */
-export interface Live2DSession {
+export interface Live2dSession {
     readonly events: EventEmitter;
     readonly model: InternalModel | null;
     readonly state: SessionState;
@@ -14,6 +14,7 @@ export interface Live2DSession {
     loadModel(
         source: ModelSource,
         resolver?: AssetResolver,
+        options?: { signal?: AbortSignal },
     ): Promise<InternalModel>;
 
     /** Latest CPU frame after update, or null if no model. */
@@ -26,7 +27,7 @@ export interface Live2DSession {
     destroy(): void;
 }
 
-export function createSessionStub(): Live2DSession {
+export function createSessionStub(): Live2dSession {
     let canvas: HTMLCanvasElement | null = null;
     let model: InternalModel | null = null;
     const events = new EventEmitter();

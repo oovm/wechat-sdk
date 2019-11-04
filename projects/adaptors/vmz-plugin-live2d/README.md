@@ -9,10 +9,10 @@ pnpm add @vmz/plugin-live2d @vmz/ui @vmz/ui-icons
 **App** (`vmz.config.ts`):
 
 ```ts
-import { defineConfig } from '@vmz/vmz';
+import {defineConfig} from '@vmz/vmz';
 import live2d from '@vmz/plugin-live2d';
 
-export default defineConfig({ plugins: [live2d] });
+export default defineConfig({plugins: [live2d]});
 ```
 
 **Plugin** (`vmz.plugin.ts` in this package) uses `definePlugin` from `@vmz/plugin`.

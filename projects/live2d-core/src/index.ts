@@ -19,9 +19,9 @@ export { modelSourceUrl } from "./contracts.js";
 export {
     EventEmitter,
     type FrameProfile,
-    type Live2DEventMap,
-    type Live2DEventName,
-    type Live2DListener,
+    type Live2dEventMap,
+    type Live2dEventName,
+    type Live2dListener,
     type LoadProgress,
     type LoadProgressStage,
 } from "./events.js";
@@ -52,7 +52,7 @@ export type {
 } from "./program.js";
 export {
     createSessionStub,
-    type Live2DSession,
+    type Live2dSession,
 } from "./session.js";
 export type {
     ActorHit,

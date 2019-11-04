@@ -2,7 +2,7 @@
 
 import { createMoc3Backend } from "@doki-land/live2d-renderer";
 import { describe, expect, it } from "vitest";
-import { createLive2D } from "../../src/facade/create-live2d.js";
+import { createLive2d } from "../../src/facade/create-live2d.js";
 import {
     cpuProgramBytes,
     createCountingResolver,
@@ -11,14 +11,14 @@ import {
 } from "../fixtures/cpu-model-fixture.js";
 
 function createTestLive2D() {
-    return createLive2D({
+    return createLive2d({
         renderer: createStubRenderer(),
         backends: [createMoc3Backend()],
         updateMode: "manual",
     });
 }
 
-describe("createLive2D facade", () => {
+describe("createLive2d facade", () => {
     it("loadModel transitions to live and emits ready", async () => {
         const live2d = createTestLive2D();
         const canvas = document.createElement("canvas");

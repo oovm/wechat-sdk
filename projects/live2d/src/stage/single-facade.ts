@@ -1,6 +1,6 @@
 import type {
     FrameSnapshot,
-    Live2DSession,
+    Live2dSession,
     LoadProgress,
     ModelSource,
     SessionPhase,
@@ -18,14 +18,14 @@ import { MotionPriority } from "../motion/index.js";
 import type { Live2dActorImpl } from "./actor.js";
 import type { Live2dStageImpl } from "./stage.js";
 
-export interface CreateLive2DOptions {
+export interface CreateLive2dOptions {
     backends?: ModelBackend[];
     renderer?: Renderer;
     prefer?: RendererKind[];
     updateMode?: "auto" | "manual";
 }
 
-export interface Live2DRuntime extends Live2DSession {
+export interface Live2dRuntime extends Live2dSession {
     readonly renderer: Renderer;
     readonly backends: readonly ModelBackend[];
     readonly stage: Live2dStageImpl;
@@ -73,7 +73,7 @@ export function createSingleActorFacade(
     stage: Live2dStageImpl,
     actor: Live2dActorImpl,
     backends: readonly ModelBackend[],
-): Live2DRuntime {
+): Live2dRuntime {
     const events = new EventEmitter();
     let canvas: HTMLCanvasElement | null = null;
     let phase: SessionPhase = "idle";
@@ -92,7 +92,7 @@ export function createSingleActorFacade(
         generation,
     });
 
-    const runtime: Live2DRuntime = {
+    const runtime: Live2dRuntime = {
         events,
         backends,
         renderer: stage.renderer,
@@ -117,10 +117,10 @@ export function createSingleActorFacade(
                 },
             );
         },
-        async loadModel(source: ModelSource, resolver) {
+        async loadModel(source: ModelSource, resolver, options) {
             setPhase("loading");
             try {
-                const model = await actor.load(source, resolver);
+                const model = await actor.load(source, resolver, options);
                 lastError = null;
                 setPhase("live");
                 events.emit("ready", { modelId: model.id });
@@ -233,6 +233,11 @@ export function createSingleActorFacade(
             events.clear();
         },
     };
+
+    actor.setMotionEventHandlers({
+        onStart: (payload) => events.emit("motion:start", payload),
+        onFinish: (payload) => events.emit("motion:finish", payload),
+    });
 
     return runtime;
 }

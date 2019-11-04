@@ -48,7 +48,7 @@ export class MyLive2D extends Live2D {
 组件内部会：
 
 1. 创建离屏 Canvas
-2. `createLive2D()` + `mount`
+2. `createLive2d()` + `mount`
 3. 在 Creator 更新循环里驱动 `update` / `render`（与引擎帧同步）
 
 ## Creator 2.4（当前限制）

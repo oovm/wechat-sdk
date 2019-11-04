@@ -1,11 +1,11 @@
 import {
     allocateActorId,
-    createLive2D,
+    createLive2d,
     createLive2dStage,
     createRenderer,
     focusParameterUpdates,
-    type Live2DRuntime,
     type Live2dActor,
+    type Live2dRuntime,
     type Live2dStage,
     type RendererKind,
 } from "@doki-land/live2d";
@@ -64,7 +64,7 @@ export class Live2dWidget {
     #canvas: HTMLCanvasElement | null = null;
     #stage: Live2dStage | null = null;
     #actor: Live2dActor | null = null;
-    #runtime: Live2DRuntime | null = null;
+    #runtime: Live2dRuntime | null = null;
     #chrome: ChromeSession | null = null;
     #unsubFrame: (() => void) | null = null;
     #autoSway = true;
@@ -98,7 +98,7 @@ export class Live2dWidget {
         let actor: Live2dActor;
         if (isLegacyOptions(options)) {
             const prefer = normalizePrefer(options.prefer);
-            const runtime = createLive2D({
+            const runtime = createLive2d({
                 prefer,
                 updateMode: "auto",
             });
@@ -190,8 +190,8 @@ export class Live2dWidget {
         return this.#actor;
     }
 
-    /** Legacy accessor when mounted via `createLive2D`. */
-    getRuntime(): Live2DRuntime | null {
+    /** Legacy accessor when mounted via `createLive2d`. */
+    getRuntime(): Live2dRuntime | null {
         return this.#runtime;
     }
 
@@ -240,9 +240,6 @@ export class Live2dWidget {
         this.#chrome?.tips?.show("碰到我啦～", 2500, 4);
     };
 }
-
-/** @deprecated Use `Live2dWidget` — alias kept for hexo / legacy imports. */
-export const Live2DWidget = Live2dWidget;
 
 function normalizePrefer(
     prefer: RendererKind[] | undefined,

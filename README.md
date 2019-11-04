@@ -24,9 +24,9 @@ CPU evaluation, rendering, interaction, and host integration while keeping the p
 The runtime can be driven by an existing game loop. It does not require ownership of `requestAnimationFrame`:
 
 ```ts
-import {createLive2D} from "@doki-land/live2d";
+import {createLive2d} from "@doki-land/live2d";
 
-const live2d = createLive2D({
+const live2d = createLive2d({
     prefer: ["webgpu", "webgl2", "canvas2d"],
 });
 
@@ -94,7 +94,7 @@ pnpm add @doki-land/live2d
 ```
 
 ```ts
-import {createLive2D} from "@doki-land/live2d";
+import {createLive2d} from "@doki-land/live2d";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#actor");
 
@@ -102,7 +102,7 @@ if (!canvas) {
     throw new Error("Missing #actor canvas");
 }
 
-const actor = createLive2D();
+const actor = createLive2d();
 actor.mount(canvas);
 await actor.loadModel("/models/character.model3.json");
 

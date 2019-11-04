@@ -37,7 +37,7 @@ export interface FrameProfile {
 }
 
 /** Minimal event bus used by sessions and loaders. */
-export type Live2DEventMap = {
+export type Live2dEventMap = {
     ready: { modelId: string };
     error: { error: unknown };
     progress: LoadProgress;
@@ -49,18 +49,18 @@ export type Live2DEventMap = {
     phase: { phase: string; generation: number };
 };
 
-export type Live2DEventName = keyof Live2DEventMap;
+export type Live2dEventName = keyof Live2dEventMap;
 
-export type Live2DListener<K extends Live2DEventName> = (
-    payload: Live2DEventMap[K],
+export type Live2dListener<K extends Live2dEventName> = (
+    payload: Live2dEventMap[K],
 ) => void;
 
 export class EventEmitter {
     #listeners = new Map<string, Set<(payload: unknown) => void>>();
 
-    on<K extends Live2DEventName>(
+    on<K extends Live2dEventName>(
         event: K,
-        listener: Live2DListener<K>,
+        listener: Live2dListener<K>,
     ): () => void {
         const set = this.#listeners.get(event) ?? new Set();
         set.add(listener as (payload: unknown) => void);
@@ -68,18 +68,18 @@ export class EventEmitter {
         return () => this.off(event, listener);
     }
 
-    off<K extends Live2DEventName>(
+    off<K extends Live2dEventName>(
         event: K,
-        listener: Live2DListener<K>,
+        listener: Live2dListener<K>,
     ): void {
         this.#listeners
             .get(event)
             ?.delete(listener as (payload: unknown) => void);
     }
 
-    emit<K extends Live2DEventName>(
+    emit<K extends Live2dEventName>(
         event: K,
-        payload: Live2DEventMap[K],
+        payload: Live2dEventMap[K],
     ): void {
         for (const listener of this.#listeners.get(event) ?? []) {
             listener(payload);
