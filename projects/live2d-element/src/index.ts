@@ -15,6 +15,7 @@ export {
     LIVE2D_ELEMENT_TAG,
     Live2dElement,
     type Live2dElementRenderer,
+    type Live2dElementRenderOptions,
     type Live2dElementTracking,
 } from "./live2d-element.js";
 export {

@@ -1,7 +1,9 @@
 import {
     createLive2d,
     type Live2dRuntime,
+    type ModelSource,
     type PlayMotionOptions,
+    type RendererKind,
 } from "@doki-land/live2d";
 
 export const LIVE2D_ELEMENT_TAG = "live-2d" as const;
@@ -9,12 +11,17 @@ export const LIVE2D_ELEMENT_TAG = "live-2d" as const;
 export type Live2dElementRenderer = "auto" | "webgpu" | "webgl2" | "canvas2d";
 export type Live2dElementTracking = "pointer" | "none";
 
+export interface Live2dElementRenderOptions {
+    prefer?: RendererKind[];
+}
+
 const OBSERVED = [
     "model",
     "renderer",
     "width",
     "height",
     "autoplay",
+    "autosway",
     "interactive",
     "tracking",
 ] as const;
@@ -40,6 +47,31 @@ function parseBoolAttr(
     return true;
 }
 
+function sourceLabel(source: ModelSource): string {
+    if (typeof source === "string") return source;
+    if (source.kind === "url") return source.url;
+    if (source.kind === "npm") {
+        const path = source.path.replace(/^\/+/, "");
+        return `npm:${source.package}/${path}`;
+    }
+    return source.baseUrl;
+}
+
+function swayAngleX(
+    binding: {
+        defaultValue: number;
+        min: number;
+        max: number;
+    },
+    normalized: number,
+): number {
+    return normalized >= 0
+        ? binding.defaultValue +
+              (binding.max - binding.defaultValue) * normalized
+        : binding.defaultValue +
+              (binding.defaultValue - binding.min) * normalized;
+}
+
 /**
  * Thin `<live-2d>` host: attribute → createLive2d → Stage RAF → live2d-* events.
  */
@@ -52,23 +84,46 @@ export class Live2dElement extends HTMLElement {
     #canvas: HTMLCanvasElement | null = null;
     #mountGen = 0;
     #model = "";
+    #sourceProperty: ModelSource | null = null;
+    #renderOptions: Live2dElementRenderOptions | null = null;
     #renderer: Live2dElementRenderer = "auto";
     #width = 320;
     #height = 320;
     #autoplay = true;
+    #autosway = false;
     #interactive = false;
     #tracking: Live2dElementTracking = "none";
     #connected = false;
     #boundPointer: ((event: PointerEvent) => void) | null = null;
     #unsubs: Array<() => void> = [];
+    #unsubFrame: (() => void) | null = null;
+    #swayPhase = 0;
 
     get model(): string {
         return this.#model;
     }
     set model(value: string) {
         const next = String(value ?? "");
+        this.#sourceProperty = null;
         if (next) this.setAttribute("model", next);
         else this.removeAttribute("model");
+    }
+
+    /** Structured model source (property-only; not reflected to attributes). */
+    get source(): ModelSource | null {
+        return this.#sourceProperty;
+    }
+    set source(value: ModelSource | null) {
+        this.#sourceProperty = value;
+        if (this.#connected) void this.#boot();
+    }
+
+    get renderOptions(): Live2dElementRenderOptions | null {
+        return this.#renderOptions;
+    }
+    set renderOptions(value: Live2dElementRenderOptions | null) {
+        this.#renderOptions = value;
+        if (this.#connected && this.#resolveLoadSource()) void this.#boot();
     }
 
     get renderer(): Live2dElementRenderer {
@@ -100,6 +155,14 @@ export class Live2dElement extends HTMLElement {
         else this.removeAttribute("autoplay");
     }
 
+    get autosway(): boolean {
+        return this.#autosway;
+    }
+    set autosway(value: boolean) {
+        if (value) this.setAttribute("autosway", "");
+        else this.removeAttribute("autosway");
+    }
+
     get interactive(): boolean {
         return this.#interactive;
     }
@@ -119,13 +182,17 @@ export class Live2dElement extends HTMLElement {
         return this.#runtime;
     }
 
-    /** Imperative reload (also used when `model` attribute changes). */
+    /** Imperative reload (also used when `model` / `source` changes). */
     async loadModel(
-        source?: string,
+        source?: ModelSource | string,
         opts?: { signal?: AbortSignal },
     ): Promise<void> {
         if (source !== undefined) {
-            this.model = String(source);
+            if (typeof source === "string") {
+                this.model = source;
+            } else {
+                this.#sourceProperty = source;
+            }
         }
         await this.#boot(opts?.signal);
     }
@@ -187,6 +254,7 @@ export class Live2dElement extends HTMLElement {
     ): void {
         if (name === "model") {
             this.#model = value ?? "";
+            this.#sourceProperty = null;
             if (this.#connected) void this.#boot();
             return;
         }
@@ -211,6 +279,11 @@ export class Live2dElement extends HTMLElement {
                 if (this.#autoplay) this.#runtime.stage.start();
                 else this.#runtime.stage.pause();
             }
+            return;
+        }
+        if (name === "autosway") {
+            this.#autosway = parseBoolAttr(this, "autosway", false);
+            this.#syncAutosway(this.#runtime, this.#mountGen);
             return;
         }
         if (name === "interactive") {
@@ -245,9 +318,22 @@ export class Live2dElement extends HTMLElement {
             );
         }
         this.#autoplay = parseBoolAttr(this, "autoplay", true);
+        this.#autosway = parseBoolAttr(this, "autosway", false);
         this.#interactive = parseBoolAttr(this, "interactive", false);
         this.#tracking =
             this.getAttribute("tracking") === "pointer" ? "pointer" : "none";
+    }
+
+    #resolveLoadSource(): ModelSource | null {
+        if (this.#sourceProperty != null) return this.#sourceProperty;
+        const model = this.#model.trim();
+        return model ? model : null;
+    }
+
+    #resolvePrefer(): RendererKind[] {
+        const prefer = this.#renderOptions?.prefer;
+        if (prefer?.length) return [...prefer];
+        return preferFromRenderer(this.#renderer);
     }
 
     #ensureCanvas(): HTMLCanvasElement {
@@ -295,6 +381,24 @@ export class Live2dElement extends HTMLElement {
         this.#boundPointer = null;
     }
 
+    #syncAutosway(runtime: Live2dRuntime | null, gen: number): void {
+        this.#unsubFrame?.();
+        this.#unsubFrame = null;
+        if (!runtime || !this.#autosway) return;
+        this.#swayPhase = 0;
+        this.#unsubFrame = runtime.stage.onFrame((dt) => {
+            if (gen !== this.#mountGen) return;
+            this.#swayPhase += dt;
+            const binding = runtime.actor.parameterMap().get("PARAM_ANGLE_X");
+            if (!binding) return;
+            const normalized = Math.sin(this.#swayPhase) * 0.25;
+            runtime.setParameter(
+                "PARAM_ANGLE_X",
+                swayAngleX(binding, normalized),
+            );
+        });
+    }
+
     #syncPointer(): void {
         this.#detachPointer();
         const canvas = this.#canvas;
@@ -336,6 +440,8 @@ export class Live2dElement extends HTMLElement {
 
     #destroyRuntime(): void {
         this.#clearUnsubs();
+        this.#unsubFrame?.();
+        this.#unsubFrame = null;
         this.#detachPointer();
         try {
             this.#runtime?.stage.stop?.();
@@ -350,8 +456,8 @@ export class Live2dElement extends HTMLElement {
 
     async #boot(signal?: AbortSignal): Promise<void> {
         if (!this.#connected) return;
-        const model = this.#model.trim();
-        if (!model) return;
+        const source = this.#resolveLoadSource();
+        if (!source) return;
 
         const gen = ++this.#mountGen;
         this.#destroyRuntime();
@@ -368,12 +474,13 @@ export class Live2dElement extends HTMLElement {
         signal?.addEventListener("abort", onAbort, { once: true });
 
         const canvas = this.#ensureCanvas();
+        const sourceLabelText = sourceLabel(source);
         this.setAttribute("data-phase", "loading");
         this.setAttribute("aria-busy", "true");
 
         try {
             const runtime = createLive2d({
-                prefer: preferFromRenderer(this.#renderer),
+                prefer: this.#resolvePrefer(),
                 updateMode: "auto",
             });
             if (gen !== this.#mountGen) {
@@ -393,12 +500,13 @@ export class Live2dElement extends HTMLElement {
                             /* already running */
                         }
                     }
+                    this.#syncAutosway(runtime, gen);
                     this.#syncPointer();
                     this.dispatchEvent(
                         new CustomEvent("live2d-ready", {
                             bubbles: true,
                             composed: true,
-                            detail: { model },
+                            detail: { model: sourceLabelText },
                         }),
                     );
                 }),
@@ -408,6 +516,32 @@ export class Live2dElement extends HTMLElement {
                 runtime.events.on("error", (payload) => {
                     if (gen !== this.#mountGen) return;
                     this.#emitError(payload?.error ?? "load error");
+                }),
+            );
+
+            this.#unsubs.push(
+                runtime.events.on("progress", (payload) => {
+                    if (gen !== this.#mountGen) return;
+                    this.dispatchEvent(
+                        new CustomEvent("live2d-progress", {
+                            bubbles: true,
+                            composed: true,
+                            detail: payload,
+                        }),
+                    );
+                }),
+            );
+
+            this.#unsubs.push(
+                runtime.events.on("profile", (payload) => {
+                    if (gen !== this.#mountGen) return;
+                    this.dispatchEvent(
+                        new CustomEvent("live2d-profile", {
+                            bubbles: true,
+                            composed: true,
+                            detail: payload,
+                        }),
+                    );
                 }),
             );
 
@@ -438,12 +572,13 @@ export class Live2dElement extends HTMLElement {
             );
 
             runtime.mount(canvas);
-            await runtime.loadModel(model, undefined, { signal });
+            await runtime.loadModel(source, undefined, { signal });
             if (gen !== this.#mountGen) {
                 runtime.destroy();
                 return;
             }
             this.#runtime = runtime;
+            this.#syncAutosway(runtime, gen);
             this.#syncPointer();
         } catch (err) {
             if (gen !== this.#mountGen) return;
