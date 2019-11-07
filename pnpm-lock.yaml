@@ -79,6 +79,9 @@ importers:
       '@doki-land/live2d':
         specifier: workspace:*
         version: link:../../live2d
+      '@doki-land/live2d-element':
+        specifier: workspace:*
+        version: link:../../live2d-element
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.0.0

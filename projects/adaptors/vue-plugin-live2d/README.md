@@ -2,9 +2,8 @@
 
 A Vue 3 compatibility component for `@doki-land/live2d`.
 
-> **Runtime freeze (Developer Preview):** from v0.0.23 onward, do not add new runtime
-> logic here (RAF loops, hit test, parameter tracking, motion/expression eval).
-> Shared behavior belongs in `@doki-land/live2d` Stage/Actor APIs or CE/widget shells.
+> **Runtime freeze lifted for shell only (v0.0.26):** this adapter is a thin Vue wrapper over
+> `<live-2d>` from `@doki-land/live2d-element`. Shared behavior belongs in CE / Stage / Actor APIs.
 
 This adapter helps existing Vue applications mount the browser-native runtime. It is not the architectural center of the
 project and does not replace the framework-independent facade used by game engines and other hosts.
@@ -23,7 +22,7 @@ project and does not replace the framework-independent facade used by game engin
 ## 📦 Installation
 
 ```bash
-pnpm add vue-plugin-live2d @doki-land/live2d vue
+pnpm add vue-plugin-live2d @doki-land/live2d-element vue
 ```
 
 ## 🚀 Quick Start
