@@ -27,3 +27,6 @@ dist/
 .placeholder-npm-cache.json
 scripts/.placeholder-npm-cache.json
 .env.placeholder.local
+
+# CE browser-matrix local vendor copy
+projects/live2d-element/fixtures/.vendor/

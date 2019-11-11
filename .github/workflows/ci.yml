@@ -41,17 +41,20 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Typecheck UI adaptors
+        run: pnpm --filter vue-plugin-live2d typecheck && pnpm --filter react-plugin-live2d typecheck
+
       - name: Test
         run: pnpm test
-
-      - name: Test hexo plugin (logic only; not Hexo product readiness)
-        run: pnpm --filter hexo-plugin-live2d test
 
       - name: Build packages
         run: pnpm build
 
-      - name: Build hexo plugin browser assets
-        run: pnpm --filter hexo-plugin-live2d build
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: CE browser matrix (Chromium)
+        run: pnpm browser:ce-matrix
 
       - name: Build homepage
         run: pnpm build:homepage
