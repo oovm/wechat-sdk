@@ -93,6 +93,17 @@ describe("<live-2d> custom element", () => {
         expect(String(ev.detail?.error ?? "")).toMatch(/./);
         expect(el.getAttribute("data-phase")).toBe("error");
     });
+
+    it("clears data-renderer on disconnect and exposes the attribute API", () => {
+        const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
+        el.setAttribute("data-renderer", "canvas2d");
+        el.setAttribute("data-phase", "live");
+        document.body.appendChild(el);
+        expect(el.getAttribute("data-renderer")).toBe("canvas2d");
+        el.remove();
+        expect(el.getAttribute("data-renderer")).toBeNull();
+        expect(el.getAttribute("data-phase")).toBeNull();
+    });
 });
 
 describe("<live-2d-widget> custom element", () => {
@@ -126,5 +137,42 @@ describe("<live-2d-widget> custom element", () => {
         expect(actor?.getAttribute("width")).toBe("240");
         expect(actor?.getAttribute("height")).toBe("320");
         expect(el.querySelector('[part="chrome"]')).toBeTruthy();
+    });
+
+    it("forwards interactive, autosway, tracking, and renderOptions", () => {
+        const el = document.createElement(
+            LIVE2D_WIDGET_ELEMENT_TAG,
+        ) as Live2dWidgetElement;
+        el.setAttribute("interactive", "");
+        el.setAttribute("autosway", "");
+        el.setAttribute("tracking", "pointer");
+        el.renderOptions = { prefer: ["canvas2d", "webgl2"] };
+        document.body.appendChild(el);
+
+        const actor = el.actor;
+        expect(actor?.interactive).toBe(true);
+        expect(actor?.autosway).toBe(true);
+        expect(actor?.tracking).toBe("pointer");
+        expect(actor?.renderOptions?.prefer).toEqual(["canvas2d", "webgl2"]);
+    });
+
+    it("re-dispatches live2d-* events from inner actor", async () => {
+        const el = document.createElement(
+            LIVE2D_WIDGET_ELEMENT_TAG,
+        ) as Live2dWidgetElement;
+        el.setAttribute("renderer", "canvas2d");
+        el.setAttribute("width", "64");
+        el.setAttribute("height", "64");
+        document.body.appendChild(el);
+
+        const widgetError = new Promise<CustomEvent>((resolve) => {
+            el.addEventListener("live2d-error", ((e: Event) => {
+                resolve(e as CustomEvent);
+            }) as EventListener);
+        });
+
+        el.setAttribute("model", "/__missing__/no-such.model3.json");
+        const ev = await widgetError;
+        expect(String(ev.detail?.error ?? "")).toMatch(/./);
     });
 });

@@ -39,7 +39,9 @@
       width="320"
       height="320"
       autoplay
+      data-phase
     ></live-2d>
+    <live-2d-widget id="widget" model="/models/samples/moc3-wanko/Wanko.model3.json" width="240" height="320" interactive autosway></live-2d-widget>
     <pre id="log">waiting…</pre>
     <script type="module">
       // Dev: resolve via workspace package entry after `pnpm install`.
@@ -52,6 +54,13 @@
       });
       el.addEventListener("live2d-error", (e) => {
         log.textContent = `live2d-error ${e.detail?.error ?? e.detail}`;
+      });
+      el.addEventListener("live2d-progress", (e) => {
+        log.textContent = `live2d-progress ${JSON.stringify(e.detail?.stage ?? e.detail)}`;
+      });
+      const widget = document.getElementById("widget");
+      widget?.addEventListener("live2d-ready", (e) => {
+        log.textContent = `widget live2d-ready ${JSON.stringify(e.detail)}`;
       });
     </script>
   </body>

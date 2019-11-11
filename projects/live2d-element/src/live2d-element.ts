@@ -451,6 +451,7 @@ export class Live2dElement extends HTMLElement {
         this.#runtime?.destroy?.();
         this.#runtime = null;
         this.removeAttribute("data-phase");
+        this.removeAttribute("data-renderer");
         this.removeAttribute("aria-busy");
     }
 
@@ -493,6 +494,10 @@ export class Live2dElement extends HTMLElement {
                     if (gen !== this.#mountGen) return;
                     this.setAttribute("data-phase", "live");
                     this.setAttribute("aria-busy", "false");
+                    this.setAttribute(
+                        "data-renderer",
+                        runtime.stage.renderer.kind,
+                    );
                     if (this.#autoplay) {
                         try {
                             runtime.stage.start();
@@ -571,7 +576,11 @@ export class Live2dElement extends HTMLElement {
                 }),
             );
 
-            runtime.mount(canvas);
+            await runtime.mount(canvas);
+            if (gen !== this.#mountGen) {
+                runtime.destroy();
+                return;
+            }
             await runtime.loadModel(source, undefined, { signal });
             if (gen !== this.#mountGen) {
                 runtime.destroy();
