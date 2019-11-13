@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Live2D page widget — product chrome over Stage + Actor (no private RAF); built on @doki-land/live2d.",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",

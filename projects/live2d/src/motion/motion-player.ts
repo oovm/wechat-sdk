@@ -77,25 +77,6 @@ export class MotionPlayer {
         }));
     }
 
-    /** @deprecated Prefer {@link listPlaying}; returns highest-priority slot. */
-    get current(): {
-        group: string;
-        index: number;
-        time: number;
-        priority: MotionPriorityLevel;
-    } | null {
-        const list = [...this.listPlaying()];
-        if (!list.length) return null;
-        list.sort((a, b) => b.priority - a.priority);
-        const top = list[0]!;
-        return {
-            group: top.group,
-            index: top.index,
-            time: top.time,
-            priority: top.priority,
-        };
-    }
-
     /**
      * Start a clip on a slot. Returns false if rejected by priority
      * (and not queued).

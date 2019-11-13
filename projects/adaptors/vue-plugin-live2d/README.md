@@ -17,6 +17,7 @@ project and does not replace the framework-independent facade used by game engin
 - Ready, error, progress, profile, and hit events.
 - Optional browser animation loop.
 - Pointer tracking.
+- Optional `interactive` / `tracking` props (forwarded to `<live-2d>`).
 - Parameter inspection and mutation through the exposed component API.
 
 ## 📦 Installation
@@ -29,11 +30,11 @@ pnpm add vue-plugin-live2d @doki-land/live2d-element vue
 
 ```vue
 <script setup lang="ts">
-import { Live2D } from "vue-plugin-live2d";
+import { Live2d } from "vue-plugin-live2d";
 </script>
 
 <template>
-  <Live2D
+  <Live2d
     model="/models/character.model3.json"
     :width="480"
     :height="640"
@@ -54,9 +55,9 @@ Use a template ref for runtime-level controls:
 ```vue
 <script setup lang="ts">
 import { ref } from "vue";
-import { Live2D } from "vue-plugin-live2d";
+import { Live2d } from "vue-plugin-live2d";
 
-const actor = ref<InstanceType<typeof Live2D> | null>(null);
+const actor = ref<InstanceType<typeof Live2d> | null>(null);
 
 function lookLeft() {
   actor.value?.setParameter("PARAM_ANGLE_X", -15);
@@ -64,7 +65,7 @@ function lookLeft() {
 </script>
 
 <template>
-  <Live2D ref="actor" model="/models/character.model3.json" />
+  <Live2d ref="actor" model="/models/character.model3.json" />
   <button type="button" @click="lookLeft">Look left</button>
 </template>
 ```
@@ -103,4 +104,4 @@ than being reimplemented for Vue.
 
 ## 📄 License
 
-See the repository license.
+Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../../License.md).

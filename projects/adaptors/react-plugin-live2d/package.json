@@ -1,19 +1,19 @@
 {
-    "name": "vue-plugin-live2d",
+    "name": "react-plugin-live2d",
     "version": "0.0.0",
-    "description": "Vue 3 <Live2d> component — thin wrapper over <live-2d> Custom Element.",
+    "description": "React <Live2d> component  - thin wrapper over <live-2d> Custom Element.",
     "type": "module",
     "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/doki-land/live2d.ts.git",
-        "directory": "projects/adaptors/vue-plugin-live2d"
+        "directory": "projects/adaptors/react-plugin-live2d"
     },
     "keywords": [
         "live2d",
-        "vue",
-        "plugin",
+        "react",
+        "custom-element",
         "doki-land"
     ],
     "main": "./src/index.ts",
@@ -30,27 +30,27 @@
         "access": "public"
     },
     "scripts": {
-        "typecheck": "vue-tsc --noEmit",
+        "typecheck": "tsc --noEmit",
         "test": "vitest run --passWithNoTests"
     },
     "peerDependencies": {
-        "vue": "^3.4.0"
+        "react": "^18.0.0 || ^19.0.0",
+        "react-dom": "^18.0.0 || ^19.0.0"
     },
     "dependencies": {
         "@doki-land/live2d": "workspace:*",
         "@doki-land/live2d-element": "workspace:*"
     },
     "devDependencies": {
-        "@vitejs/plugin-vue": "^5.0.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
         "@webgpu/types": "^0.1.64",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
         "typescript": "^5.8.0",
-        "vite": "8.0.16",
-        "vitest": "^2.1.8",
-        "vue": "^3.5.0",
-        "vue-tsc": "^2.0.0"
+        "vitest": "^2.1.8"
     },
     "sideEffects": [
-        "./src/index.ts",
-        "./src/Live2d.vue"
+        "./src/index.ts"
     ]
 }

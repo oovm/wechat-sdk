@@ -164,4 +164,4 @@ Keep this package focused on webpage character behavior. Runtime and renderer ch
 
 ## 📄 License
 
-See the repository license. Character models and message-service content may have separate terms.
+Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../License.md). Character models and message-service content may have separate terms.

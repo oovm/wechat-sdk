@@ -1,4 +1,5 @@
-import Live2D from "./Live2D.vue";
+import "@doki-land/live2d-element";
+import Live2d from "./Live2d.vue";
 
-export { Live2D };
-export default Live2D;
+export { Live2d };
+export default Live2d;

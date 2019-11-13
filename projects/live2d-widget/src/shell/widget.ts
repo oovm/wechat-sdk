@@ -1,8 +1,5 @@
 import {
-    allocateActorId,
     createLive2d,
-    createLive2dStage,
-    createRenderer,
     focusParameterUpdates,
     type Live2dActor,
     type Live2dRuntime,
@@ -33,8 +30,8 @@ export interface ComposedWidgetOptions {
 }
 
 /**
- * Legacy bootstrap that still creates its own Stage + Actor.
- * Prefer composing `stage` + `actor` yourself and calling `createLive2dWidget`.
+ * Bootstrap widget that creates its own Stage + Actor via `createLive2d`.
+ * Prefer `createLive2dWidget({ stage, actor, ... })` when you already own the stage.
  */
 export interface LegacyWidgetOptions {
     target: string | HTMLElement;
@@ -264,22 +261,4 @@ export async function mountWidget(
     const widget = new Live2dWidget();
     await widget.mount(options);
     return widget;
-}
-
-/** Convenience bootstrap: Stage + default Actor + widget chrome. */
-export async function mountWidgetWithStage(
-    options: LegacyWidgetOptions,
-): Promise<{ widget: Live2dWidget; stage: Live2dStage; actor: Live2dActor }> {
-    const prefer = normalizePrefer(options.prefer);
-    const stage = createLive2dStage({
-        renderer: createRenderer({ prefer }),
-        updateMode: "auto",
-    });
-    const actor = stage.createActor({ id: allocateActorId("widget") });
-    const widget = new Live2dWidget();
-    await widget.mount({ ...options, stage, actor });
-    if (options.model) {
-        await actor.load(options.model);
-    }
-    return { widget, stage, actor };
 }

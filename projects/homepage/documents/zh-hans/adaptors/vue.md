@@ -10,11 +10,11 @@ order: 1
 ```vue
 
 <script setup lang="ts">
-  import {Live2D} from "vue-plugin-live2d";
+  import {Live2d} from "vue-plugin-live2d";
 </script>
 
 <template>
-  <Live2D
+  <Live2d
       model="/models/quad/quad.model3.json"
       :width="360"
       :height="360"
