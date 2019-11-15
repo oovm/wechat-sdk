@@ -4,7 +4,7 @@
 
 export type HexoRendererPrefer = "webgpu" | "webgl2" | "canvas2d";
 
-export type HexoLive2dLoader = "esm" | "bundle" | "ce";
+export type HexoLive2dLoader = "esm" | "ce";
 
 export interface HexoLive2dConfig {
     enable?: boolean;
@@ -18,9 +18,8 @@ export interface HexoLive2dConfig {
     className?: string;
     /**
      * Asset delivery mode.
-     * - `esm` (default): import map + vendor dist + thin bootstrap module
-     * - `ce`: optional CE path — inject `<live-2d-widget>` + `@doki-land/live2d-element`
-     * - `bundle` (deprecated): monolithic `doki-live2d-hexo.js` IIFE
+     * - `ce` (default): inject `<live-2d-widget>` + `@doki-land/live2d-element`
+     * - `esm`: import map + vendor dist + thin bootstrap module (Widget TS chrome)
      */
     loader?: HexoLive2dLoader;
     /**
@@ -64,7 +63,7 @@ export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
     height: 400,
     target: "#doki-live2d",
     className: "doki-live2d",
-    loader: "esm",
+    loader: "ce",
     scriptUrl: "",
     pluginRootPath: "live2dw/",
     prefer: ["webgpu", "webgl2", "canvas2d"],
@@ -120,8 +119,7 @@ export function buildHexoImportMap(pluginRootPath: string): {
 export function resolveHexoLive2dLoader(
     loader: HexoLive2dLoader | undefined,
 ): HexoLive2dLoader {
-    if (loader === "bundle" || loader === "ce") return loader;
-    return "esm";
+    return loader === "esm" ? "esm" : "ce";
 }
 
 export function defaultHexoScriptUrl(
@@ -129,13 +127,44 @@ export function defaultHexoScriptUrl(
     pluginRootPath: string,
 ): string {
     const root = normalizePublicPrefix(pluginRootPath);
-    if (loader === "bundle") {
-        return `${root}doki-live2d-hexo.js`;
-    }
     if (loader === "ce") {
         return `${root}vendor/live2d-element/index.js`;
     }
     return `${root}doki-live2d-hexo.bootstrap.mjs`;
+}
+
+function renderCeWidgetTag(options: {
+    className: string;
+    width: number;
+    height: number;
+    interactive: boolean;
+    autoSway: boolean;
+}): string {
+    const parts = [
+        'id="doki-live2d"',
+        `class="${options.className}"`,
+        `width="${options.width}"`,
+        `height="${options.height}"`,
+        "autoplay",
+    ];
+    if (options.interactive) parts.push("interactive");
+    if (options.autoSway) parts.push("autosway");
+    parts.push('style="position:fixed;left:0;bottom:0;z-index:999;"');
+    return `<live-2d-widget ${parts.join(" ")}></live-2d-widget>\n`;
+}
+
+function renderCeInitScript(
+    model: string,
+    prefer: HexoRendererPrefer[],
+): string {
+    return `<script type="module">
+import "@doki-land/live2d-element";
+const w = document.getElementById("doki-live2d");
+if (w) {
+  w.renderOptions = { prefer: ${JSON.stringify(prefer)} };
+  w.model = ${JSON.stringify(model)};
+}
+</script>\n`;
 }
 
 /** Body-end HTML: host node + bootstrap / CE script tag. */
@@ -157,14 +186,20 @@ export function renderHexoLive2dInjector(config: HexoLive2dConfig): string {
     const prefer =
         normalizePrefer(cfg.prefer) ?? DEFAULT_HEXO_LIVE2D_CONFIG.prefer;
     const autoSway = cfg.autoSway !== false;
-    const chrome =
-        cfg.chrome === undefined || cfg.chrome === null ? true : cfg.chrome;
-    const modelAttr = String(cfg.model ?? "").replace(/"/g, "&quot;");
+    const interactive = cfg.chrome !== false;
+    const modelText = String(cfg.model ?? "");
 
     if (loader === "ce") {
         const importMap = `<script type="importmap">${JSON.stringify(buildHexoImportMap(pluginRootPath))}</script>\n`;
-        const widget = `<live-2d-widget id="doki-live2d" class="${className}" model="${modelAttr}" width="${width}" height="${height}" autoplay style="position:fixed;left:0;bottom:0;z-index:999;"></live-2d-widget>\n`;
-        return `${widget}${importMap}<script type="module" src="${scriptUrl}"></script>\n`;
+        const widget = renderCeWidgetTag({
+            className,
+            width,
+            height,
+            interactive,
+            autoSway,
+        });
+        const init = renderCeInitScript(modelText, prefer);
+        return `${widget}${importMap}${init}`;
     }
 
     const needsHost = (cfg.target ?? "#doki-live2d") === "#doki-live2d";
@@ -177,10 +212,10 @@ export function renderHexoLive2dInjector(config: HexoLive2dConfig): string {
             ? `<script type="importmap">${JSON.stringify(buildHexoImportMap(pluginRootPath))}</script>\n`
             : "";
 
-    const scriptTag =
-        loader === "esm"
-            ? `<script type="module" src="${scriptUrl}"></script>`
-            : `<script defer src="${scriptUrl}"></script>`;
+    const scriptTag = `<script type="module" src="${scriptUrl}"></script>`;
+
+    const chrome =
+        cfg.chrome === undefined || cfg.chrome === null ? true : cfg.chrome;
 
     return `${host}${importMap}<script>
 window.__DOKI_LIVE2D_HEXO__ = {

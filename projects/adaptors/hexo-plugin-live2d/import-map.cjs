@@ -26,12 +26,9 @@ function buildHexoImportMap(pluginRootPath) {
     };
 }
 
-/** @param {"esm" | "bundle" | "ce"} loader @param {string} pluginRootPath */
+/** @param {"esm" | "ce"} loader @param {string} pluginRootPath */
 function defaultScriptUrl(loader, pluginRootPath) {
     const root = normalizePublicPrefix(pluginRootPath);
-    if (loader === "bundle") {
-        return `${root}doki-live2d-hexo.js`;
-    }
     if (loader === "ce") {
         return `${root}vendor/live2d-element/index.js`;
     }

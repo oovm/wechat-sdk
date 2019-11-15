@@ -15,7 +15,7 @@ const cjs = require("../index.cjs") as {
     renderInjector: (config: Record<string, unknown>) => string;
     DEFAULTS: Record<string, unknown>;
     PLUGIN_ID: string;
-    resolveLoader: (config: Record<string, unknown>) => "esm" | "bundle";
+    resolveLoader: (config: Record<string, unknown>) => "esm" | "ce";
     resolveScriptUrl: (config: Record<string, unknown>) => string;
     collectAssetRoutes: (config: Record<string, unknown>) => {
         missing: string | null;
@@ -40,15 +40,40 @@ function withTempBrowserRoot(
 }
 
 describe("hexo-plugin-live2d", () => {
-    it("exports 0.0.0 version", () => {
+    it("exports 0.0.0 version and defaults to CE loader", () => {
         expect(HEXO_PLUGIN_LIVE2D_VERSION).toBe("0.0.0");
         expect(cjs.PLUGIN_ID).toBe("hexo-plugin-live2d");
-        expect(cjs.DEFAULTS.loader).toBe("esm");
+        expect(cjs.DEFAULTS.loader).toBe("ce");
+        expect(DEFAULT_HEXO_LIVE2D_CONFIG.loader).toBe("ce");
     });
 
-    it("renders ESM injector with import map by default", () => {
+    it("renders CE injector by default", () => {
         const html = renderHexoLive2dInjector({
             enable: true,
+            model: "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+        });
+        expect(html).toContain("<live-2d-widget");
+        expect(html).toContain('type="importmap"');
+        expect(html).toContain("@doki-land/live2d-element");
+        expect(html).toContain("interactive");
+        expect(html).toContain("autosway");
+        expect(html).toContain("renderOptions");
+        expect(html).toContain("hijiki.model.json");
+        expect(html).toContain('"webgpu"');
+        expect(html).not.toContain("window.__DOKI_LIVE2D_HEXO__");
+        expect(html).not.toContain("doki-live2d-hexo.bootstrap.mjs");
+        expect(
+            cjs.renderInjector({
+                enable: true,
+                model: "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+            }),
+        ).toContain("<live-2d-widget");
+    });
+
+    it("renders ESM injector when loader is esm", () => {
+        const html = renderHexoLive2dInjector({
+            enable: true,
+            loader: "esm",
             model: "npm:live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
         });
         expect(html).toContain('type="importmap"');
@@ -63,19 +88,6 @@ describe("hexo-plugin-live2d", () => {
         expect(html).toContain("chrome: true");
     });
 
-    it("renders legacy bundle injector when loader is bundle", () => {
-        const html = renderHexoLive2dInjector({
-            enable: true,
-            loader: "bundle",
-            model: "x",
-        });
-        expect(html).not.toContain("importmap");
-        expect(html).toContain('defer src="/live2dw/doki-live2d-hexo.js"');
-        expect(
-            cjs.renderInjector({ enable: true, loader: "bundle", model: "x" }),
-        ).toContain("doki-live2d-hexo.js");
-    });
-
     it("builds import map under pluginRootPath", () => {
         const map = buildHexoImportMap("assets/live2dw/");
         expect(map.imports["@doki-land/live2d"]).toBe(
@@ -83,6 +95,9 @@ describe("hexo-plugin-live2d", () => {
         );
         expect(map.imports["@doki-land/live2d-widget"]).toContain(
             "live2d-widget/index.js",
+        );
+        expect(map.imports["@doki-land/live2d-element"]).toContain(
+            "live2d-element/index.js",
         );
     });
 
@@ -100,10 +115,10 @@ describe("hexo-plugin-live2d", () => {
         ).toBe("/live2dw/doki-live2d-hexo.bootstrap.mjs");
         expect(
             cjs.resolveScriptUrl({
-                loader: "bundle",
+                loader: "ce",
                 pluginRootPath: "live2dw/",
             }),
-        ).toContain("doki-live2d-hexo.js");
+        ).toBe("/live2dw/vendor/live2d-element/index.js");
     });
 
     it("collectAssetRoutes reports missing bootstrap for esm in empty browser root", () => {
@@ -181,67 +196,6 @@ describe("hexo-plugin-live2d", () => {
         );
     });
 
-    it("collectAssetRoutes reports missing legacy bundle when loader is bundle", () => {
-        withTempBrowserRoot(
-            () => {},
-            (browserRoot) => {
-                const result = cjs.collectAssetRoutes({
-                    loader: "bundle",
-                    pluginRootPath: "live2dw/",
-                    browserRoot,
-                });
-                expect(result.missing).toBe("legacy");
-                expect(result.routes).toEqual([]);
-            },
-        );
-    });
-
-    it("collectAssetRoutes lists legacy bundle when loader is bundle and file exists", () => {
-        withTempBrowserRoot(
-            (browserRoot) => {
-                fs.writeFileSync(
-                    path.join(browserRoot, "doki-live2d-hexo.js"),
-                    "/* legacy */",
-                );
-            },
-            (browserRoot) => {
-                const result = cjs.collectAssetRoutes({
-                    loader: "bundle",
-                    pluginRootPath: "live2dw/",
-                    browserRoot,
-                });
-                expect(result.missing).toBeNull();
-                expect(
-                    result.routes.some((r) =>
-                        r.path.includes("doki-live2d-hexo.js"),
-                    ),
-                ).toBe(true);
-            },
-        );
-    });
-
-    it("renders CE injector with live-2d-widget when loader is ce", () => {
-        const html = renderHexoLive2dInjector({
-            enable: true,
-            loader: "ce",
-            model: "/models/demo.model3.json",
-            width: 300,
-            height: 400,
-        });
-        expect(html).toContain("<live-2d-widget");
-        expect(html).toContain('model="/models/demo.model3.json"');
-        expect(html).toContain("@doki-land/live2d-element");
-        expect(html).toContain("vendor/live2d-element/index.js");
-        expect(html).not.toContain("window.__DOKI_LIVE2D_HEXO__");
-        expect(
-            cjs.renderInjector({
-                enable: true,
-                loader: "ce",
-                model: "/models/demo.model3.json",
-            }),
-        ).toContain("<live-2d-widget");
-    });
-
     it("collectAssetRoutes reports missing ce when live2d-element vendor absent", () => {
         withTempBrowserRoot(
             () => {},
@@ -252,6 +206,34 @@ describe("hexo-plugin-live2d", () => {
                     browserRoot,
                 });
                 expect(result.missing).toBe("ce");
+            },
+        );
+    });
+
+    it("collectAssetRoutes lists ce vendor when live2d-element exists", () => {
+        withTempBrowserRoot(
+            (browserRoot) => {
+                const element = path.join(
+                    browserRoot,
+                    "vendor",
+                    "live2d-element",
+                    "index.js",
+                );
+                fs.mkdirSync(path.dirname(element), { recursive: true });
+                fs.writeFileSync(element, "export {}");
+            },
+            (browserRoot) => {
+                const result = cjs.collectAssetRoutes({
+                    loader: "ce",
+                    pluginRootPath: "live2dw/",
+                    browserRoot,
+                });
+                expect(result.missing).toBeNull();
+                expect(
+                    result.routes.some((r) =>
+                        r.path.includes("vendor/live2d-element/index.js"),
+                    ),
+                ).toBe(true);
             },
         );
     });
