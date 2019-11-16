@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Live2D in the browser — load moc2/moc3 models, Stage + multi-actor, motion; WebGPU/WebGL2/Canvas2D. Main entry for live2d.ts.",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "author": "Doki Land",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {

@@ -78,7 +78,10 @@ widget package. Model decoding and rendering remain in the runtime and are not d
 | `@doki-land/live2d-widget`   | Optional webpage character shell with messages and toolbar behavior.                              |
 | `@doki-land/live2d-element`  | Official `<live-2d>` / `<live-2d-widget>` Custom Elements (Stage-owned RAF).                      |
 | `vue-plugin-live2d`          | Thin Vue wrapper over `<live-2d>` for existing Vue apps (not a separate runtime).                 |
-| `hexo-plugin-live2d`         | Hexo configuration, browser asset emission, and widget bootstrap.                                 |
+| `react-plugin-live2d`        | Thin React wrapper over `<live-2d>` for existing React apps (not a separate runtime).             |
+| `cocos-plugin-live2d`        | Cocos Creator 3.x (Web) component over the pure TS facade.                                        |
+
+Static-site inject (`hexo-plugin-live2d` / Hugo) lives in **`hexo-theme-yuki` / `hugo-theme-yuki`** (same semver as the theme). See design `07`.
 
 Applications normally depend only on `@doki-land/live2d`. Install implementation packages directly only when building
 custom tooling or replacing part of the default pipeline.
@@ -248,9 +251,9 @@ Local gate (Biome + typecheck + tests + builds + homepage??
 pnpm verify
 ```
 
-`pnpm verify` includes `hexo-plugin-live2d` unit tests (plugin logic only). Hexo site / ESM inject acceptance lives in sibling `hexo-theme-fate` (`npm run build && npm run verify:live2d`).
+`pnpm verify` covers Biome, CE fixture static gate, typecheck/tests/build, Playwright Chromium CE browser-matrix, and homepage build.
 
-Real npm semver releases are **only** via GitHub Actions Trusted Publisher?push tag `vX.Y.Z` ? `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
+Real npm semver releases are **only** via GitHub Actions Trusted Publisher: push tag `vX.Y.Z` → `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
 
 Run type checking and renderer tests:
 
@@ -278,7 +281,7 @@ Do not include proprietary model assets in public issues without permission.
 
 ## Developer Preview
 
-**Current band: `0.0.x` (Developer Preview).** APIs and architecture may change between tags. The next maturity gate is **`0.1.0`** (compatibility matrix, full browser acceptance, Vue-to-CE completion, Hexo default CE, bundle retirement). Do not describe `0.0.x` as production-ready or claim performance superiority over the official SDK without the benchmark evidence pack in design `03` ?.
+**Current band: `0.0.x` (Developer Preview).** APIs and architecture may change between tags. The next maturity gate is **`0.1.0`** (compatibility matrix, full browser matrix beyond CI Chromium, Blink/Breath/Lip Sync, Widget legacy retirement, benchmark evidence pack). Physics3 full simulation is deferred to **0.1.x**. Static-site Hexo/Hugo plugins are maintained in theme repos, not here. Do not describe `0.0.x` as production-ready or claim performance superiority over the official SDK without the benchmark evidence pack in design `03` §5.
 
 Cross-ecosystem integration should prefer **`@doki-land/live2d-element`** (`<live-2d>`) or the pure TS `createLive2d()` API. Game engines and schedulers that already own a canvas should use the TS facade directly.
 
@@ -324,6 +327,6 @@ Report security-sensitive issues privately to the maintainers rather than publis
 
 ### Source and asset terms
 
-- See the repository license for source-code terms.
+- Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](License.md).
 - Model files, textures, motions, expressions, audio, and character artwork may have separate licenses and are not
   automatically covered by the runtime license.

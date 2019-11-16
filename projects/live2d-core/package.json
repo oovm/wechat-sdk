@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Shared TypeScript contracts for live2d.ts — ModelSource, Live2dStage/Actor, ModelAsset, events (no DOM/GPU).",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",

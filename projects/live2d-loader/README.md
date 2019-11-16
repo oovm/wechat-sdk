@@ -105,4 +105,4 @@ and deterministic resolution rules.
 
 ## 📄 License
 
-See the repository license.
+Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../License.md).

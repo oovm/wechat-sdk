@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "VMZ Live2D adapter — <Live2dHost> for @doki-land/live2d in VMZ applications",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",
