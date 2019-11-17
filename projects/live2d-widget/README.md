@@ -16,7 +16,6 @@ integrations.
 - Hitokoto toolbar action.
 - Canvas screenshot download.
 - Hide/quit action.
-- Renderer fallback configuration passed to the runtime.
 
 ## 🧭 Package Role
 
@@ -30,6 +29,9 @@ Webpage behavior and controls
 The widget owns webpage presentation such as tips and toolbar actions. Model parsing, parameter evaluation, graphics
 backends, and resource semantics belong to `@doki-land/live2d` and its implementation packages.
 
+**Widget does not bootstrap models.** Create a `Live2dStage` + `Live2dActor` (or use `<live-2d>` / framework adaptors),
+load the model, then pass `stage` and `actor` to `createLive2dWidget`.
+
 ## 📦 Installation
 
 ```bash
@@ -39,28 +41,32 @@ pnpm add @doki-land/live2d-widget
 ## 🚀 Quick Start
 
 ```html
-
 <div id="live2d-widget"></div>
 ```
 
 ```ts
-import {mountWidget} from "@doki-land/live2d-widget";
+import { createLive2d } from "@doki-land/live2d";
+import { createLive2dWidget } from "@doki-land/live2d-widget";
 
-const widget = await mountWidget({
+const runtime = createLive2d({ updateMode: "auto" });
+await runtime.loadModel("/models/character.model3.json");
+
+const widget = await createLive2dWidget({
     target: "#live2d-widget",
-    model: "/models/character.model3.json",
+    stage: runtime.stage,
+    actor: runtime.actor,
     width: 280,
     height: 400,
-    prefer: ["webgpu", "webgl2", "canvas2d"],
     autoSway: true,
     chrome: true,
 });
 ```
 
-Destroy the widget when its host is permanently removed:
+The widget mounts the stage onto its own canvas. Destroy both when the host is permanently removed:
 
 ```ts
 widget.destroy();
+runtime.destroy();
 ```
 
 ## 💬 Messages
@@ -82,9 +88,10 @@ Higher-priority messages can temporarily prevent lower-priority page events from
 Enable default controls:
 
 ```ts
-const widget = await mountWidget({
+const widget = await createLive2dWidget({
     target: host,
-    model,
+    stage,
+    actor,
     chrome: true,
 });
 ```
@@ -92,9 +99,10 @@ const widget = await mountWidget({
 Or configure them explicitly:
 
 ```ts
-const widget = await mountWidget({
+const widget = await createLive2dWidget({
     target: host,
-    model,
+    stage,
+    actor,
     chrome: {
         tips: true,
         welcome: ["Welcome to the site."],
@@ -110,10 +118,11 @@ disable it or provide an approved endpoint.
 ## 🖱️ Interaction
 
 ```ts
-await mountWidget({
+await createLive2dWidget({
     target: host,
-    model,
-    onHit({area, x, y}) {
+    stage,
+    actor,
+    onHit({ area, x, y }) {
         console.log(area, x, y);
     },
 });
@@ -124,15 +133,11 @@ deformation data in the loaded model.
 
 ## 📝 Blog Engines
 
-The package is suitable as the shared browser layer for blog-engine adapters. An adapter should only:
+Blog-engine adaptors should use `<live-2d>` / `<live-2d-widget>` (see `@doki-land/live2d-element`) or compose
+`createLive2d` + `createLive2dWidget` — they must not copy model decoding, rendering, pointer math, or message behavior
+into the adapter.
 
-- read host configuration;
-- emit or copy browser assets;
-- create the target element;
-- pass options to the widget;
-- integrate with the host's navigation lifecycle.
-
-It should not copy model decoding, rendering, pointer math, or message behavior into the adapter.
+Hexo / Hugo inject plugins ship from **hexo-theme-yuki** / **hugo-theme-yuki**, not this repo.
 
 ## 🎮 Game Engines
 

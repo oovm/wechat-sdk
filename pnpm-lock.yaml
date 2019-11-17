@@ -14,6 +14,9 @@ importers:
       '@webgpu/types':
         specifier: ^0.1.64
         version: 0.1.72
+      live2d-widget-model-hijiki:
+        specifier: 1.0.5
+        version: 1.0.5
       playwright:
         specifier: ^1.62.1
         version: 1.62.1
@@ -45,8 +48,6 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.1)(happy-dom@15.11.7)(lightningcss@1.33.0)
-
-  projects/adaptors/hexo-plugin-live2d: {}
 
   projects/adaptors/react-plugin-live2d:
     dependencies:
@@ -228,6 +229,9 @@ importers:
       happy-dom:
         specifier: '15'
         version: 15.11.7
+      live2d-widget-model-hijiki:
+        specifier: 1.0.5
+        version: 1.0.5
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.26)(typescript@5.9.3)
@@ -1328,6 +1332,9 @@ packages:
 
   linkify-it@5.0.2:
     resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
+
+  live2d-widget-model-hijiki@1.0.5:
+    resolution: {integrity: sha512-1htA3VPgqw5mvs94qHVqy56MjmF1huBXst1SsgphNyeWuZT3aH87I0sF1Ene7WDkyEPnMeR+pX1bJxWa524snA==}
 
   load-tsconfig@0.2.5:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
@@ -2542,6 +2549,8 @@ snapshots:
   linkify-it@5.0.2:
     dependencies:
       uc.micro: 2.1.0
+
+  live2d-widget-model-hijiki@1.0.5: {}
 
   load-tsconfig@0.2.5: {}
 

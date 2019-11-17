@@ -58,6 +58,17 @@
       "tags": ["moc2", "npm"]
     },
     {
+      "id": "local-tororo",
+      "name": {
+        "en-us": "Local moc2 Tororo",
+        "zh-cn": "本地 moc2 Tororo"
+      },
+      "source": "/models/samples/moc2-tororo/tororo.model.json",
+      "local": true,
+      "sample": "moc2-tororo",
+      "tags": ["moc2", "npm"]
+    },
+    {
       "id": "npm-mirrored-hijiki",
       "name": {
         "en-us": "npm package (mirrored) Hijiki",

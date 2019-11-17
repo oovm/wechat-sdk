@@ -12,9 +12,7 @@ export {
     type ComposedWidgetOptions,
     createLive2dWidget,
     Live2dWidget,
-    mountWidget,
     type WidgetChromeOptions,
-    type WidgetOptions,
     type WidgetToolId,
 } from "./shell/widget.js";
 
