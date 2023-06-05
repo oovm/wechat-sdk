@@ -2,7 +2,7 @@
 resolver = "2"
 members = ["projects/*"]
 default-members = [
-    "projects/sub_projects",
+    "projects/mini-program-sdk",
 ]
 exclude = [
     "projects/.DS_Store",
