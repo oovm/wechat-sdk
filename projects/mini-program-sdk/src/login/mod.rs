@@ -5,6 +5,7 @@ use crate::{MiniProgram, WechatSession};
 
 
 impl MiniProgram {
+    /// <https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html>
     pub async fn code2session(&self, js_code: &str) -> Result<WechatSession, reqwest::Error> {
         let mut params = HashMap::new();
         params.insert("appid", self.app_id.as_ref());

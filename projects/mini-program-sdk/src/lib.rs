@@ -17,8 +17,9 @@ pub struct WechatSession {
     #[serde(default, rename = "openid")]
     pub open_id: String,
     #[serde(default, rename = "unionid")]
+    /// <https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/union-id.html>
     pub union_id: String,
-    #[serde(default, rename = "unionid")]
+    #[serde(default, rename = "session_key")]
     pub session_key: String,
     #[serde(rename = "errcode")]
     pub error_code: Option<i32>,
@@ -39,7 +40,7 @@ impl WechatSession {
                 Err((40029, "无效的登录 code"))
             }
             Some(45011) => {
-                Err((45011, "频率限制, 每个用户每分钟最多 100 次"))
+                Err((45011, "频率限制, 每个用户每分钟最多 100 次尝试"))
             }
             Some(40163) => {
                 Err((40163, "该登录 code 已被使用"))
