@@ -22,10 +22,7 @@ export function createModelInstance(program: ModelProgram): ModelInstance {
 
 const paramIndexCache = new WeakMap<object, Map<string, number>>();
 
-function parameterIndex(
-    instance: ModelInstance,
-    parameterId: string,
-): number {
+function parameterIndex(instance: ModelInstance, parameterId: string): number {
     let map = paramIndexCache.get(instance.program);
     if (!map) {
         map = new Map();

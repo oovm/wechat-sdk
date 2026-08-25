@@ -58,7 +58,13 @@ function normalizePositions(
     pixelsPerUnit: number,
 ): Float32Array {
     const out = new Float32Array(positions.length);
-    normalizePositionsInto(positions, canvasWidth, canvasHeight, pixelsPerUnit, out);
+    normalizePositionsInto(
+        positions,
+        canvasWidth,
+        canvasHeight,
+        pixelsPerUnit,
+        out,
+    );
     return out;
 }
 
@@ -350,7 +356,13 @@ export function moc3ArtMeshIndicesInProgramOrder(
         drafts.push({
             artMeshIndex: i,
             renderOrder: Math.round(
-                blendKeyformScalar(keyformDrawOrders, kfBegin, kfCount, blend, i),
+                blendKeyformScalar(
+                    keyformDrawOrders,
+                    kfBegin,
+                    kfCount,
+                    blend,
+                    i,
+                ),
             ),
         });
     }
@@ -440,7 +452,13 @@ export function evaluateMoc3PoseInto(
         orderByMesh.set(
             i,
             Math.round(
-                blendKeyformScalar(keyformDrawOrders, kfBegin, kfCount, blend, i),
+                blendKeyformScalar(
+                    keyformDrawOrders,
+                    kfBegin,
+                    kfCount,
+                    blend,
+                    i,
+                ),
             ),
         );
         visibleByMesh.set(i, (visibles[i] ?? 1) !== 0);

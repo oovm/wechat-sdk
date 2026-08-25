@@ -128,6 +128,14 @@ export class Live2dActorImpl implements Live2dActor {
         return this.#slot.listParameters();
     }
 
+    parameterMap() {
+        return this.#slot.parameterMap();
+    }
+
+    resolveParameter(id: string) {
+        return this.#slot.resolveParameter(id);
+    }
+
     listMotionGroups() {
         return this.#slot.listMotionGroups();
     }
@@ -159,7 +167,7 @@ export class Live2dActorImpl implements Live2dActor {
             this.#transform,
         );
         for (const u of focusParameterUpdates(
-            this.#slot.listParameters(),
+            this.#slot.parameterMap(),
             dragX,
             dragY,
         )) {

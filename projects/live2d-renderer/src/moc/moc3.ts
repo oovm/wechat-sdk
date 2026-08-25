@@ -44,9 +44,7 @@ interface Moc3State {
 
 const stateByModel = new WeakMap<InternalModel, Moc3State>();
 
-function allocateMeshesFromProgram(
-    program: ModelProgram,
-): DrawableMesh[] {
+function allocateMeshesFromProgram(program: ModelProgram): DrawableMesh[] {
     return program.drawables.map((d) => ({
         index: d.index,
         textureIndex: d.textureIndex,
@@ -95,9 +93,7 @@ function refreshDrawView(state: Moc3State): void {
     const view = state.drawView;
     view.length = 0;
     for (const m of state.meshes) view.push(m);
-    view.sort(
-        (a, b) => a.renderOrder - b.renderOrder || a.index - b.index,
-    );
+    view.sort((a, b) => a.renderOrder - b.renderOrder || a.index - b.index);
 }
 
 function applyPartOpacity(state: Moc3State): void {
@@ -257,6 +253,15 @@ export class Moc3Backend implements ModelBackend {
         const state = stateByModel.get(model);
         if (!state) return;
         setParameterValue(state.instance, id, value);
+        const index = state.paramIndexById.get(id);
+        if (index !== undefined) {
+            const binding = state.bindings[index];
+            if (binding) {
+                (binding as { value: number }).value =
+                    state.instance.parameterValues[index] ??
+                    binding.defaultValue;
+            }
+        }
         state.poseDirty = true;
     }
 

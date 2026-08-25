@@ -137,9 +137,7 @@ export class Live2DWidget {
     }
 
     #parameterFromNormalized(id: string, normalized: number): number {
-        const binding = this.#runtime
-            ?.listParameters()
-            .find((p) => p.id === id);
+        const binding = this.#runtime?.parameterMap().get(id);
         if (!binding) return normalized;
         return normalized >= 0
             ? binding.defaultValue +
@@ -166,7 +164,7 @@ export class Live2DWidget {
         // Pointer tracking overrides auto-sway for ANGLE_X while moving.
         this.#autoSwayPausedByPointer = true;
         for (const { id, value } of focusParameterUpdates(
-            runtime.listParameters(),
+            runtime.parameterMap(),
             p.x,
             p.y,
         )) {

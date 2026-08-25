@@ -69,6 +69,12 @@ export interface ModelBackend {
     /** Optional PartOpacity override (moc3 parts / pose / motion). */
     setPartOpacity?(model: InternalModel, id: string, value: number): void;
 
+    /**
+     * Resolve parameter id → index (O(1) after load).
+     * Used by motion blend / hosts instead of `listParameters().find`.
+     */
+    resolveParameter?(model: InternalModel, id: string): number | undefined;
+
     listParameters?(model: InternalModel): readonly ParameterBinding[];
 }
 
