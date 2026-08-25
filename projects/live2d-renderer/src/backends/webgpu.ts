@@ -8,13 +8,12 @@
 
 import { webGpuBlendState } from "../render/blend.js";
 import {
-    fitClippingContexts,
     type LaidOutClippingContext,
     type MaskLayoutRect,
     maskChannelVec4,
     maskLayoutVec4,
-    partitionForClipping,
 } from "../render/clipping.js";
+import { ResidentClippingPlan } from "../render/clipping-plan.js";
 import {
     PREVIEW_FILL,
     PREVIEW_STROKE,
@@ -27,6 +26,7 @@ import type {
     WebGpuRenderer,
 } from "../types.js";
 import { BlendMode } from "../types.js";
+import { WebGpuMeshCache } from "./webgpu-mesh-cache.js";
 
 const SOLID_WGSL = /* wgsl */ `
 struct Uniforms {
@@ -218,40 +218,6 @@ const BLEND_MODES: BlendMode[] = [
     BlendMode.Multiplicative,
 ];
 
-/** WebGPU INDEX buffers must be a multiple of 4 bytes. */
-function indexBufferSize(byteLength: number): number {
-    return (byteLength + 3) & ~3;
-}
-
-function writeIndexBuffer(device: GPUDevice, indices: Uint16Array): GPUBuffer {
-    const size = indexBufferSize(indices.byteLength);
-    const ibo = device.createBuffer({
-        size: Math.max(4, size),
-        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-        mappedAtCreation: true,
-    });
-    new Uint16Array(ibo.getMappedRange()).set(indices);
-    ibo.unmap();
-    return ibo;
-}
-
-function interleavePosUv(
-    positions: Float32Array,
-    uvs: Float32Array,
-): Float32Array {
-    const n = Math.floor(positions.length / 2);
-    const out = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) {
-        const o = i * 4;
-        const p = i * 2;
-        out[o] = positions[p]!;
-        out[o + 1] = positions[p + 1]!;
-        out[o + 2] = uvs[p] ?? 0;
-        out[o + 3] = uvs[p + 1] ?? 0;
-    }
-    return out;
-}
-
 /** 1x1 white texture used when a mask mesh has no model texture. */
 function createWhiteTexture(device: GPUDevice): GPUTexture {
     const tex = device.createTexture({
@@ -324,8 +290,17 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
     #maskW = 0;
     #maskH = 0;
     #whiteTexture: GPUTexture | null = null;
-    #transient: GPUBuffer[] = [];
+    #whiteView: GPUTextureView | null = null;
+    #maskView: GPUTextureView | null = null;
     #gpuTextures: (GPUTexture | null)[] = [];
+    #gpuTextureViews: (GPUTextureView | null)[] = [];
+    readonly #meshCache = new WebGpuMeshCache();
+    readonly #clipPlan = new ResidentClippingPlan();
+    readonly #layoutScratch = new Float32Array(4);
+    readonly #channelScratch = new Float32Array(4);
+    readonly #boundsScratch = new Float32Array(4);
+    /** Preview-only line index buffers destroyed at endFrame. */
+    #transient: GPUBuffer[] = [];
     readonly #options: WebGpuRendererOptions;
 
     constructor(options: WebGpuRendererOptions = {}) {
@@ -709,6 +684,7 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
             addressModeV: "clamp-to-edge",
         });
         this.#whiteTexture = createWhiteTexture(device);
+        this.#whiteView = this.#whiteTexture.createView();
         this.#ensureMsaa();
     }
 
@@ -751,12 +727,16 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
         });
         this.#maskW = w;
         this.#maskH = h;
+        this.#maskView = this.#maskTexture.createView();
+        this.#meshCache.bumpMaskGeneration();
         return this.#maskTexture;
     }
 
     #clearGpuTextures(): void {
         for (const t of this.#gpuTextures) t?.destroy();
         this.#gpuTextures = [];
+        this.#gpuTextureViews = [];
+        this.#meshCache.invalidateTextureBindGroups();
     }
 
     setTextures(textures: TextureData[]): void {
@@ -767,6 +747,7 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
         let maxIndex = -1;
         for (const t of textures) maxIndex = Math.max(maxIndex, t.index);
         this.#gpuTextures = new Array(Math.max(0, maxIndex + 1)).fill(null);
+        this.#gpuTextureViews = new Array(Math.max(0, maxIndex + 1)).fill(null);
 
         for (const t of textures) {
             const gpuTex = device.createTexture({
@@ -783,6 +764,7 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
                 [t.width, t.height],
             );
             this.#gpuTextures[t.index] = gpuTex;
+            this.#gpuTextureViews[t.index] = gpuTex.createView();
         }
     }
 
@@ -877,8 +859,8 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
         const byIndex = new Map<number, DrawableMesh>();
         for (const d of drawables) byIndex.set(d.index, d);
 
-        const partitioned = partitionForClipping(drawables);
-        const contexts = fitClippingContexts(partitioned.contexts, byIndex);
+        const partitioned = this.#clipPlan.resolveMeshes(drawables);
+        const contexts = partitioned.contexts;
         const { maskOnly } = partitioned;
 
         let maskTex: GPUTexture | null = null;
@@ -969,29 +951,25 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
         channelFlag: LaidOutClippingContext["channelFlag"],
     ): void {
         const device = this.#device;
-        if (!device || d.opacity <= 0) return;
+        const whiteView = this.#whiteView;
+        if (!device || !whiteView || d.opacity <= 0) return;
 
-        const interleaved = interleavePosUv(d.vertexPositions, d.uvs);
-        const vbo = device.createBuffer({
-            size: interleaved.byteLength,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-            mappedAtCreation: true,
-        });
-        new Float32Array(vbo.getMappedRange()).set(interleaved);
-        vbo.unmap();
+        const slot = this.#meshCache.ensureSlot(device, d.index);
+        this.#meshCache.uploadMesh(
+            device,
+            slot,
+            d.vertexPositions,
+            d.uvs,
+            d.indices,
+        );
 
-        const gpuTex = this.#gpuTextures[d.textureIndex] ?? whiteTex;
-        const ubo = device.createBuffer({
-            size: 64,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            mappedAtCreation: true,
-        });
-        const layoutVec = maskLayoutVec4(atlasLayout);
-        const ch = maskChannelVec4(channelFlag);
-        const boundsVec = maskLayoutVec4(modelBounds);
-        new Float32Array(ubo.getMappedRange()).set([
+        const layoutVec = maskLayoutVec4(atlasLayout, this.#layoutScratch);
+        const ch = maskChannelVec4(channelFlag, this.#channelScratch);
+        const boundsVec = maskLayoutVec4(modelBounds, this.#boundsScratch);
+        const useWhite = !this.#gpuTextures[d.textureIndex];
+        this.#meshCache.writeUbo(device, slot, [
             Math.max(d.opacity, 1),
-            this.#gpuTextures[d.textureIndex] ? 1 : 0,
+            useWhite ? 0 : 1,
             0,
             0,
             layoutVec[0]!,
@@ -1007,24 +985,30 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
             boundsVec[2]!,
             boundsVec[3]!,
         ]);
-        ubo.unmap();
 
-        const ibo = writeIndexBuffer(device, d.indices);
-        pass.setBindGroup(
-            0,
-            device.createBindGroup({
+        const texView = this.#gpuTextureViews[d.textureIndex] ?? whiteView;
+        if (
+            !slot.bgMask ||
+            slot.texIndex !== d.textureIndex ||
+            slot.useWhite !== useWhite
+        ) {
+            slot.bgMask = device.createBindGroup({
                 layout,
                 entries: [
-                    { binding: 0, resource: { buffer: ubo } },
+                    { binding: 0, resource: { buffer: slot.ubo } },
                     { binding: 1, resource: sampler },
-                    { binding: 2, resource: gpuTex.createView() },
+                    { binding: 2, resource: texView },
                 ],
-            }),
-        );
-        pass.setVertexBuffer(0, vbo);
-        pass.setIndexBuffer(ibo, "uint16");
+            });
+            slot.texIndex = d.textureIndex;
+            slot.useWhite = useWhite;
+        }
+
+        pass.setBindGroup(0, slot.bgMask);
+        pass.setVertexBuffer(0, slot.vbo);
+        pass.setIndexBuffer(slot.ibo, "uint16");
         pass.drawIndexed(d.indices.length);
-        this.#transient.push(vbo, ubo, ibo);
+        void whiteTex;
     }
 
     #drawColorMesh(
@@ -1043,6 +1027,7 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
         const texturedLayout = this.#texturedBindGroupLayout;
         const clippedSolidLayout = this.#clippedSolidBindGroupLayout;
         const clippedTexturedLayout = this.#clippedTexturedBindGroupLayout;
+        const maskView = this.#maskView;
         if (
             !device ||
             !sampler ||
@@ -1061,31 +1046,31 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
 
         const layoutVec = maskLayoutVec4(
             atlasLayout ?? { x: 0, y: 0, width: 1, height: 1 },
+            this.#layoutScratch,
         );
-        const ch = maskChannelVec4(channelFlag ?? [0, 0, 0, 1]);
+        const ch = maskChannelVec4(
+            channelFlag ?? [0, 0, 0, 1],
+            this.#channelScratch,
+        );
         const boundsVec = maskLayoutVec4(
             modelBounds ?? { x: -1, y: -1, width: 2, height: 2 },
+            this.#boundsScratch,
         );
 
+        const slot = this.#meshCache.ensureSlot(device, d.index);
         const gpuTex = this.#gpuTextures[d.textureIndex] ?? null;
-        if (gpuTex) {
-            const interleaved = interleavePosUv(d.vertexPositions, d.uvs);
-            const vbo = device.createBuffer({
-                size: interleaved.byteLength,
-                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-                mappedAtCreation: true,
-            });
-            new Float32Array(vbo.getMappedRange()).set(interleaved);
-            vbo.unmap();
+        const texView = this.#gpuTextureViews[d.textureIndex] ?? null;
 
-            const uboSize = useMask && maskTex ? 64 : 16;
-            const ubo = device.createBuffer({
-                size: uboSize,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                mappedAtCreation: true,
-            });
-            if (useMask && maskTex) {
-                new Float32Array(ubo.getMappedRange()).set([
+        if (gpuTex && texView) {
+            this.#meshCache.uploadMesh(
+                device,
+                slot,
+                d.vertexPositions,
+                d.uvs,
+                d.indices,
+            );
+            if (useMask && maskTex && maskView) {
+                this.#meshCache.writeUbo(device, slot, [
                     d.opacity,
                     invertMask ? 1 : 0,
                     0,
@@ -1103,67 +1088,57 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
                     boundsVec[2]!,
                     boundsVec[3]!,
                 ]);
-            } else {
-                new Float32Array(ubo.getMappedRange()).set([
-                    d.opacity,
-                    0,
-                    0,
-                    0,
-                ]);
-            }
-            ubo.unmap();
-
-            const ibo = writeIndexBuffer(device, d.indices);
-            if (useMask && maskTex) {
-                pass.setPipeline(set.clippedTextured);
-                pass.setBindGroup(
-                    0,
-                    device.createBindGroup({
+                if (
+                    !slot.bgClippedTextured ||
+                    slot.texIndex !== d.textureIndex ||
+                    slot.maskGeneration !== this.#meshCache.maskGeneration
+                ) {
+                    slot.bgClippedTextured = device.createBindGroup({
                         layout: clippedTexturedLayout,
                         entries: [
-                            { binding: 0, resource: { buffer: ubo } },
+                            { binding: 0, resource: { buffer: slot.ubo } },
                             { binding: 1, resource: sampler },
-                            { binding: 2, resource: gpuTex.createView() },
-                            { binding: 3, resource: maskTex.createView() },
+                            { binding: 2, resource: texView },
+                            { binding: 3, resource: maskView },
                         ],
-                    }),
-                );
+                    });
+                    slot.texIndex = d.textureIndex;
+                    slot.maskGeneration = this.#meshCache.maskGeneration;
+                }
+                pass.setPipeline(set.clippedTextured);
+                pass.setBindGroup(0, slot.bgClippedTextured);
             } else {
-                pass.setPipeline(set.textured);
-                pass.setBindGroup(
-                    0,
-                    device.createBindGroup({
+                this.#meshCache.writeUbo(device, slot, [d.opacity, 0, 0, 0]);
+                if (!slot.bgTextured || slot.texIndex !== d.textureIndex) {
+                    slot.bgTextured = device.createBindGroup({
                         layout: texturedLayout,
                         entries: [
-                            { binding: 0, resource: { buffer: ubo } },
+                            { binding: 0, resource: { buffer: slot.ubo } },
                             { binding: 1, resource: sampler },
-                            { binding: 2, resource: gpuTex.createView() },
+                            { binding: 2, resource: texView },
                         ],
-                    }),
-                );
+                    });
+                    slot.texIndex = d.textureIndex;
+                }
+                pass.setPipeline(set.textured);
+                pass.setBindGroup(0, slot.bgTextured);
             }
-            pass.setVertexBuffer(0, vbo);
-            pass.setIndexBuffer(ibo, "uint16");
+            pass.setVertexBuffer(0, slot.vbo);
+            pass.setIndexBuffer(slot.ibo, "uint16");
             pass.drawIndexed(d.indices.length);
-            this.#transient.push(vbo, ubo, ibo);
             return;
         }
 
-        const vbo = device.createBuffer({
-            size: d.vertexPositions.byteLength,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-            mappedAtCreation: true,
-        });
-        new Float32Array(vbo.getMappedRange()).set(d.vertexPositions);
-        vbo.unmap();
-
-        if (useMask && maskTex) {
-            const ubo = device.createBuffer({
-                size: 80,
-                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-                mappedAtCreation: true,
-            });
-            new Float32Array(ubo.getMappedRange()).set([
+        // Preview path: solid fill (+ optional stroke) without model textures.
+        this.#meshCache.uploadMesh(
+            device,
+            slot,
+            d.vertexPositions,
+            d.uvs,
+            d.indices,
+        );
+        if (useMask && maskTex && maskView) {
+            this.#meshCache.writeUbo(device, slot, [
                 PREVIEW_FILL.r,
                 PREVIEW_FILL.g,
                 PREVIEW_FILL.b,
@@ -1185,56 +1160,66 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
                 boundsVec[2]!,
                 boundsVec[3]!,
             ]);
-            ubo.unmap();
-            const ibo = writeIndexBuffer(device, d.indices);
-            pass.setPipeline(set.clippedFill);
-            pass.setBindGroup(
-                0,
-                device.createBindGroup({
+            if (
+                !slot.bgClippedSolid ||
+                slot.maskGeneration !== this.#meshCache.maskGeneration
+            ) {
+                slot.bgClippedSolid = device.createBindGroup({
                     layout: clippedSolidLayout,
                     entries: [
-                        { binding: 0, resource: { buffer: ubo } },
+                        { binding: 0, resource: { buffer: slot.ubo } },
                         { binding: 1, resource: sampler },
-                        { binding: 2, resource: maskTex.createView() },
+                        { binding: 2, resource: maskView },
                     ],
-                }),
-            );
-            pass.setVertexBuffer(0, vbo);
-            pass.setIndexBuffer(ibo, "uint16");
+                });
+                slot.maskGeneration = this.#meshCache.maskGeneration;
+            }
+            pass.setPipeline(set.clippedFill);
+            pass.setBindGroup(0, slot.bgClippedSolid);
+            pass.setVertexBuffer(0, slot.vbo);
+            pass.setIndexBuffer(slot.ibo, "uint16");
             pass.drawIndexed(d.indices.length);
-            this.#transient.push(vbo, ubo, ibo);
             return;
         }
 
-        const fillUbo = this.#makeColorUbo(
-            device,
+        this.#meshCache.writeUbo(device, slot, [
             PREVIEW_FILL.r,
             PREVIEW_FILL.g,
             PREVIEW_FILL.b,
             PREVIEW_FILL.a * d.opacity,
-        );
-        const fillIbo = writeIndexBuffer(device, d.indices);
-        pass.setPipeline(set.fill);
-        pass.setBindGroup(
-            0,
-            device.createBindGroup({
+        ]);
+        if (!slot.bgSolid) {
+            slot.bgSolid = device.createBindGroup({
                 layout: solidLayout,
-                entries: [{ binding: 0, resource: { buffer: fillUbo } }],
-            }),
-        );
-        pass.setVertexBuffer(0, vbo);
-        pass.setIndexBuffer(fillIbo, "uint16");
+                entries: [{ binding: 0, resource: { buffer: slot.ubo } }],
+            });
+        }
+        pass.setPipeline(set.fill);
+        pass.setBindGroup(0, slot.bgSolid);
+        pass.setVertexBuffer(0, slot.vbo);
+        pass.setIndexBuffer(slot.ibo, "uint16");
         pass.drawIndexed(d.indices.length);
 
         const lines = triangleEdgesToLineList(d.indices);
-        const lineUbo = this.#makeColorUbo(
-            device,
+        const lineUbo = device.createBuffer({
+            size: 16,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            mappedAtCreation: true,
+        });
+        new Float32Array(lineUbo.getMappedRange()).set([
             PREVIEW_STROKE.r,
             PREVIEW_STROKE.g,
             PREVIEW_STROKE.b,
             PREVIEW_STROKE.a * d.opacity,
-        );
-        const lineIbo = writeIndexBuffer(device, lines);
+        ]);
+        lineUbo.unmap();
+        const lineIbo = device.createBuffer({
+            size: Math.max(4, (lines.byteLength + 3) & ~3),
+            usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+            mappedAtCreation: true,
+        });
+        new Uint16Array(lineIbo.getMappedRange()).set(lines);
+        lineIbo.unmap();
         pass.setPipeline(set.line);
         pass.setBindGroup(
             0,
@@ -1243,27 +1228,10 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
                 entries: [{ binding: 0, resource: { buffer: lineUbo } }],
             }),
         );
-        pass.setVertexBuffer(0, vbo);
+        pass.setVertexBuffer(0, slot.vbo);
         pass.setIndexBuffer(lineIbo, "uint16");
         pass.drawIndexed(lines.length);
-        this.#transient.push(vbo, fillUbo, fillIbo, lineUbo, lineIbo);
-    }
-
-    #makeColorUbo(
-        device: GPUDevice,
-        r: number,
-        g: number,
-        b: number,
-        a: number,
-    ): GPUBuffer {
-        const ubo = device.createBuffer({
-            size: 16,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-            mappedAtCreation: true,
-        });
-        new Float32Array(ubo.getMappedRange()).set([r, g, b, a]);
-        ubo.unmap();
-        return ubo;
+        this.#transient.push(lineUbo, lineIbo);
     }
 
     endFrame(): void {
@@ -1299,13 +1267,17 @@ export class WebGpuRendererImpl implements WebGpuRenderer {
     destroy(): void {
         for (const b of this.#transient) b.destroy();
         this.#transient = [];
+        this.#meshCache.clear();
+        this.#clipPlan.clear();
         this.#clearGpuTextures();
         this.#msaaTexture?.destroy();
         this.#msaaTexture = null;
         this.#maskTexture?.destroy();
         this.#maskTexture = null;
+        this.#maskView = null;
         this.#whiteTexture?.destroy();
         this.#whiteTexture = null;
+        this.#whiteView = null;
         this.#device?.destroy();
         this.#device = null;
         this.#context = null;
