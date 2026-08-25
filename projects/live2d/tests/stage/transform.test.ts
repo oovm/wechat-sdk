@@ -1,12 +1,15 @@
 import { DEFAULT_ACTOR_TRANSFORM } from "@doki-land/live2d-core";
+import type { DrawableMesh } from "@doki-land/live2d-renderer";
 import { describe, expect, it } from "vitest";
 import {
     compareActorsForDraw,
     compareActorsForHit,
     modelNdcToStage,
     resolveActorTransform,
+    StageDrawableScratch,
     stageFocusDrag,
     stageToModelNdc,
+    transformDrawablesForStage,
 } from "../../src/stage/transform.js";
 
 describe("resolveActorTransform", () => {
@@ -71,5 +74,46 @@ describe("actor sort", () => {
             compareActorsForHit(a, b, layers),
         );
         expect(sorted.map((a) => a.id)).toEqual(["b", "c", "a"]);
+    });
+});
+
+describe("StageDrawableScratch", () => {
+    const mesh = (positions: number[]): DrawableMesh => ({
+        index: 0,
+        textureIndex: 0,
+        vertexPositions: new Float32Array(positions),
+        uvs: new Float32Array([0, 0, 1, 1]),
+        indices: new Uint16Array([0, 1, 2]),
+        opacity: 1,
+        blendMode: 0,
+        invertedMask: false,
+        renderOrder: 0,
+        dynamicFlag: true,
+        maskIndices: [1],
+        visible: true,
+    });
+
+    it("reuses mesh and buffer identity across transforms", () => {
+        const scratch = new StageDrawableScratch();
+        const src = [mesh([-1, -1, 1, 1])];
+        const t = resolveActorTransform({ x: 0.5, y: 0.5, scale: 0.5 });
+        const a = scratch.transform(src, t, 1);
+        const mesh0 = a[0]!;
+        const pos0 = mesh0.vertexPositions;
+        const b = scratch.transform(src, t, 0.5);
+        expect(b[0]).toBe(mesh0);
+        expect(b[0]!.vertexPositions).toBe(pos0);
+        expect(b[0]!.opacity).toBeCloseTo(0.5, 5);
+        expect(b[0]!.uvs).toBe(src[0]!.uvs);
+        expect(b[0]!.maskIndices).toBe(src[0]!.maskIndices);
+    });
+
+    it("transformDrawablesForStage accepts shared scratch", () => {
+        const scratch = new StageDrawableScratch();
+        const src = [mesh([0, 0, 1, 1])];
+        const t = resolveActorTransform({});
+        const once = transformDrawablesForStage(src, t, 1, scratch);
+        const twice = transformDrawablesForStage(src, t, 1, scratch);
+        expect(twice[0]).toBe(once[0]);
     });
 });
