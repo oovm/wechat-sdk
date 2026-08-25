@@ -412,12 +412,28 @@ export function fitClippingContexts(
     }));
 }
 
-/** Flatten layout to `[x, y, w, h]` for GPU uniforms. */
-export function maskLayoutVec4(layout: MaskLayoutRect): Float32Array {
-    return new Float32Array([layout.x, layout.y, layout.width, layout.height]);
+/** Flatten layout to `[x, y, w, h]` for GPU uniforms. Reuses `into` when provided. */
+export function maskLayoutVec4(
+    layout: MaskLayoutRect,
+    into?: Float32Array,
+): Float32Array {
+    const out = into && into.length >= 4 ? into : new Float32Array(4);
+    out[0] = layout.x;
+    out[1] = layout.y;
+    out[2] = layout.width;
+    out[3] = layout.height;
+    return out;
 }
 
-/** Flatten channel flag to `[r, g, b, a]` for GPU uniforms. */
-export function maskChannelVec4(flag: MaskChannelFlag): Float32Array {
-    return new Float32Array([flag[0], flag[1], flag[2], flag[3]]);
+/** Flatten channel flag to `[r, g, b, a]` for GPU uniforms. Reuses `into` when provided. */
+export function maskChannelVec4(
+    flag: MaskChannelFlag,
+    into?: Float32Array,
+): Float32Array {
+    const out = into && into.length >= 4 ? into : new Float32Array(4);
+    out[0] = flag[0];
+    out[1] = flag[1];
+    out[2] = flag[2];
+    out[3] = flag[3];
+    return out;
 }

@@ -1,9 +1,6 @@
 import { canvasCompositeForBlendMode } from "../render/blend.js";
-import {
-    fitClippingContexts,
-    type MaskLayoutRect,
-    partitionForClipping,
-} from "../render/clipping.js";
+import type { MaskLayoutRect } from "../render/clipping.js";
+import { ResidentClippingPlan } from "../render/clipping-plan.js";
 import {
     modelXToCanvasPixelX,
     modelYUpToCanvasPixelY,
@@ -159,6 +156,7 @@ class Canvas2DModelDrawPass implements ModelDrawPass {
     readonly #ctx: CanvasRenderingContext2D;
     readonly #options: Canvas2DRendererOptions;
     #textures: (TextureData | null)[] = [];
+    readonly #clipPlan = new ResidentClippingPlan();
 
     constructor(
         ctx: CanvasRenderingContext2D,
@@ -182,10 +180,10 @@ class Canvas2DModelDrawPass implements ModelDrawPass {
         const byIndex = new Map<number, DrawableMesh>();
         for (const d of drawables) byIndex.set(d.index, d);
         // UV-grid only: Canvas2D cannot isolate R/G/B/A channels.
-        const partitioned = partitionForClipping(drawables, {
+        const partitioned = this.#clipPlan.resolveMeshes(drawables, {
             mode: "uv-grid",
         });
-        const contexts = fitClippingContexts(partitioned.contexts, byIndex);
+        const contexts = partitioned.contexts;
         const { maskOnly } = partitioned;
 
         if (contexts.length === 0) {
@@ -380,6 +378,7 @@ class Canvas2DModelDrawPass implements ModelDrawPass {
 
     destroy(): void {
         this.#textures = [];
+        this.#clipPlan.clear();
     }
 }
 
