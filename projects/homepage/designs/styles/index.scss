@@ -305,10 +305,15 @@ a {
 
 .playground-status,
 .playground-profile,
-.playground-hit-hint {
+.playground-hit-hint,
+.playground-hit-last {
   margin: 0;
   font-size: 0.82rem;
   color: var(--vmz-text-steel);
+}
+
+.playground-hit-last {
+  font-variant-numeric: tabular-nums;
 }
 
 .playground-hit-hint {

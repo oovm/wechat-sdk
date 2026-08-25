@@ -42,6 +42,9 @@
   playgroundPlayMotion: 'Play',
   playgroundProfile: 'Frame profile',
   playgroundHitHint: 'Hit areas usually fall back to drawable:N unless settings Id is D_{index}.',
+  playgroundHitLast: 'Last hit',
+  playgroundHitNone: '(click the canvas to hit-test)',
   playgroundStatusLoading: 'Loading…',
   playgroundReady: 'Ready',
+  playgroundError: 'Load failed',
 }

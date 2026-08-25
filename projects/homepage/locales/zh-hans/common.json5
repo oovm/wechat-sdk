@@ -42,6 +42,9 @@
   playgroundPlayMotion: '播放',
   playgroundProfile: '帧 profile',
   playgroundHitHint: '命中：当前多为 drawable:N；命名 HitArea 需设置 Id 为 D_{index}。',
+  playgroundHitLast: '最近命中',
+  playgroundHitNone: '（点击画布试命中）',
   playgroundStatusLoading: '加载中…',
   playgroundReady: '就绪',
+  playgroundError: '加载失败',
 }
