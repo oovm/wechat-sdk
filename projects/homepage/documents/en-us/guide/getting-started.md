@@ -37,6 +37,10 @@ function tick() {
 requestAnimationFrame(tick);
 ```
 
+## Hit testing (current limit)
+
+`hitTest` runs triangle hits in normalized model space. A HitArea **name** is returned only when settings `Id` is `D_{drawableIndex}` or the bare index string; otherwise you get `drawable:N` (common for sample models). Full named mapping is not the main path yet.
+
 ## Next
 
 - [Model sources](./sources) — local, remote URL, `npm:` packages
