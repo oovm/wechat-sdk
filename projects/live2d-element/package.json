@@ -1,0 +1,61 @@
+{
+    "name": "@doki-land/live2d-element",
+    "version": "0.0.0",
+    "description": "Official <live-2d> Custom Element — thin host over @doki-land/live2d (Stage-owned RAF).",
+    "type": "module",
+    "license": "MIT",
+    "author": "Doki Land",
+    "homepage": "https://github.com/doki-land/live2d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/doki-land/live2d.ts.git",
+        "directory": "projects/live2d-element"
+    },
+    "keywords": [
+        "live2d",
+        "custom-element",
+        "web-components",
+        "doki-land"
+    ],
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "dist",
+        "src",
+        "fixtures",
+        "README.md"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "main": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js"
+            }
+        }
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm --dts",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run --passWithNoTests"
+    },
+    "dependencies": {
+        "@doki-land/live2d": "workspace:*"
+    },
+    "devDependencies": {
+        "@webgpu/types": "^0.1.64",
+        "happy-dom": "15",
+        "tsup": "^8.5.1",
+        "typescript": "^5.8.0",
+        "vitest": "^2.1.8"
+    },
+    "sideEffects": [
+        "./src/index.ts",
+        "./dist/index.js"
+    ]
+}
