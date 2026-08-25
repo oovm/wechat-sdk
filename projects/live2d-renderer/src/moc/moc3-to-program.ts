@@ -32,23 +32,33 @@ import {
     moc3SectionStrings,
 } from "./moc3-reader.js";
 
-function normalizePositions(
+function normalizePositionsInto(
     positions: Float32Array,
     canvasWidth: number,
     canvasHeight: number,
     pixelsPerUnit: number,
-): Float32Array {
+    out: Float32Array,
+): void {
     // Deformer output uses logical canvas/ppu units around the model center.
     // Convert the decoded authoring orientation once into the renderer's shared
     // Y-up NDC contract, matching the moc2 path after top-left normalization.
     const ppu = pixelsPerUnit > 0 ? pixelsPerUnit : 1;
     const hw = canvasWidth > 0 ? (canvasWidth / ppu) * 0.5 : 0.5;
     const hh = canvasHeight > 0 ? (canvasHeight / ppu) * 0.5 : 0.5;
-    const out = new Float32Array(positions.length);
     for (let i = 0; i + 1 < positions.length; i += 2) {
         out[i] = positions[i]! / hw;
         out[i + 1] = -positions[i + 1]! / hh;
     }
+}
+
+function normalizePositions(
+    positions: Float32Array,
+    canvasWidth: number,
+    canvasHeight: number,
+    pixelsPerUnit: number,
+): Float32Array {
+    const out = new Float32Array(positions.length);
+    normalizePositionsInto(positions, canvasWidth, canvasHeight, pixelsPerUnit, out);
     return out;
 }
 
@@ -300,4 +310,166 @@ export function moc3DocumentToProgram(
         parameters,
         drawables,
     };
+}
+
+/** Art-mesh indices in the same order {@link moc3DocumentToProgram} assigns drawable indices. */
+export function moc3ArtMeshIndicesInProgramOrder(
+    doc: Moc3Document,
+    getParamByIndex?: (index: number) => number,
+): number[] {
+    const meshCount = doc.counts[CountIdx.ART_MESHES] ?? 0;
+    const defaultValues = moc3SectionF32(doc, "parameter.default_values");
+    const gp =
+        getParamByIndex ?? ((index: number) => defaultValues[index] ?? 0);
+    const keyTables = loadMoc3KeyTables(doc);
+    const enables = moc3SectionI32(doc, "art_mesh.enables");
+    const vertexCounts = moc3SectionI32(doc, "art_mesh.vertex_counts");
+    const indexCounts = moc3SectionI32(doc, "art_mesh.position_index_counts");
+    const keyformBegins = moc3SectionI32(doc, "art_mesh.keyform_begin_indices");
+    const keyformCounts = moc3SectionI32(doc, "art_mesh.keyform_counts");
+    const bandIndices = moc3SectionI32(
+        doc,
+        "art_mesh.keyform_binding_band_indices",
+    );
+    const keyformDrawOrders = moc3SectionF32(
+        doc,
+        "art_mesh_keyform.draw_orders",
+    );
+
+    const drafts: { artMeshIndex: number; renderOrder: number }[] = [];
+    for (let i = 0; i < meshCount; i++) {
+        if ((enables[i] ?? 1) === 0) continue;
+        const vertexCount = vertexCounts[i] ?? 0;
+        const indexCount = indexCounts[i] ?? 0;
+        if (vertexCount <= 0 || indexCount < 3) continue;
+        const kfBegin = keyformBegins[i] ?? 0;
+        const kfCount = keyformCounts[i] ?? 0;
+        if (kfCount <= 0) continue;
+        const band = bandIndices[i] ?? -1;
+        const blend = resolveMoc3KeyformBlend(keyTables, band, gp);
+        drafts.push({
+            artMeshIndex: i,
+            renderOrder: Math.round(
+                blendKeyformScalar(keyformDrawOrders, kfBegin, kfCount, blend, i),
+            ),
+        });
+    }
+    drafts.sort((a, b) => a.renderOrder - b.renderOrder);
+    return drafts.map((d) => d.artMeshIndex);
+}
+
+/**
+ * Evaluate moc3 keyforms/deformers/glue into resident meshes keyed by art-mesh index.
+ * Topology buffers (`uvs`/`indices`/`maskIndices`) stay shared; positions are written in place.
+ */
+export function evaluateMoc3PoseInto(
+    doc: Moc3Document,
+    getParamByIndex: (index: number) => number,
+    byArtMesh: ReadonlyMap<number, import("../types.js").DrawableMesh>,
+    poseOpacity: Float32Array,
+): void {
+    const meshCount = doc.counts[CountIdx.ART_MESHES] ?? 0;
+    const keyTables = loadMoc3KeyTables(doc);
+    const deformers = bakeMoc3Deformers(doc, keyTables, getParamByIndex);
+    const glues = loadMoc3Glues(doc);
+    const glueIntensities = moc3SectionF32(doc, "glue_keyform.intensities");
+
+    const visibles = moc3SectionI32(doc, "art_mesh.visibles");
+    const enables = moc3SectionI32(doc, "art_mesh.enables");
+    const vertexCounts = moc3SectionI32(doc, "art_mesh.vertex_counts");
+    const indexCounts = moc3SectionI32(doc, "art_mesh.position_index_counts");
+    const keyformBegins = moc3SectionI32(doc, "art_mesh.keyform_begin_indices");
+    const keyformCounts = moc3SectionI32(doc, "art_mesh.keyform_counts");
+    const bandIndices = moc3SectionI32(
+        doc,
+        "art_mesh.keyform_binding_band_indices",
+    );
+    const parentDeformers = moc3SectionI32(
+        doc,
+        "art_mesh.parent_deformer_indices",
+    );
+    const keyformOpacities = moc3SectionF32(doc, "art_mesh_keyform.opacities");
+    const keyformDrawOrders = moc3SectionF32(
+        doc,
+        "art_mesh_keyform.draw_orders",
+    );
+    const keyformPosBegins = moc3SectionI32(
+        doc,
+        "art_mesh_keyform.keyform_position_begin_indices",
+    );
+    const keyformPositions = moc3SectionF32(doc, "keyform_position.xys");
+
+    const cw = doc.canvas.canvasWidth;
+    const ch = doc.canvas.canvasHeight;
+    const ppu = doc.canvas.pixelsPerUnit;
+
+    const worldByMesh = new Map<number, Float32Array>();
+    const opacityByMesh = new Map<number, number>();
+    const orderByMesh = new Map<number, number>();
+    const visibleByMesh = new Map<number, boolean>();
+
+    for (let i = 0; i < meshCount; i++) {
+        if (!byArtMesh.has(i)) continue;
+        if ((enables[i] ?? 1) === 0) continue;
+        const vertexCount = vertexCounts[i] ?? 0;
+        const indexCount = indexCounts[i] ?? 0;
+        if (vertexCount <= 0 || indexCount < 3) continue;
+        const kfBegin = keyformBegins[i] ?? 0;
+        const kfCount = keyformCounts[i] ?? 0;
+        if (kfCount <= 0) continue;
+
+        const band = bandIndices[i] ?? -1;
+        const blend = resolveMoc3KeyformBlend(keyTables, band, getParamByIndex);
+        const local = blendKeyformFloats(
+            keyformPositions,
+            keyformPosBegins,
+            kfBegin,
+            kfCount,
+            vertexCount * 2,
+            blend,
+        );
+        const parentIndex = parentDeformers[i] ?? -1;
+        const parent =
+            parentIndex >= 0 ? (deformers[parentIndex] ?? null) : null;
+        const world = parent ? applyParentToPoints(local, parent) : local;
+        worldByMesh.set(i, world);
+        opacityByMesh.set(
+            i,
+            blendKeyformScalar(keyformOpacities, kfBegin, kfCount, blend, 1),
+        );
+        orderByMesh.set(
+            i,
+            Math.round(
+                blendKeyformScalar(keyformDrawOrders, kfBegin, kfCount, blend, i),
+            ),
+        );
+        visibleByMesh.set(i, (visibles[i] ?? 1) !== 0);
+    }
+
+    applyMoc3Glues(
+        worldByMesh,
+        glues,
+        keyTables,
+        getParamByIndex,
+        glueIntensities,
+    );
+
+    for (const [artMeshIndex, world] of worldByMesh) {
+        const sink = byArtMesh.get(artMeshIndex);
+        if (!sink) continue;
+        let pos = sink.vertexPositions;
+        if (pos.length !== world.length) {
+            pos = new Float32Array(world.length);
+            sink.vertexPositions = pos;
+        }
+        normalizePositionsInto(world, cw, ch, ppu, pos);
+        const opacity = opacityByMesh.get(artMeshIndex) ?? 1;
+        sink.renderOrder = orderByMesh.get(artMeshIndex) ?? sink.renderOrder;
+        sink.visible = visibleByMesh.get(artMeshIndex) ?? true;
+        const slot = sink.index;
+        if (slot >= 0 && slot < poseOpacity.length) {
+            poseOpacity[slot] = opacity;
+        }
+        sink.opacity = opacity;
+    }
 }
