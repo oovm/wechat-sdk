@@ -55,8 +55,12 @@ export default class Live2dHost {
   public capturePresetId = '';
   /** Called with Live2DRuntime after loadModel succeeds. */
   public onReady = null;
-  /** Optional frame profile listener. */
+  /** Optional frame profile listener (caller should throttle UI). */
   public onProfile = null;
+  /** Load / mount failure. */
+  public onError = null;
+  /** Pointer hit area string (often `drawable:N`). */
+  public onHit = null;
 
   hostId = `live2d-host-${++hostSeq}`;
   hostStyle = '';
@@ -67,6 +71,9 @@ export default class Live2dHost {
   _raf = 0;
   _lastTs = 0;
   _unsubProfile = null;
+  _canvas = null;
+  _boundPointer = null;
+  _bootGeneration = 0;
 
   onMount() {
     this.hostStyle = `width:${this.width}px;height:${this.height}px`;
@@ -87,18 +94,45 @@ export default class Live2dHost {
 
   teardownRuntime() {
     this.stopLoop();
+    this.detachPointer();
     if (typeof this._unsubProfile === 'function') {
       this._unsubProfile();
       this._unsubProfile = null;
     }
     this.runtime?.destroy?.();
     this.runtime = null;
+    this._canvas = null;
   }
 
   stopLoop() {
     if (this._raf) cancelAnimationFrame(this._raf);
     this._raf = 0;
     this._lastTs = 0;
+  }
+
+  detachPointer() {
+    if (this._canvas && this._boundPointer) {
+      this._canvas.removeEventListener('pointerdown', this._boundPointer);
+    }
+    this._boundPointer = null;
+  }
+
+  attachPointer(canvas) {
+    this.detachPointer();
+    this._boundPointer = (event) => this.onPointerDown(event);
+    canvas.addEventListener('pointerdown', this._boundPointer);
+  }
+
+  onPointerDown(event) {
+    const runtime = this.runtime;
+    const canvas = this._canvas;
+    if (!runtime || !canvas || typeof this.onHit !== 'function') return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = 1 - ((event.clientY - rect.top) / rect.height) * 2;
+    const area = runtime.hitTest?.(nx, ny) ?? null;
+    this.onHit(area);
   }
 
   tick(ts) {
@@ -120,6 +154,7 @@ export default class Live2dHost {
     canvas.style.width = `${this.width}px`;
     canvas.style.height = `${this.height}px`;
     host.appendChild(canvas);
+    this._canvas = canvas;
     return canvas;
   }
 
@@ -132,13 +167,25 @@ export default class Live2dHost {
     return this.runtime.capturePng(opts);
   }
 
+  reportError(err) {
+    this.loading = false;
+    const message = String(err?.message || err || 'load error');
+    if (this.exposeCaptureApi && typeof window !== 'undefined') {
+      const api = window.__LIVE2D_CAPTURE__;
+      if (api) api.error = message;
+    }
+    if (typeof this.onError === 'function') this.onError(message);
+  }
+
   async boot() {
     if (!this.model) return;
+    const generation = ++this._bootGeneration;
     this.loading = true;
     this.progressPercent = 0;
     this.progressLabel = 'loading';
     try {
       this.teardownRuntime();
+      if (generation !== this._bootGeneration) return;
       const canvas = this.ensureCanvas();
       if (!canvas) return;
       const prefer = Array.isArray(this.prefer)
@@ -146,6 +193,7 @@ export default class Live2dHost {
         : ['canvas2d', 'webgl2', 'webgpu'];
       const runtime = createLive2D({ prefer, updateMode: 'manual' });
       runtime.events.on('ready', () => {
+        if (generation !== this._bootGeneration) return;
         this.loading = false;
         this.progressPercent = 100;
         this.progressLabel = 'ready';
@@ -153,27 +201,32 @@ export default class Live2dHost {
           this._lastTs = 0;
           this._raf = requestAnimationFrame((t) => this.tick(t));
         }
+        this.attachPointer(canvas);
         if (this.exposeCaptureApi) void this.publishCapture();
         if (typeof this.onReady === 'function') this.onReady(runtime);
       });
       runtime.events.on('error', (p) => {
-        this.loading = false;
-        if (this.exposeCaptureApi && typeof window !== 'undefined') {
-          const api = window.__LIVE2D_CAPTURE__;
-          if (api) api.error = String(p?.error || 'load error');
-        }
+        if (generation !== this._bootGeneration) return;
+        this.reportError(p?.error || 'load error');
       });
       if (typeof this.onProfile === 'function') {
         this._unsubProfile = runtime.events.on('profile', (profile) => {
+          if (generation !== this._bootGeneration) return;
           this.onProfile(profile);
         });
       }
       runtime.mount(canvas);
       this.progressPercent = 35;
       await runtime.loadModel(this.model);
+      if (generation !== this._bootGeneration) {
+        runtime.destroy?.();
+        return;
+      }
       this.runtime = runtime;
-    } catch {
-      this.loading = false;
+      this.progressPercent = 90;
+    } catch (err) {
+      if (generation !== this._bootGeneration) return;
+      this.reportError(err);
     }
   }
 
