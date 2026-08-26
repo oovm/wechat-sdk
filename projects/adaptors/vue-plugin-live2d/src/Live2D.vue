@@ -4,7 +4,17 @@
     class="doki-live2d-root"
     :style="{ width: `${width}px`, height: `${height}px` }"
   >
-    <div ref="hostRef" class="doki-live2d-host"/>
+    <live-2d
+      ref="actorRef"
+      :model="modelAttr"
+      :width="width"
+      :height="height"
+      :renderer="rendererKind"
+      :autoplay="autoplay"
+      :autosway="autoSway"
+      interactive
+      tracking="pointer"
+    />
     <div
       v-if="showProgress && loading"
       class="doki-live2d-progress"
@@ -27,17 +37,15 @@
 </template>
 
 <script setup lang="ts">
-import {
-    createLive2d,
-    createRenderer,
-    type FrameProfile,
-    focusParameterUpdates,
-    type Live2dRuntime,
-    type LoadProgress,
-    type ModelSource,
-    type PlayMotionOptions,
-    type RendererKind,
+import "@doki-land/live2d-element";
+import type {
+    FrameProfile,
+    LoadProgress,
+    ModelSource,
+    PlayMotionOptions,
+    RendererKind,
 } from "@doki-land/live2d";
+import type { Live2dElement } from "@doki-land/live2d-element";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const props = withDefaults(
@@ -73,16 +81,21 @@ const emit = defineEmits<{
     hit: [payload: { area: string; x: number; y: number }];
 }>();
 
-const hostRef = ref<HTMLDivElement | null>(null);
+const actorRef = ref<Live2dElement | null>(null);
 const loadProgress = ref<LoadProgress | null>(null);
 const loading = ref(false);
 
-let _canvas: HTMLCanvasElement | null = null;
-let runtime: Live2dRuntime | null = null;
-let raf = 0;
-let lastTs = 0;
-let manualAngleX: number | null = null;
-let mountGeneration = 0;
+const modelAttr = computed(() =>
+    typeof props.model === "string" ? props.model : "",
+);
+
+const rendererKind = computed(() => {
+    const first = props.prefer?.[0];
+    if (first === "webgpu" || first === "webgl2" || first === "canvas2d") {
+        return first;
+    }
+    return "auto";
+});
 
 const progressPercent = computed(() => {
     const p = loadProgress.value?.progress ?? 0;
@@ -100,215 +113,131 @@ const progressLabel = computed(() => {
     return p.detail ? `${stage} · ${p.detail}` : stage;
 });
 
-function stopLoop() {
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
-    lastTs = 0;
+function actor(): Live2dElement | null {
+    return actorRef.value;
 }
 
-function tick(ts: number) {
-    if (!runtime) return;
-    const dt = lastTs ? (ts - lastTs) / 1000 : 0;
-    lastTs = ts;
-    if (manualAngleX !== null) {
-        runtime.setParameter("PARAM_ANGLE_X", manualAngleX);
-    } else if (props.autoSway) {
-        const t = ts / 1000;
-        runtime.setParameter(
-            "PARAM_ANGLE_X",
-            parameterFromNormalized("PARAM_ANGLE_X", Math.sin(t) * 0.25),
-        );
-    }
-    runtime.update(dt);
-    raf = requestAnimationFrame(tick);
-}
-
-function ensureFreshCanvas(): HTMLCanvasElement | null {
-    const host = hostRef.value;
-    if (!host) return null;
-    // Drop any previous canvas so GPU context families never stack in the DOM.
-    host.replaceChildren();
-    const next = document.createElement("canvas");
-    next.className = "doki-live2d-canvas";
-    // Backing store follows devicePixelRatio so WebGL/WebGPU edges stay sharp.
-    const dpr = Math.min(
-        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
-        2,
-    );
-    next.width = Math.max(1, Math.round(props.width * dpr));
-    next.height = Math.max(1, Math.round(props.height * dpr));
-    next.style.width = `${props.width}px`;
-    next.style.height = `${props.height}px`;
-    next.addEventListener("pointermove", onPointerMove);
-    next.addEventListener("pointerdown", onPointerDown);
-    host.appendChild(next);
-    _canvas = next;
-    return next;
-}
-
-function bindRuntimeEvents(r: Live2dRuntime) {
-    r.events.on("ready", (p) => {
+function syncSource(): void {
+    const el = actor();
+    if (!el) return;
+    if (props.model == null) {
+        el.removeAttribute("model");
+        el.source = null;
         loading.value = false;
-        loadProgress.value = {
-            stage: "ready",
-            progress: 1,
-            detail: p.modelId,
-        };
-        emit("ready", p.modelId);
-    });
-    r.events.on("error", (p) => {
-        loading.value = false;
-        emit("error", p.error);
-    });
-    r.events.on("progress", (p) => {
-        loadProgress.value = p;
-        emit("progress", p);
-    });
-    r.events.on("profile", (p) => {
-        emit("profile", p);
-    });
-}
-
-async function remount() {
-    const gen = ++mountGeneration;
-    stopLoop();
-    runtime?.destroy();
-    runtime = null;
-    loadProgress.value = props.model
-        ? { stage: "mounting", progress: 0.01, detail: "initialize renderer" }
-        : null;
-    loading.value = Boolean(props.model);
-
-    let next = ensureFreshCanvas();
-    if (!next) {
-        await new Promise<void>((r) => requestAnimationFrame(() => r()));
-        next = ensureFreshCanvas();
-    }
-    if (!next) {
-        loading.value = false;
-        emit("error", new Error("vue-plugin-live2d: host element missing"));
+        loadProgress.value = null;
         return;
     }
-
-    runtime = createLive2d({
-        renderer: createRenderer({ prefer: props.prefer }),
-    });
-    bindRuntimeEvents(runtime);
-    runtime.mount(next);
-
-    if (props.model) {
-        try {
-            await runtime.loadModel(props.model);
-            if (gen !== mountGeneration) return;
-            if (props.autoplay) {
-                raf = requestAnimationFrame(tick);
-            } else {
-                runtime.update(0);
-            }
-        } catch {
-            // error already emitted via runtime events
-        }
+    if (typeof props.model === "string") {
+        el.source = null;
+        el.model = props.model;
     } else {
-        loading.value = false;
+        el.removeAttribute("model");
+        el.source = props.model;
+    }
+    loading.value = true;
+    loadProgress.value = { stage: "mounting", progress: 0.01 };
+}
+
+function syncRenderOptions(): void {
+    const el = actor();
+    if (!el) return;
+    el.renderOptions = { prefer: [...props.prefer] };
+}
+
+function bindActorEvents(el: Live2dElement): void {
+    el.addEventListener("live2d-ready", onReady);
+    el.addEventListener("live2d-error", onError);
+    el.addEventListener("live2d-progress", onProgress);
+    el.addEventListener("live2d-profile", onProfile);
+    el.addEventListener("live2d-hit", onHit);
+}
+
+function unbindActorEvents(el: Live2dElement): void {
+    el.removeEventListener("live2d-ready", onReady);
+    el.removeEventListener("live2d-error", onError);
+    el.removeEventListener("live2d-progress", onProgress);
+    el.removeEventListener("live2d-profile", onProfile);
+    el.removeEventListener("live2d-hit", onHit);
+}
+
+function onReady(event: Event): void {
+    loading.value = false;
+    const detail = (event as CustomEvent<{ model?: string }>).detail;
+    loadProgress.value = {
+        stage: "ready",
+        progress: 1,
+        detail: detail?.model,
+    };
+    emit("ready", detail?.model ?? "");
+}
+
+function onError(event: Event): void {
+    loading.value = false;
+    const detail = (event as CustomEvent<{ cause?: unknown; error?: string }>)
+        .detail;
+    emit("error", detail?.cause ?? detail?.error ?? "live2d-error");
+}
+
+function onProgress(event: Event): void {
+    const payload = (event as CustomEvent<LoadProgress>).detail;
+    loadProgress.value = payload;
+    emit("progress", payload);
+}
+
+function onProfile(event: Event): void {
+    emit("profile", (event as CustomEvent<FrameProfile>).detail);
+}
+
+function onHit(event: Event): void {
+    const detail = (
+        event as CustomEvent<{
+            area: string | null;
+            modelX: number;
+            modelY: number;
+        }>
+    ).detail;
+    if (detail?.area) {
+        emit("hit", {
+            area: detail.area,
+            x: detail.modelX,
+            y: detail.modelY,
+        });
     }
 }
 
-/**
- * Reload model on the existing runtime/renderer.
- * Prefer this over remounting — full remount races GPU init and fetch.
- */
-async function reload() {
-    if (!runtime || !props.model) {
-        await remount();
+function setParameter(id: string, value: number): void {
+    actor()?.runtime?.setParameter(id, value);
+    if (!props.autoplay) {
+        actor()?.runtime?.update(0);
+    }
+}
+
+function clearManualAngleX(): void {
+    /* autosway lives on <live-2d>; callers may set PARAM_ANGLE_X directly. */
+}
+
+async function reload(): Promise<void> {
+    const el = actor();
+    if (!el || props.model == null) {
+        syncSource();
         return;
     }
-    const gen = mountGeneration;
-    stopLoop();
     loading.value = true;
     loadProgress.value = {
         stage: "resolve",
         progress: 0.02,
         detail: "resolve source",
     };
-    try {
-        await runtime.loadModel(props.model);
-        if (gen !== mountGeneration) return;
-        if (props.autoplay) {
-            raf = requestAnimationFrame(tick);
-        } else {
-            runtime.update(0);
-        }
-    } catch {
-        // error already emitted via runtime events
-    }
-}
-
-function setParameter(id: string, value: number) {
-    if (id === "PARAM_ANGLE_X") {
-        manualAngleX = value;
-    }
-    runtime?.setParameter(id, value);
-    if (!props.autoplay) {
-        runtime?.update(0);
-    }
-}
-
-function clearManualAngleX() {
-    manualAngleX = null;
-}
-
-function modelPoint(event: PointerEvent) {
-    const canvas = _canvas;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return null;
-    return {
-        x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        y: 1 - ((event.clientY - rect.top) / rect.height) * 2,
-    };
-}
-
-function parameterFromNormalized(id: string, normalized: number) {
-    const binding = runtime?.listParameters().find((p) => p.id === id);
-    if (!binding) return normalized;
-    return normalized >= 0
-        ? binding.defaultValue +
-              (binding.max - binding.defaultValue) * normalized
-        : binding.defaultValue +
-              (binding.defaultValue - binding.min) * normalized;
-}
-
-function applyPointerFocus(x: number, y: number) {
-    if (!runtime) return;
-    for (const { id, value } of focusParameterUpdates(
-        runtime.listParameters(),
-        x,
-        y,
-    )) {
-        if (id === "PARAM_ANGLE_X") {
-            // Pointer owns ANGLE_X until cleared; stops auto-sway fighting it.
-            manualAngleX = value;
-        }
-        runtime.setParameter(id, value);
-    }
-}
-
-function onPointerMove(event: PointerEvent) {
-    const p = modelPoint(event);
-    if (!p || !runtime) return;
-    applyPointerFocus(p.x, p.y);
-    if (!props.autoplay) runtime.update(0);
-}
-
-function onPointerDown(event: PointerEvent) {
-    const p = modelPoint(event);
-    if (!p || !runtime) return;
-    const area = runtime.hitTest(p.x, p.y);
-    if (area) emit("hit", { area, x: p.x, y: p.y });
+    syncSource();
+    await el.loadModel();
 }
 
 onMounted(() => {
-    void remount();
+    const el = actor();
+    if (!el) return;
+    bindActorEvents(el);
+    syncRenderOptions();
+    syncSource();
 });
 
 watch(
@@ -319,32 +248,31 @@ watch(
             props.height,
             props.prefer?.join(","),
             props.autoplay,
+            props.autoSway,
         ] as const,
     () => {
-        void remount();
+        syncRenderOptions();
+        syncSource();
     },
 );
 
 onBeforeUnmount(() => {
-    mountGeneration += 1;
-    stopLoop();
-    runtime?.destroy();
-    runtime = null;
-    _canvas = null;
-    hostRef.value?.replaceChildren();
+    const el = actor();
+    if (el) unbindActorEvents(el);
 });
 
 defineExpose({
-    getRuntime: () => runtime,
+    getRuntime: () => actor()?.runtime ?? null,
     setParameter,
     clearManualAngleX,
-    listParameters: () => runtime?.listParameters() ?? [],
+    listParameters: () => actor()?.runtime?.listParameters() ?? [],
     playMotion: (group: string, index?: number, options?: PlayMotionOptions) =>
-        runtime?.playMotion(group, index, options) ?? Promise.resolve(false),
+        actor()?.playMotion(group, index, options) ?? Promise.resolve(false),
     stopMotion: (opts?: { fade?: boolean; slot?: string }) =>
-        runtime?.stopMotion(opts),
-    listPlayingMotions: () => runtime?.listPlayingMotions() ?? [],
+        actor()?.runtime?.stopMotion(opts),
+    listPlayingMotions: () => actor()?.runtime?.listPlayingMotions() ?? [],
     capturePng: (opts?: { mimeType?: "image/png"; quality?: number }) => {
+        const runtime = actor()?.runtime;
         if (!runtime) {
             return Promise.reject(
                 new Error("vue-plugin-live2d: runtime not mounted"),
@@ -363,14 +291,13 @@ defineExpose({
   line-height: 0;
 }
 
-.doki-live2d-host {
+live-2d {
   display: block;
   width: 100%;
   height: 100%;
-  line-height: 0;
 }
 
-.doki-live2d-host :deep(canvas) {
+live-2d::part(canvas) {
   display: block;
   width: 100%;
   height: 100%;

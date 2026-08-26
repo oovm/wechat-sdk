@@ -37,7 +37,8 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
-        "@doki-land/live2d": "workspace:*"
+        "@doki-land/live2d": "workspace:*",
+        "@doki-land/live2d-element": "workspace:*"
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.0",
