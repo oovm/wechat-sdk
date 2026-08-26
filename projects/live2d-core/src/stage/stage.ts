@@ -1,5 +1,9 @@
 import type { AssetResolver, ModelSource } from "../contracts.js";
-import type { InternalModel, MotionDefinition } from "../model/model.js";
+import type {
+    ExpressionDefinition,
+    InternalModel,
+    MotionDefinition,
+} from "../model/model.js";
 import type { ModelAsset } from "../model/model-asset.js";
 
 /** Normalized stage placement for one actor (0,0) top-left → (1,1) bottom-right. */
@@ -150,6 +154,11 @@ export interface Live2dActor {
         priority: number;
     }>;
 
+    listExpressions(): readonly ExpressionDefinition[];
+
+    /** Apply an expression by settings name; pass `null` to clear. */
+    setExpression(name: string | null): Promise<boolean>;
+
     lookAt(stageX: number, stageY: number): void;
 
     destroy(): void;
@@ -178,6 +187,9 @@ export interface Live2dStage {
     update(deltaTimeSeconds: number): void;
 
     render(): void;
+
+    /** Subscribe to the stage-owned frame loop (before `update`). Returns unsubscribe. */
+    onFrame(listener: (deltaTimeSeconds: number) => void): () => void;
 
     start(): void;
 

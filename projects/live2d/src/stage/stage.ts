@@ -67,6 +67,7 @@ export class Live2dStageImpl implements Live2dStage {
     ]);
     readonly #drawScratch = new StageDrawableScratch();
     readonly #sortedActors: Live2dActorImpl[] = [];
+    readonly #frameListeners = new Set<(deltaTimeSeconds: number) => void>();
 
     #canvas: HTMLCanvasElement | null = null;
     #initPromise: Promise<void> | null = null;
@@ -182,10 +183,20 @@ export class Live2dStageImpl implements Live2dStage {
 
     update(deltaTimeSeconds: number): void {
         if (this.#destroyed) return;
+        for (const listener of this.#frameListeners) {
+            listener(deltaTimeSeconds);
+        }
         for (const actor of this.#actors.values()) {
             actor.update(deltaTimeSeconds);
         }
         this.#applyPointerTracking();
+    }
+
+    onFrame(listener: (deltaTimeSeconds: number) => void): () => void {
+        this.#frameListeners.add(listener);
+        return () => {
+            this.#frameListeners.delete(listener);
+        };
     }
 
     render(): void {
@@ -291,6 +302,7 @@ export class Live2dStageImpl implements Live2dStage {
         if (this.#destroyed) return;
         this.#destroyed = true;
         this.stop();
+        this.#frameListeners.clear();
         this.#detachPointerListeners();
         for (const actor of this.#actors.values()) {
             actor.destroy();
