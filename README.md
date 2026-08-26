@@ -16,7 +16,7 @@ CPU evaluation, rendering, interaction, and host integration while keeping the p
 - URL, static asset, CDN, and `npm:` model resolution.
 - Pointer tracking, parameter inspection, and drawable hit testing.
 - Optional webpage widget for blog and documentation sites.
-- Hexo integration with generated browser assets and configuration passthrough.
+- Official `<live-2d>` Custom Element for cross-ecosystem hosts.
 - Lazy resource loading for H5 games and constrained hosts.
 
 ## ?? Game Engine Integration
@@ -49,23 +49,17 @@ This makes the runtime suitable for:
 
 The public runtime remains independent of a particular UI framework or application shell.
 
-## ?? Blog Engine Integration
+## Blog Engine Integration
 
-Blog integrations are built as thin host adapters over the same runtime:
+Blog integrations are thin host adapters over the same runtime / CE. Hexo and Hugo inject plugins ship from
+**hexo-theme-yuki** / **hugo-theme-yuki** (same semver as the theme), not from this repository. See design `07`.
 
 ```text
-Blog engine
-  -> host configuration and static asset injection
-  -> @doki-land/live2d-widget
+Blog engine (theme repo)
+  -> inject <live-2d> / <live-2d-widget> or compose createLive2d + createLive2dWidget
+  -> @doki-land/live2d-element / @doki-land/live2d-widget
   -> @doki-land/live2d
-  -> browser-native renderer
 ```
-
-The included Hexo plugin provides the first supported blog-engine integration. It can mount a site-wide character, emit
-the browser bundle, pass renderer preferences, and enable the optional speech bubble and toolbar.
-
-Blog-specific behavior such as welcome messages, page events, screenshots, Hitokoto, and close controls belongs to the
-widget package. Model decoding and rendering remain in the runtime and are not duplicated by the Hexo adapter.
 
 ## ?? Packages
 
@@ -78,8 +72,9 @@ widget package. Model decoding and rendering remain in the runtime and are not d
 | `@doki-land/live2d-widget`   | Optional webpage character shell with messages and toolbar behavior.                              |
 | `@doki-land/live2d-element`  | Official `<live-2d>` / `<live-2d-widget>` Custom Elements (Stage-owned RAF).                      |
 | `vue-plugin-live2d`          | Thin Vue wrapper over `<live-2d>` for existing Vue apps (not a separate runtime).                 |
-| `react-plugin-live2d`        | Thin React wrapper over `<live-2d>` for existing React apps (not a separate runtime).             |
+| `react-plugin-live2d`        | **Transitional** thin React wrapper over `<live-2d>` (prefer CE / TS facade long-term).           |
 | `cocos-plugin-live2d`        | Cocos Creator 3.x (Web) component over the pure TS facade.                                        |
+| `@vmz/plugin-live2d`         | VMZ dogfood host for homepage / future UI charts.                                                 |
 
 Static-site inject (`hexo-plugin-live2d` / Hugo) lives in **`hexo-theme-yuki` / `hugo-theme-yuki`** (same semver as the theme). See design `07`.
 
@@ -251,7 +246,7 @@ Local gate (Biome + typecheck + tests + builds + homepage??
 pnpm verify
 ```
 
-`pnpm verify` covers Biome, CE fixture static gate, typecheck/tests/build, Playwright Chromium CE browser-matrix, and homepage build.
+`pnpm verify` covers Biome, CE fixture + publish-surface gate, typecheck/tests/build, model conformance, **benchmark proof** (`dist/benchmark.proof.json`), Playwright Chromium CE browser-matrix, and homepage build.
 
 Real npm semver releases are **only** via GitHub Actions Trusted Publisher: push tag `vX.Y.Z` → `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
 
@@ -279,11 +274,23 @@ When reporting a model issue, include:
 
 Do not include proprietary model assets in public issues without permission.
 
-## Developer Preview
+## Maturity (`0.1.0` gate)
 
-**Current band: `0.0.x` (Developer Preview).** APIs and architecture may change between tags. The next maturity gate is **`0.1.0`** (compatibility matrix, full browser matrix beyond CI Chromium, Blink/Breath/Lip Sync, Widget legacy retirement, benchmark evidence pack). Physics3 full simulation is deferred to **0.1.x**. Static-site Hexo/Hugo plugins are maintained in theme repos, not here. Do not describe `0.0.x` as production-ready or claim performance superiority over the official SDK without the benchmark evidence pack in design `03` §5.
+**Published npm band today remains `0.0.x` until `v0.1.0` is tagged (S9).** Capability table for the maturity gate:
 
-Cross-ecosystem integration should prefer **`@doki-land/live2d-element`** (`<live-2d>`) or the pure TS `createLive2d()` API. Game engines and schedulers that already own a canvas should use the TS facade directly.
+| Area | Status |
+|------|--------|
+| MOC / model matrix (`conformance:models`) | Done (S4 thin gate) |
+| CE binding + Chromium browser matrix | Done (S1 / S5) |
+| Widget host loop (`stage` + `actor` only) | Done (S3) |
+| Benchmark evidence pack (`benchmark:proof`) | Done (S7 self metrics; SDK compare handoff) |
+| Docs / publish surface / CC0 | Done (S8) |
+| Eye Blink / Breath / Lip Sync | **Deferred to 0.1.x** (not required for 0.1.0) |
+| Physics3 full spring sim | **Deferred to 0.1.x** (thin gate kept) |
+| Firefox / Safari / mobile / context lost | Handoff |
+| Claim “faster than official SDK” | **Forbidden** until handoff SDK compare exists |
+
+Do not describe current tags as production-ready or LTS. Cross-ecosystem integration should prefer **`@doki-land/live2d-element`** (`<live-2d>`) or `createLive2d()`. VMZ `custom-element` CLI target (`custom-element-contract` / `custom-element-output`) is **blocked** until `vmz build --target custom-element` lands; today’s CE is pure TypeScript.
 
 ## ?? Security
 

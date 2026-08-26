@@ -1,8 +1,9 @@
 # react-plugin-live2d
 
-Thin React wrapper over the official `<live-2d>` Custom Element from
+**Transitional** thin React wrapper over the official `<live-2d>` Custom Element from
 `@doki-land/live2d-element`.
 
+> Not a first-class long-term surface in design `00`. Prefer `<live-2d>` CE or the pure TS facade.
 > Shared runtime behavior lives in CE / Stage / Actor — not in this package.
 
 ## Installation

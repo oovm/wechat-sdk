@@ -4,6 +4,7 @@
     "version": "0.0.0",
     "description": "live2d.ts official site — VMZ dogfood (@vmz/plugin-live2d + @vmz/ui)",
     "type": "module",
+    "license": "CC0-1.0",
     "scripts": {
         "fixtures": "node ../../scripts/write-fixtures.mjs",
         "sync:models": "node ../../scripts/sync-models.mjs",
