@@ -69,7 +69,10 @@ function normalizePrefer(prefer) {
 }
 
 function resolveLoader(config) {
-    return config.loader === "bundle" ? "bundle" : "esm";
+    if (config.loader === "bundle" || config.loader === "ce") {
+        return config.loader;
+    }
+    return "esm";
 }
 
 function resolveScriptUrl(config) {
@@ -98,6 +101,17 @@ function renderInjector(config) {
         config.chrome === undefined || config.chrome === null
             ? true
             : config.chrome;
+    const pluginRootPath = config.pluginRootPath || DEFAULTS.pluginRootPath;
+    const modelAttr = String(config.model || "").replace(/"/g, "&quot;");
+
+    if (loader === "ce") {
+        const importMap = `<script type="importmap">${JSON.stringify(
+            buildHexoImportMap(pluginRootPath),
+        )}</script>\n`;
+        const widget = `<live-2d-widget id="doki-live2d" class="${className}" model="${modelAttr}" width="${width}" height="${height}" autoplay style="position:fixed;left:0;bottom:0;z-index:999;"></live-2d-widget>\n`;
+        return `${widget}${importMap}<script type="module" src="${scriptUrl}"></script>\n`;
+    }
+
     const needsHost = (config.target || "#doki-live2d") === "#doki-live2d";
     const host = needsHost
         ? `<div id="doki-live2d" class="${className}" style="position:fixed;left:0;bottom:0;z-index:999;pointer-events:none;" aria-hidden="true"></div>\n`
@@ -106,9 +120,7 @@ function renderInjector(config) {
     const importMap =
         loader === "esm"
             ? `<script type="importmap">${JSON.stringify(
-                  buildHexoImportMap(
-                      config.pluginRootPath || DEFAULTS.pluginRootPath,
-                  ),
+                  buildHexoImportMap(pluginRootPath),
               )}</script>\n`
             : "";
 
@@ -142,6 +154,23 @@ function collectAssetRoutes(config) {
             : path.join(__dirname, "browser");
     /** @type {{ path: string; data: () => import('node:fs').ReadStream }[]} */
     const out = [];
+
+    if (loader === "ce") {
+        const elementEntry = path.join(
+            browserRoot,
+            "vendor",
+            "live2d-element",
+            "index.js",
+        );
+        const vendorDir = path.join(browserRoot, "vendor");
+        if (fs.existsSync(vendorDir)) {
+            walkVendorAssets(vendorDir, "", pluginRootPath, out);
+        }
+        if (!fs.existsSync(elementEntry)) {
+            return { missing: "ce", routes: out };
+        }
+        return { missing: null, routes: out };
+    }
 
     if (loader === "esm") {
         const vendorDir = path.join(browserRoot, "vendor");
@@ -208,6 +237,12 @@ function register(hexo) {
         if (missing === "legacy") {
             hexo.log.warn(
                 `[${PLUGIN_ID}] missing browser/doki-live2d-hexo.js — run pnpm --filter hexo-plugin-live2d build:legacy`,
+            );
+            return [];
+        }
+        if (missing === "ce") {
+            hexo.log.warn(
+                `[${PLUGIN_ID}] missing browser/vendor/live2d-element — run pnpm --filter hexo-plugin-live2d build`,
             );
             return [];
         }

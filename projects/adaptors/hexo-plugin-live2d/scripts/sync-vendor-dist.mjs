@@ -17,6 +17,7 @@ const VENDOR_PACKAGES = [
     { dir: "projects/live2d-loader", vendorName: "live2d-loader" },
     { dir: "projects/live2d-renderer", vendorName: "live2d-renderer" },
     { dir: "projects/live2d-widget", vendorName: "live2d-widget" },
+    { dir: "projects/live2d-element", vendorName: "live2d-element" },
 ];
 
 function copyTree(src, dest) {

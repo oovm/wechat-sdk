@@ -4,9 +4,9 @@
 
 export type HexoRendererPrefer = "webgpu" | "webgl2" | "canvas2d";
 
-export type HexoLive2dLoader = "esm" | "bundle";
+export type HexoLive2dLoader = "esm" | "bundle" | "ce";
 
-export interface HexoLive2DConfig {
+export interface HexoLive2dConfig {
     enable?: boolean;
     /** Model settings URL, `npm:…` specifier, or site-relative path. */
     model?: string;
@@ -19,6 +19,7 @@ export interface HexoLive2DConfig {
     /**
      * Asset delivery mode.
      * - `esm` (default): import map + vendor dist + thin bootstrap module
+     * - `ce`: optional CE path — inject `<live-2d-widget>` + `@doki-land/live2d-element`
      * - `bundle` (deprecated): monolithic `doki-live2d-hexo.js` IIFE
      */
     loader?: HexoLive2dLoader;
@@ -44,7 +45,7 @@ export interface HexoLive2DConfig {
 
 export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
     Pick<
-        HexoLive2DConfig,
+        HexoLive2dConfig,
         | "enable"
         | "width"
         | "height"
@@ -71,9 +72,9 @@ export const DEFAULT_HEXO_LIVE2D_CONFIG: Required<
     chrome: true,
 };
 
-export function mergeHexoLive2DConfig(
-    ...layers: Array<HexoLive2DConfig | undefined>
-): HexoLive2DConfig {
+export function mergeHexoLive2dConfig(
+    ...layers: Array<HexoLive2dConfig | undefined>
+): HexoLive2dConfig {
     return Object.assign(
         {},
         DEFAULT_HEXO_LIVE2D_CONFIG,
@@ -111,8 +112,16 @@ export function buildHexoImportMap(pluginRootPath: string): {
             "@doki-land/live2d-loader": `${root}vendor/live2d-loader/index.js`,
             "@doki-land/live2d-renderer": `${root}vendor/live2d-renderer/index.js`,
             "@doki-land/live2d-widget": `${root}vendor/live2d-widget/index.js`,
+            "@doki-land/live2d-element": `${root}vendor/live2d-element/index.js`,
         },
     };
+}
+
+export function resolveHexoLive2dLoader(
+    loader: HexoLive2dLoader | undefined,
+): HexoLive2dLoader {
+    if (loader === "bundle" || loader === "ce") return loader;
+    return "esm";
 }
 
 export function defaultHexoScriptUrl(
@@ -123,14 +132,17 @@ export function defaultHexoScriptUrl(
     if (loader === "bundle") {
         return `${root}doki-live2d-hexo.js`;
     }
+    if (loader === "ce") {
+        return `${root}vendor/live2d-element/index.js`;
+    }
     return `${root}doki-live2d-hexo.bootstrap.mjs`;
 }
 
-/** Body-end HTML: host node + bootstrap script tag. */
-export function renderHexoLive2DInjector(config: HexoLive2DConfig): string {
-    const cfg = mergeHexoLive2DConfig(config);
+/** Body-end HTML: host node + bootstrap / CE script tag. */
+export function renderHexoLive2dInjector(config: HexoLive2dConfig): string {
+    const cfg = mergeHexoLive2dConfig(config);
     if (!cfg.enable) return "";
-    const loader = cfg.loader === "bundle" ? "bundle" : "esm";
+    const loader = resolveHexoLive2dLoader(cfg.loader);
     const model = JSON.stringify(cfg.model ?? "");
     const target = JSON.stringify(cfg.target ?? "#doki-live2d");
     const width = Number(cfg.width ?? 280);
@@ -147,8 +159,15 @@ export function renderHexoLive2DInjector(config: HexoLive2DConfig): string {
     const autoSway = cfg.autoSway !== false;
     const chrome =
         cfg.chrome === undefined || cfg.chrome === null ? true : cfg.chrome;
-    const needsHost = (cfg.target ?? "#doki-live2d") === "#doki-live2d";
+    const modelAttr = String(cfg.model ?? "").replace(/"/g, "&quot;");
 
+    if (loader === "ce") {
+        const importMap = `<script type="importmap">${JSON.stringify(buildHexoImportMap(pluginRootPath))}</script>\n`;
+        const widget = `<live-2d-widget id="doki-live2d" class="${className}" model="${modelAttr}" width="${width}" height="${height}" autoplay style="position:fixed;left:0;bottom:0;z-index:999;"></live-2d-widget>\n`;
+        return `${widget}${importMap}<script type="module" src="${scriptUrl}"></script>\n`;
+    }
+
+    const needsHost = (cfg.target ?? "#doki-live2d") === "#doki-live2d";
     const host = needsHost
         ? `<div id="doki-live2d" class="${className}" style="position:fixed;left:0;bottom:0;z-index:999;pointer-events:none;" aria-hidden="true"></div>\n`
         : "";
