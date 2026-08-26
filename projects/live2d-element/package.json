@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Official <live-2d> Custom Element — thin host over @doki-land/live2d (Stage-owned RAF).",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "author": "Doki Land",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {

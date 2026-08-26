@@ -184,5 +184,5 @@ contract justifies it.
 
 ### Terms
 
-- See the repository license for source-code terms.
+- Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../License.md).
 - Model assets used for local testing may have separate terms.

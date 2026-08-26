@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "description": "Cocos Creator Live2D component — Creator 3.x Web runtime; Creator 2.4 scaffold entry.",
     "type": "module",
-    "license": "MIT",
+    "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",

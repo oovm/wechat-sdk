@@ -109,4 +109,4 @@ implementation layers and remain meaningful without a browser UI framework.
 
 ## 📄 License
 
-See the repository license.
+Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../License.md).

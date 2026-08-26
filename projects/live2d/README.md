@@ -228,5 +228,5 @@ applicable.
 
 ### Terms
 
-- See the repository license for source-code terms.
+- Source code is dedicated to the public domain under **CC0 1.0 Universal** — see [`License.md`](../../License.md).
 - Model and artwork licenses are separate from the runtime license.
