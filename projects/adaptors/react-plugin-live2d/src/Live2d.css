@@ -1,0 +1,57 @@
+.doki-live2d-root {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+}
+
+.doki-live2d-root live-2d {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.doki-live2d-root live-2d::part(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.doki-live2d-progress {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: stretch;
+    gap: 0.55rem;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    background: color-mix(in srgb, #0f1b2d 55%, transparent);
+    pointer-events: none;
+}
+
+.doki-live2d-progress__track {
+    height: 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, #fff 22%, transparent);
+    overflow: hidden;
+}
+
+.doki-live2d-progress__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: #7eb6ff;
+    transition: width 80ms linear;
+}
+
+.doki-live2d-progress__label {
+    color: #f4f8ff;
+    font:
+        0.78rem / 1.3 ui-sans-serif,
+        system-ui,
+        sans-serif;
+    text-align: center;
+    word-break: break-all;
+}

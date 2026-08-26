@@ -9,11 +9,10 @@
       :model="modelAttr"
       :width="width"
       :height="height"
-      :renderer="rendererKind"
       :autoplay="autoplay"
       :autosway="autoSway"
-      interactive
-      tracking="pointer"
+      :interactive="interactive"
+      :tracking="tracking"
     />
     <div
       v-if="showProgress && loading"
@@ -61,6 +60,8 @@ const props = withDefaults(
         autoSway?: boolean;
         /** Show built-in loading overlay with progress bar. */
         showProgress?: boolean;
+        interactive?: boolean;
+        tracking?: "pointer" | "none";
     }>(),
     {
         model: null,
@@ -70,6 +71,8 @@ const props = withDefaults(
         autoplay: true,
         autoSway: true,
         showProgress: true,
+        interactive: true,
+        tracking: "pointer",
     },
 );
 
@@ -88,14 +91,6 @@ const loading = ref(false);
 const modelAttr = computed(() =>
     typeof props.model === "string" ? props.model : "",
 );
-
-const rendererKind = computed(() => {
-    const first = props.prefer?.[0];
-    if (first === "webgpu" || first === "webgl2" || first === "canvas2d") {
-        return first;
-    }
-    return "auto";
-});
 
 const progressPercent = computed(() => {
     const p = loadProgress.value?.progress ?? 0;
@@ -249,6 +244,8 @@ watch(
             props.prefer?.join(","),
             props.autoplay,
             props.autoSway,
+            props.interactive,
+            props.tracking,
         ] as const,
     () => {
         syncRenderOptions();

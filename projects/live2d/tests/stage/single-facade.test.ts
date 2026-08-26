@@ -10,7 +10,7 @@ import {
     inlineCpuModelSource,
 } from "../fixtures/cpu-model-fixture.js";
 
-function createTestLive2D() {
+function createTestLive2d() {
     return createLive2d({
         renderer: createStubRenderer(),
         backends: [createMoc3Backend()],
@@ -20,7 +20,7 @@ function createTestLive2D() {
 
 describe("createLive2d facade", () => {
     it("loadModel transitions to live and emits ready", async () => {
-        const live2d = createTestLive2D();
+        const live2d = createTestLive2d();
         const canvas = document.createElement("canvas");
         canvas.width = 200;
         canvas.height = 200;
@@ -47,7 +47,7 @@ describe("createLive2d facade", () => {
     });
 
     it("delegates setParameter and motion helpers to default actor", async () => {
-        const live2d = createTestLive2D();
+        const live2d = createTestLive2d();
         const canvas = document.createElement("canvas");
         await live2d.stage.mount(canvas);
         await live2d.loadModel(
@@ -64,7 +64,7 @@ describe("createLive2d facade", () => {
     });
 
     it("exposes stage and default actor", () => {
-        const live2d = createTestLive2D();
+        const live2d = createTestLive2d();
         expect(live2d.stage).toBeDefined();
         expect(live2d.actor).toBeDefined();
         expect(live2d.stage.actors).toHaveLength(1);

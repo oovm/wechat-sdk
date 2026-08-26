@@ -11,10 +11,8 @@ export {
 export {
     type ComposedWidgetOptions,
     createLive2dWidget,
-    type LegacyWidgetOptions,
     Live2dWidget,
     mountWidget,
-    mountWidgetWithStage,
     type WidgetChromeOptions,
     type WidgetOptions,
     type WidgetToolId,

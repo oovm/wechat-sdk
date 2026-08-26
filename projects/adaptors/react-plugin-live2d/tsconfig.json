@@ -1,0 +1,14 @@
+{
+    "extends": "../../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "dist",
+        "jsx": "react-jsx",
+        "moduleResolution": "bundler",
+        "types": ["@webgpu/types"],
+        "paths": {
+            "@doki-land/live2d": ["../../live2d/src/index.ts"],
+            "@doki-land/live2d-element": ["../../live2d-element/src/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/global.d.ts"]
+}
