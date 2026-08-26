@@ -80,7 +80,7 @@ const JS_STUBS = [
     "@doki-land/live2d-widget",
     "@doki-land/live2d-element",
     "vue-plugin-live2d",
-    "hexo-plugin-live2d",
+    "react-plugin-live2d",
     "cocos-plugin-live2d",
     "@vmz/plugin-live2d",
 ];
@@ -605,7 +605,7 @@ function writeStub(spec, dir, authToken) {
         description:
             spec.description ??
             "live2d.ts placeholder — not for production use.",
-        license: "MIT",
+        license: "CC0-1.0",
         private: false,
         files: ["README.md"],
     };

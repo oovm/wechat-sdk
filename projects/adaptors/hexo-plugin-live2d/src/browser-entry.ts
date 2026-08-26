@@ -1,7 +1,7 @@
 /**
- * Browser bootstrap for hexo-plugin-live2d.
- * ESM default: `browser/doki-live2d-hexo.bootstrap.mjs` + import map vendor.
- * Legacy: bundled IIFE `browser/doki-live2d-hexo.js` (deprecated).
+ * Browser bootstrap for hexo-plugin-live2d (`loader: esm` compatibility path).
+ * Emits `browser/doki-live2d-hexo.bootstrap.mjs` + import map vendor.
+ * Default site path is `loader: ce` (Custom Element); this entry is optional.
  */
 import type { RendererKind } from "@doki-land/live2d";
 import {
@@ -24,7 +24,7 @@ declare global {
           }
         | undefined;
     // eslint-disable-next-line no-var
-    var DokiLive2D:
+    var dokiLive2d:
         | {
               mountWidget: typeof mountWidget;
               Live2dWidget: typeof Live2dWidget;
@@ -32,7 +32,7 @@ declare global {
         | undefined;
 }
 
-globalThis.DokiLive2D = {
+globalThis.dokiLive2d = {
     mountWidget,
     Live2dWidget,
 };

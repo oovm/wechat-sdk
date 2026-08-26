@@ -1,62 +1,7 @@
 {
     "name": "hexo-plugin-live2d",
     "version": "0.0.0",
-    "description": "Hexo plugin — inject Live2D widget via _config.yml; ESM vendor + import map (default) or legacy bundle.",
-    "license": "MIT",
-    "homepage": "https://github.com/doki-land/live2d.ts",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/doki-land/live2d.ts.git",
-        "directory": "projects/adaptors/hexo-plugin-live2d"
-    },
-    "keywords": [
-        "hexo",
-        "hexo-plugin",
-        "live2d",
-        "doki-land"
-    ],
-    "main": "index.cjs",
-    "types": "./src/index.ts",
-    "exports": {
-        ".": {
-            "types": "./src/index.ts",
-            "require": "./index.cjs",
-            "default": "./index.cjs"
-        }
-    },
-    "files": [
-        "index.cjs",
-        "import-map.cjs",
-        "browser",
-        "src",
-        "README.md"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "scripts": {
-        "build": "node ./scripts/sync-vendor-dist.mjs && node ./scripts/build-bootstrap.mjs",
-        "build:legacy": "node ./scripts/build-legacy-bundle.mjs",
-        "build:publish": "pnpm run build && pnpm run build:legacy",
-        "typecheck": "tsc --noEmit",
-        "test": "vitest run"
-    },
-    "peerDependencies": {
-        "hexo": ">=6.0.0"
-    },
-    "peerDependenciesMeta": {
-        "hexo": {
-            "optional": true
-        }
-    },
-    "dependencies": {
-        "@doki-land/live2d": "workspace:*",
-        "@doki-land/live2d-widget": "workspace:*"
-    },
-    "devDependencies": {
-        "esbuild": "^0.25.0",
-        "typescript": "^5.8.0",
-        "vitest": "^2.1.8"
-    },
-    "sideEffects": false
+    "private": true,
+    "description": "MOVED to hexo-theme-yuki/packages/hexo-plugin-live2d — do not publish from live2d.ts",
+    "license": "CC0-1.0"
 }

@@ -16,7 +16,8 @@
  *   npm_config_otp=…         2FA OTP (or pass --otp=)
  *
  * Requires: logged-in npm user with publish rights for `@doki-land/*`
- * and unscoped `vue-plugin-live2d` / `hexo-plugin-live2d` / `cocos-plugin-live2d`.
+ * and unscoped `vue-plugin-live2d` / `react-plugin-live2d` / `cocos-plugin-live2d`.
+ * (`hexo-plugin-live2d` is published from hexo-theme-yuki.)
  */
 
 import { spawnSync } from "node:child_process";
@@ -36,7 +37,7 @@ const PACKAGES = [
     { dir: "projects/live2d-widget", build: true },
     { dir: "projects/live2d-element", build: true },
     { dir: "projects/adaptors/vue-plugin-live2d", build: false },
-    { dir: "projects/adaptors/hexo-plugin-live2d", build: true },
+    { dir: "projects/adaptors/react-plugin-live2d", build: false },
     { dir: "projects/adaptors/cocos-plugin-live2d", build: false },
     { dir: "projects/adaptors/vmz-plugin-live2d", build: false },
 ];

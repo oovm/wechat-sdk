@@ -31,7 +31,7 @@ const PACKAGES = [
     { dir: "projects/live2d-widget" },
     { dir: "projects/live2d-element" },
     { dir: "projects/adaptors/vue-plugin-live2d" },
-    { dir: "projects/adaptors/hexo-plugin-live2d" },
+    { dir: "projects/adaptors/react-plugin-live2d" },
     { dir: "projects/adaptors/cocos-plugin-live2d" },
     { dir: "projects/adaptors/vmz-plugin-live2d" },
 ];
@@ -186,27 +186,8 @@ function publishJs(version) {
         }
 
         if (name === "hexo-plugin-live2d") {
-            const bootstrap = path.join(
-                abs,
-                "browser",
-                "doki-live2d-hexo.bootstrap.mjs",
-            );
-            if (!fs.existsSync(bootstrap)) {
-                console.log(
-                    "ci-publish-npm: building hexo browser assets (not in git)",
-                );
-                const build = run("pnpm", [
-                    "--filter",
-                    "hexo-plugin-live2d",
-                    "run",
-                    "build:publish",
-                ]);
-                if (build.status !== 0) {
-                    fail(
-                        "hexo browser build:publish failed before npm publish",
-                    );
-                }
-            }
+            // moved to hexo-theme-yuki — unreachable if PACKAGES is correct
+            fail("hexo-plugin-live2d must not publish from live2d.ts");
         }
 
         const stage = path.join(
