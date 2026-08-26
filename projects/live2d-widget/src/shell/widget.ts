@@ -1,8 +1,12 @@
 import {
-    type CreateLive2DOptions,
+    allocateActorId,
     createLive2D,
+    createLive2dStage,
+    createRenderer,
     focusParameterUpdates,
     type Live2DRuntime,
+    type Live2dActor,
+    type Live2dStage,
     type RendererKind,
 } from "@doki-land/live2d";
 import {
@@ -13,38 +17,59 @@ import {
 
 export type { WidgetChromeOptions, WidgetToolId } from "../chrome/chrome.js";
 
-export interface WidgetOptions extends CreateLive2DOptions {
-    /** CSS selector or element to host the canvas. */
+/** Composed widget over an existing Stage + Actor (no second RAF). */
+export interface ComposedWidgetOptions {
     target: string | HTMLElement;
-    /** Initial model URL (model.json / model3.json / npm:…). */
-    model?: string;
+    stage: Live2dStage;
+    actor: Live2dActor;
     width?: number;
     height?: number;
-    /** Drive PARAM_ANGLE_X with a sine while playing. Default true. */
+    /** Drive PARAM_ANGLE_X with a sine while the stage loop runs. Default true. */
     autoSway?: boolean;
-    /** Start the RAF update loop after mount. Default true. */
+    /** Start Stage-owned RAF after mount. Default true. */
     autoplay?: boolean;
-    /**
-     * Optional tips bubble + toolbar (hitokoto / photo / quit).
-     * Pass `true` for defaults, or a config object.
-     */
     chrome?: boolean | WidgetChromeOptions;
-    /** Fired when canvas hit-test finds a drawable. */
     onHit?: (payload: { area: string; x: number; y: number }) => void;
 }
 
 /**
- * Page widget shell over `@doki-land/live2d`.
- * Renderer fallback is `createRenderer({ prefer })` (webgpu → webgl2 → canvas2d).
+ * Legacy bootstrap that still creates its own Stage + Actor.
+ * Prefer composing `stage` + `actor` yourself and calling `createLive2dWidget`.
  */
-export class Live2DWidget {
+export interface LegacyWidgetOptions {
+    target: string | HTMLElement;
+    model?: string;
+    width?: number;
+    height?: number;
+    prefer?: RendererKind[];
+    autoSway?: boolean;
+    autoplay?: boolean;
+    chrome?: boolean | WidgetChromeOptions;
+    onHit?: (payload: { area: string; x: number; y: number }) => void;
+}
+
+export type WidgetOptions = ComposedWidgetOptions | LegacyWidgetOptions;
+
+function isLegacyOptions(
+    options: WidgetOptions,
+): options is LegacyWidgetOptions {
+    return !("stage" in options && "actor" in options);
+}
+
+/**
+ * Page widget shell — product chrome over Stage + Actor.
+ * Does not own renderer selection or a private RAF loop.
+ */
+export class Live2dWidget {
     #canvas: HTMLCanvasElement | null = null;
+    #stage: Live2dStage | null = null;
+    #actor: Live2dActor | null = null;
     #runtime: Live2DRuntime | null = null;
     #chrome: ChromeSession | null = null;
-    #raf = 0;
-    #lastTs = 0;
+    #unsubFrame: (() => void) | null = null;
     #autoSway = true;
-    #onHit: WidgetOptions["onHit"];
+    #swayPhase = 0;
+    #onHit: ComposedWidgetOptions["onHit"];
 
     async mount(options: WidgetOptions): Promise<void> {
         const host =
@@ -69,16 +94,30 @@ export class Live2DWidget {
         canvas.addEventListener("pointermove", this.#onPointerMove);
         canvas.addEventListener("pointerdown", this.#onPointerDown);
 
-        const prefer = normalizePrefer(options.prefer);
-        const runtime = createLive2D({
-            backends: options.backends,
-            renderer: options.renderer,
-            prefer,
-        });
-        runtime.mount(canvas);
+        let stage: Live2dStage;
+        let actor: Live2dActor;
+        if (isLegacyOptions(options)) {
+            const prefer = normalizePrefer(options.prefer);
+            const runtime = createLive2D({
+                prefer,
+                updateMode: "auto",
+            });
+            await runtime.mount(canvas);
+            if (options.model) {
+                await runtime.loadModel(options.model);
+            }
+            this.#runtime = runtime;
+            stage = runtime.stage;
+            actor = runtime.actor;
+        } else {
+            stage = options.stage;
+            actor = options.actor;
+            await stage.mount(canvas);
+        }
 
         this.#canvas = canvas;
-        this.#runtime = runtime;
+        this.#stage = stage;
+        this.#actor = actor;
         this.#autoSway = options.autoSway !== false;
         this.#onHit = options.onHit;
         this.#chrome = mountChrome({
@@ -91,19 +130,33 @@ export class Live2DWidget {
             host.replaceChildren(canvas);
         }
 
-        if (options.model) {
-            await runtime.loadModel(options.model);
+        if (this.#autoSway) {
+            this.#unsubFrame = stage.onFrame((dt) => {
+                this.#swayPhase += dt;
+                const binding = actor.parameterMap().get("PARAM_ANGLE_X");
+                if (!binding) return;
+                const normalized = Math.sin(this.#swayPhase) * 0.25;
+                const value =
+                    normalized >= 0
+                        ? binding.defaultValue +
+                          (binding.max - binding.defaultValue) * normalized
+                        : binding.defaultValue +
+                          (binding.defaultValue - binding.min) * normalized;
+                actor.setParameter("PARAM_ANGLE_X", value);
+            });
         }
 
         if (options.autoplay !== false) {
-            this.#startLoop();
+            stage.start();
         } else {
-            runtime.update(0);
+            stage.update(0);
+            stage.render();
         }
     }
 
     destroy(): void {
-        this.#stopLoop();
+        this.#unsubFrame?.();
+        this.#unsubFrame = null;
         if (this.#canvas) {
             this.#canvas.removeEventListener(
                 "pointermove",
@@ -116,34 +169,38 @@ export class Live2DWidget {
         }
         this.#chrome?.destroy();
         this.#chrome = null;
-        this.#runtime?.destroy();
+        if (this.#runtime) {
+            this.#runtime.destroy();
+        } else {
+            this.#stage?.stop();
+        }
         this.#canvas?.remove();
-        this.#runtime = null;
         this.#canvas = null;
+        this.#stage = null;
+        this.#actor = null;
+        this.#runtime = null;
         this.#onHit = undefined;
     }
 
+    get stage(): Live2dStage | null {
+        return this.#stage;
+    }
+
+    get actor(): Live2dActor | null {
+        return this.#actor;
+    }
+
+    /** Legacy accessor when mounted via `createLive2D`. */
     getRuntime(): Live2DRuntime | null {
         return this.#runtime;
     }
 
-    /** Show a tips bubble when chrome tips are enabled. */
     showMessage(
         text: string | string[],
         timeoutMs?: number,
         priority?: number,
     ): void {
         this.#chrome?.tips?.show(text, timeoutMs, priority);
-    }
-
-    #parameterFromNormalized(id: string, normalized: number): number {
-        const binding = this.#runtime?.parameterMap().get(id);
-        if (!binding) return normalized;
-        return normalized >= 0
-            ? binding.defaultValue +
-                  (binding.max - binding.defaultValue) * normalized
-            : binding.defaultValue +
-                  (binding.defaultValue - binding.min) * normalized;
     }
 
     #modelPoint(event: PointerEvent): { x: number; y: number } | null {
@@ -159,64 +216,33 @@ export class Live2DWidget {
 
     #onPointerMove = (event: PointerEvent): void => {
         const p = this.#modelPoint(event);
-        const runtime = this.#runtime;
-        if (!p || !runtime) return;
-        // Pointer tracking overrides auto-sway for ANGLE_X while moving.
-        this.#autoSwayPausedByPointer = true;
+        const actor = this.#actor;
+        if (!p || !actor) return;
         for (const { id, value } of focusParameterUpdates(
-            runtime.parameterMap(),
+            actor.parameterMap(),
             p.x,
             p.y,
         )) {
-            runtime.setParameter(id, value);
+            actor.setParameter(id, value);
         }
     };
 
     #onPointerDown = (event: PointerEvent): void => {
         const p = this.#modelPoint(event);
-        const runtime = this.#runtime;
-        if (!p || !runtime) return;
-        const area = runtime.hitTest(p.x, p.y);
-        if (area) {
-            this.#onHit?.({ area, x: p.x, y: p.y });
-            this.#chrome?.tips?.show("碰到我啦～", 2500, 4);
-        }
+        const stage = this.#stage;
+        const actor = this.#actor;
+        if (!p || !stage || !actor) return;
+        const stageX = (p.x + 1) / 2;
+        const stageY = (1 - p.y) / 2;
+        const hit = stage.hitTest(stageX, stageY);
+        if (!hit || hit.actorId !== actor.id) return;
+        this.#onHit?.({ area: hit.area, x: p.x, y: p.y });
+        this.#chrome?.tips?.show("碰到我啦～", 2500, 4);
     };
-
-    #autoSwayPausedByPointer = false;
-
-    #startLoop(): void {
-        this.#stopLoop();
-        const tick = (ts: number) => {
-            const runtime = this.#runtime;
-            if (!runtime) return;
-            const dt = this.#lastTs ? (ts - this.#lastTs) / 1000 : 0;
-            this.#lastTs = ts;
-            if (this.#autoSway && !this.#autoSwayPausedByPointer) {
-                runtime.setParameter(
-                    "PARAM_ANGLE_X",
-                    this.#parameterFromNormalized(
-                        "PARAM_ANGLE_X",
-                        Math.sin(ts / 1000) * 0.25,
-                    ),
-                );
-            }
-            // Resume sway shortly after the last pointer sample.
-            if (this.#autoSwayPausedByPointer) {
-                this.#autoSwayPausedByPointer = false;
-            }
-            runtime.update(dt);
-            this.#raf = requestAnimationFrame(tick);
-        };
-        this.#raf = requestAnimationFrame(tick);
-    }
-
-    #stopLoop(): void {
-        if (this.#raf) cancelAnimationFrame(this.#raf);
-        this.#raf = 0;
-        this.#lastTs = 0;
-    }
 }
+
+/** @deprecated Use `Live2dWidget` — alias kept for hexo / legacy imports. */
+export const Live2DWidget = Live2dWidget;
 
 function normalizePrefer(
     prefer: RendererKind[] | undefined,
@@ -227,10 +253,36 @@ function normalizePrefer(
     return out.length ? out : undefined;
 }
 
-export async function mountWidget(
-    options: WidgetOptions,
-): Promise<Live2DWidget> {
-    const widget = new Live2DWidget();
+export async function createLive2dWidget(
+    options: ComposedWidgetOptions,
+): Promise<Live2dWidget> {
+    const widget = new Live2dWidget();
     await widget.mount(options);
     return widget;
+}
+
+export async function mountWidget(
+    options: WidgetOptions,
+): Promise<Live2dWidget> {
+    const widget = new Live2dWidget();
+    await widget.mount(options);
+    return widget;
+}
+
+/** Convenience bootstrap: Stage + default Actor + widget chrome. */
+export async function mountWidgetWithStage(
+    options: LegacyWidgetOptions,
+): Promise<{ widget: Live2dWidget; stage: Live2dStage; actor: Live2dActor }> {
+    const prefer = normalizePrefer(options.prefer);
+    const stage = createLive2dStage({
+        renderer: createRenderer({ prefer }),
+        updateMode: "auto",
+    });
+    const actor = stage.createActor({ id: allocateActorId("widget") });
+    const widget = new Live2dWidget();
+    await widget.mount({ ...options, stage, actor });
+    if (options.model) {
+        await actor.load(options.model);
+    }
+    return { widget, stage, actor };
 }

@@ -1,7 +1,7 @@
 {
     "name": "@doki-land/live2d-widget",
     "version": "0.0.0",
-    "description": "Live2D page widget — canvas shell, autoplay, optional tips chrome; built on @doki-land/live2d.",
+    "description": "Live2D page widget — product chrome over Stage + Actor (no private RAF); built on @doki-land/live2d.",
     "type": "module",
     "license": "MIT",
     "homepage": "https://github.com/doki-land/live2d.ts",
@@ -39,7 +39,7 @@
     "scripts": {
         "build": "tsup src/index.ts --format esm --dts",
         "typecheck": "tsc --noEmit",
-        "test": "vitest run --passWithNoTests"
+        "test": "vitest run"
     },
     "dependencies": {
         "@doki-land/live2d": "workspace:*"
