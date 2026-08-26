@@ -6,7 +6,7 @@ engines.
 `live2d.ts` provides a focused model runtime instead of wrapping a general-purpose scene graph. It owns model loading,
 CPU evaluation, rendering, interaction, and host integration while keeping the public entry point small.
 
-## ✨ Highlights
+## ? Highlights
 
 - Pure TypeScript runtime with no native addon requirement.
 - WebGPU-first rendering with WebGL2 and Canvas2D fallback paths.
@@ -19,7 +19,7 @@ CPU evaluation, rendering, interaction, and host integration while keeping the p
 - Hexo integration with generated browser assets and configuration passthrough.
 - Lazy resource loading for H5 games and constrained hosts.
 
-## 🎮 Game Engine Integration
+## ?? Game Engine Integration
 
 The runtime can be driven by an existing game loop. It does not require ownership of `requestAnimationFrame`:
 
@@ -49,7 +49,7 @@ This makes the runtime suitable for:
 
 The public runtime remains independent of a particular UI framework or application shell.
 
-## 📝 Blog Engine Integration
+## ?? Blog Engine Integration
 
 Blog integrations are built as thin host adapters over the same runtime:
 
@@ -67,7 +67,7 @@ the browser bundle, pass renderer preferences, and enable the optional speech bu
 Blog-specific behavior such as welcome messages, page events, screenshots, Hitokoto, and close controls belongs to the
 widget package. Model decoding and rendering remain in the runtime and are not duplicated by the Hexo adapter.
 
-## 📦 Packages
+## ?? Packages
 
 | Package                      | Responsibility                                                                                    |
 |------------------------------|---------------------------------------------------------------------------------------------------|
@@ -76,13 +76,14 @@ widget package. Model decoding and rendering remain in the runtime and are not d
 | `@doki-land/live2d-loader`   | Model source resolution, settings normalization, fetching, and progress reporting.                |
 | `@doki-land/live2d-renderer` | MOC2/MOC3 execution plus WebGPU, WebGL2, and Canvas2D rendering.                                  |
 | `@doki-land/live2d-widget`   | Optional webpage character shell with messages and toolbar behavior.                              |
-| `vue-plugin-live2d`          | Compatibility component for existing Vue applications. It is not a separate runtime.              |
+| `@doki-land/live2d-element`  | Official `<live-2d>` / `<live-2d-widget>` Custom Elements (Stage-owned RAF).                      |
+| `vue-plugin-live2d`          | Thin Vue wrapper over `<live-2d>` for existing Vue apps (not a separate runtime).                 |
 | `hexo-plugin-live2d`         | Hexo configuration, browser asset emission, and widget bootstrap.                                 |
 
 Applications normally depend only on `@doki-land/live2d`. Install implementation packages directly only when building
 custom tooling or replacing part of the default pipeline.
 
-## 🚀 Quick Start
+## ?? Quick Start
 
 ```bash
 pnpm add @doki-land/live2d
@@ -118,7 +119,7 @@ function frame(now: number) {
 requestAnimationFrame(frame);
 ```
 
-## 🖱️ Interaction
+## ??? Interaction
 
 Parameters can be driven by gameplay, dialogue, pointer input, or developer tools:
 
@@ -148,7 +149,7 @@ canvas.addEventListener("pointerdown", (event) => {
 Drawable-level hit testing is available today. Named semantic hit areas should only be assumed when the loaded format
 and model expose them.
 
-## 🧱 Architecture
+## ?? Architecture
 
 The runtime follows a one-way data path:
 
@@ -169,7 +170,7 @@ Package boundaries are intentional:
 - The facade composes the default pipeline.
 - Widgets and host adapters depend on the facade, never the reverse.
 
-## 🖼️ Rendering Backends
+## ??? Rendering Backends
 
 The default preference order is:
 
@@ -183,7 +184,7 @@ can continue to the next backend.
 Canvas2D is a compatibility and diagnostic path. It should not be treated as performance-equivalent to GPU rendering for
 complex models.
 
-## 📥 Model Sources
+## ?? Model Sources
 
 Load models from local or remote URLs:
 
@@ -202,7 +203,7 @@ await actor.loadModel(
 
 Remote loading is subject to the target server's CORS policy. Pin package versions for reproducible deployments.
 
-## ⚡ Performance
+## ? Performance
 
 The runtime is designed around browser-native rendering, typed numeric data, reusable graphics resources, and explicit
 frame control. These choices make it possible to optimize the complete CPU-to-GPU path without routing model data
@@ -222,7 +223,7 @@ reporting:
 - startup time and peak memory;
 - one-character and multi-character scaling.
 
-## 🌐 Browser Support
+## ?? Browser Support
 
 Backend availability depends on the browser and device:
 
@@ -233,7 +234,7 @@ Backend availability depends on the browser and device:
 Applications should test their selected models on the browsers and GPUs they intend to support. API availability alone
 does not guarantee identical image output or performance.
 
-## 🧪 Development
+## ?? Development
 
 Install workspace dependencies:
 
@@ -241,7 +242,7 @@ Install workspace dependencies:
 pnpm install
 ```
 
-Local gate (Biome + typecheck + tests + builds + homepage）：
+Local gate (Biome + typecheck + tests + builds + homepage??
 
 ```bash
 pnpm verify
@@ -249,7 +250,7 @@ pnpm verify
 
 `pnpm verify` includes `hexo-plugin-live2d` unit tests (plugin logic only). Hexo site / ESM inject acceptance lives in sibling `hexo-theme-fate` (`npm run build && npm run verify:live2d`).
 
-Real npm semver releases are **only** via GitHub Actions Trusted Publisher：push tag `vX.Y.Z` → `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
+Real npm semver releases are **only** via GitHub Actions Trusted Publisher?push tag `vX.Y.Z` ? `.github/workflows/publish-npm.yml` (OIDC). Do not `npm publish` real versions locally.
 
 Run type checking and renderer tests:
 
@@ -260,7 +261,7 @@ pnpm --filter @doki-land/live2d-renderer test
 
 Run the homepage and playground using the scripts declared by the homepage package.
 
-## ✅ Compatibility Policy
+## ? Compatibility Policy
 
 Model behavior is validated through explicit fixtures and browser rendering checks. Support should be described by
 tested capabilities rather than by file extension alone.
@@ -275,14 +276,20 @@ When reporting a model issue, include:
 
 Do not include proprietary model assets in public issues without permission.
 
-## 🔒 Security
+## Developer Preview
+
+**Current band: `0.0.x` (Developer Preview).** APIs and architecture may change between tags. The next maturity gate is **`0.1.0`** (compatibility matrix, full browser acceptance, Vue-to-CE completion, Hexo default CE, bundle retirement). Do not describe `0.0.x` as production-ready or claim performance superiority over the official SDK without the benchmark evidence pack in design `03` ?.
+
+Cross-ecosystem integration should prefer **`@doki-land/live2d-element`** (`<live-2d>`) or the pure TS `createLive2d()` API. Game engines and schedulers that already own a canvas should use the TS facade directly.
+
+## ?? Security
 
 Treat remote model URLs as untrusted input. Applications should restrict allowed origins, validate response sizes, apply
 a suitable content-security policy, and avoid exposing privileged tokens through asset requests.
 
 Report security-sensitive issues privately to the maintainers rather than publishing exploit details in a public issue.
 
-## 🤝 Contributing
+## ?? Contributing
 
 ### Engineering expectations
 
@@ -294,7 +301,7 @@ Report security-sensitive issues privately to the maintainers rather than publis
 - Keep public APIs small and host-independent.
 - Rebuild generated bundles from source instead of editing them manually.
 
-## 📄 License
+## ?? License
 
 ### Clean-room implementation
 
