@@ -41,11 +41,11 @@ The package exposes types such as:
 
 ```ts
 import type {
-  AssetResolver,
-  FrameSnapshot,
-  Live2DSession,
-  ModelSettings,
-  ModelSource,
+    AssetResolver,
+    FrameSnapshot,
+    Live2dSession,
+    ModelSettings,
+    ModelSource,
 } from "@doki-land/live2d-core";
 ```
 
@@ -54,14 +54,14 @@ behavior:
 
 ```ts
 const resolver: AssetResolver = {
-  async fetchJson(url) {
-    const response = await fetch(url);
-    return response.json();
-  },
-  async fetchBytes(url) {
-    const response = await fetch(url);
-    return response.arrayBuffer();
-  },
+    async fetchJson(url) {
+        const response = await fetch(url);
+        return response.json();
+    },
+    async fetchBytes(url) {
+        const response = await fetch(url);
+        return response.arrayBuffer();
+    },
 };
 ```
 

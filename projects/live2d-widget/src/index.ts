@@ -12,8 +12,6 @@ export {
     type ComposedWidgetOptions,
     createLive2dWidget,
     type LegacyWidgetOptions,
-    /** @deprecated Use `Live2dWidget`. */
-    Live2DWidget,
     Live2dWidget,
     mountWidget,
     mountWidgetWithStage,

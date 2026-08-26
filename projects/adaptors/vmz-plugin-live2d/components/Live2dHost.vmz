@@ -39,7 +39,7 @@
 </style>
 
 <script client>
-import { createLive2D } from '@doki-land/live2d';
+import { createLive2d } from '@doki-land/live2d';
 
 let hostSeq = 0;
 
@@ -53,7 +53,7 @@ export default class Live2dHost {
   public showProgress = true;
   public exposeCaptureApi = false;
   public capturePresetId = '';
-  /** Called with Live2DRuntime after loadModel succeeds. */
+  /** Called with Live2dRuntime after loadModel succeeds. */
   public onReady = null;
   /** Optional frame profile listener (caller should throttle UI). */
   public onProfile = null;
@@ -179,7 +179,7 @@ export default class Live2dHost {
       const prefer = Array.isArray(this.prefer)
         ? this.prefer
         : ['canvas2d', 'webgl2', 'webgpu'];
-      const runtime = createLive2D({ prefer, updateMode: 'auto' });
+      const runtime = createLive2d({ prefer, updateMode: 'auto' });
       runtime.events.on('ready', () => {
         if (generation !== this._bootGeneration) return;
         this.loading = false;

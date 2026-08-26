@@ -28,7 +28,7 @@ The implementation packages are installed transitively. Most applications should
 ## 🧭 Source Layout
 
 ```text
-src/facade/    createLive2D() — default stage + single actor
+src/facade/    createLive2d() — default stage + single actor
 src/motion/    motion3 parse, curves, MotionPlayer
 src/stage/     Live2dStage, actors, asset registry, transforms
 src/reexports/ optional subpath exports for core / loader / renderer
@@ -37,7 +37,7 @@ src/reexports/ optional subpath exports for core / loader / renderer
 ## 🚀 Quick Start
 
 ```ts
-import {createLive2D} from "@doki-land/live2d";
+import {createLive2d} from "@doki-land/live2d";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#live2d");
 
@@ -45,7 +45,7 @@ if (!canvas) {
     throw new Error("Missing Live2D canvas");
 }
 
-const runtime = createLive2D({
+const runtime = createLive2d({
     prefer: ["webgpu", "webgl2", "canvas2d"],
 });
 
@@ -159,7 +159,7 @@ scheduling costs.
 Advanced applications can provide a renderer or model backends:
 
 ```ts
-const runtime = createLive2D({
+const runtime = createLive2d({
     renderer: customRenderer,
     backends: [customBackend],
 });

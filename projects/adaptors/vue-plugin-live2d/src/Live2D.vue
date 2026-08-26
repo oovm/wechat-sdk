@@ -28,11 +28,11 @@
 
 <script setup lang="ts">
 import {
-    createLive2D,
+    createLive2d,
     createRenderer,
     type FrameProfile,
     focusParameterUpdates,
-    type Live2DRuntime,
+    type Live2dRuntime,
     type LoadProgress,
     type ModelSource,
     type PlayMotionOptions,
@@ -78,7 +78,7 @@ const loadProgress = ref<LoadProgress | null>(null);
 const loading = ref(false);
 
 let _canvas: HTMLCanvasElement | null = null;
-let runtime: Live2DRuntime | null = null;
+let runtime: Live2dRuntime | null = null;
 let raf = 0;
 let lastTs = 0;
 let manualAngleX: number | null = null;
@@ -146,7 +146,7 @@ function ensureFreshCanvas(): HTMLCanvasElement | null {
     return next;
 }
 
-function bindRuntimeEvents(r: Live2DRuntime) {
+function bindRuntimeEvents(r: Live2dRuntime) {
     r.events.on("ready", (p) => {
         loading.value = false;
         loadProgress.value = {
@@ -190,7 +190,7 @@ async function remount() {
         return;
     }
 
-    runtime = createLive2D({
+    runtime = createLive2d({
         renderer: createRenderer({ prefer: props.prefer }),
     });
     bindRuntimeEvents(runtime);

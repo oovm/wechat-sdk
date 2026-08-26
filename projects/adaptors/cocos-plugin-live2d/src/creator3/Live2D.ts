@@ -1,8 +1,8 @@
 import {
-    createLive2D as createLive2DRuntime,
+    createLive2d as createLive2dRuntime,
     createRenderer,
     focusParameterUpdates,
-    type Live2DRuntime,
+    type Live2dRuntime,
     type RendererKind,
 } from "@doki-land/live2d";
 import {
@@ -61,7 +61,7 @@ export class Live2D extends Component {
 
     #canvas: HTMLCanvasElement | null = null;
     #scratch: HTMLCanvasElement | null = null;
-    #runtime: Live2DRuntime | null = null;
+    #runtime: Live2dRuntime | null = null;
     #texture: Texture2D | null = null;
     #spriteFrame: SpriteFrame | null = null;
     #sprite: Sprite | null = null;
@@ -121,7 +121,7 @@ export class Live2D extends Component {
         this.#spriteFrame = null;
     }
 
-    getRuntime(): Live2DRuntime | null {
+    getRuntime(): Live2dRuntime | null {
         return this.#runtime;
     }
 
@@ -173,7 +173,7 @@ export class Live2D extends Component {
         this.#scratch = document.createElement("canvas");
 
         const prefer = normalizePrefer(this.prefer);
-        const runtime = createLive2DRuntime({
+        const runtime = createLive2dRuntime({
             renderer: createRenderer({ prefer }),
         });
         this.#runtime = runtime;

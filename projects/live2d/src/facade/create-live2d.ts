@@ -5,15 +5,15 @@ import {
 } from "@doki-land/live2d-renderer";
 import { allocateActorId } from "../stage/actor.js";
 import {
-    type CreateLive2DOptions,
+    type CreateLive2dOptions,
     createSingleActorFacade,
-    type Live2DRuntime,
+    type Live2dRuntime,
 } from "../stage/single-facade.js";
 import { createLive2dStage } from "../stage/stage.js";
 
 export type {
-    CreateLive2DOptions,
-    Live2DRuntime,
+    CreateLive2dOptions,
+    Live2dRuntime,
 } from "../stage/single-facade.js";
 export {
     MotionPriority,
@@ -21,7 +21,7 @@ export {
 } from "../stage/single-facade.js";
 
 /** Wire moc backends and a renderer into one single-actor session. */
-export function createLive2D(options: CreateLive2DOptions = {}): Live2DRuntime {
+export function createLive2d(options: CreateLive2dOptions = {}): Live2dRuntime {
     const backends = options.backends ?? [
         createMoc2Backend(),
         createMoc3Backend(),
