@@ -14,7 +14,7 @@
         "test": "pnpm -r --filter \"@doki-land/*\" --if-present run test",
         "dev:homepage": "pnpm --filter @doki-land/live2d-homepage dev",
         "build:homepage": "pnpm --filter @doki-land/live2d-homepage build",
-        "verify": "pnpm check && node scripts/ci/check-no-generated-assets.mjs && pnpm typecheck && pnpm test && pnpm --filter hexo-plugin-live2d test && pnpm build && pnpm --filter hexo-plugin-live2d build && pnpm build:homepage",
+        "verify": "pnpm check && node scripts/ci/check-no-generated-assets.mjs && node scripts/ci/check-ce-fixture.mjs && pnpm typecheck && pnpm test && pnpm --filter hexo-plugin-live2d test && pnpm build && pnpm --filter hexo-plugin-live2d build && pnpm build:homepage",
         "publish:packages": "node ./scripts/publish-packages.mjs",
         "publish:packages:yes": "node ./scripts/publish-packages.mjs --yes",
         "placeholder": "node scripts/ci/publish-placeholder.mjs",
