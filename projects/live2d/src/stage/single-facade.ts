@@ -104,18 +104,19 @@ export function createSingleActorFacade(
         get state() {
             return state();
         },
-        mount(target) {
+        async mount(target) {
             generation += 1;
             canvas = target;
             setPhase("mounting");
-            void stage.mount(target).then(
-                () => setPhase(actor.model ? "live" : "ready"),
-                (err) => {
-                    lastError = err;
-                    setPhase("error");
-                    events.emit("error", { error: err });
-                },
-            );
+            try {
+                await stage.mount(target);
+                setPhase(actor.model ? "live" : "ready");
+            } catch (err) {
+                lastError = err;
+                setPhase("error");
+                events.emit("error", { error: err });
+                throw err;
+            }
         },
         async loadModel(source: ModelSource, resolver, options) {
             setPhase("loading");

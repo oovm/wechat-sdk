@@ -16,9 +16,12 @@ const html = fs.readFileSync(FIXTURE, "utf8");
 
 const required = [
     "<live-2d",
+    "<live-2d-widget",
     "@doki-land/live2d-element",
     "live2d-ready",
     "live2d-error",
+    "live2d-progress",
+    "data-phase",
 ];
 
 const missing = required.filter((needle) => !html.includes(needle));
