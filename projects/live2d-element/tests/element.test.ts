@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { defineLive2dElement } from "../src/define.js";
+import {
+    defineLive2dElement,
+    defineLive2dWidgetElement,
+} from "../src/define.js";
 import { LIVE2D_ELEMENT_TAG, Live2dElement } from "../src/live2d-element.js";
+import {
+    LIVE2D_WIDGET_ELEMENT_TAG,
+    Live2dWidgetElement,
+} from "../src/live2d-widget-element.js";
 
-describe("<live-2d> custom element skeleton", () => {
+describe("<live-2d> custom element", () => {
     beforeEach(() => {
         document.body.innerHTML = "";
         defineLive2dElement();
@@ -35,6 +42,16 @@ describe("<live-2d> custom element skeleton", () => {
         expect(canvas?.getAttribute("part")).toBe("canvas");
     });
 
+    it("exposes command methods on the element prototype", () => {
+        const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
+        expect(typeof el.loadModel).toBe("function");
+        expect(typeof el.playMotion).toBe("function");
+        expect(typeof el.setExpression).toBe("function");
+        expect(typeof el.lookAt).toBe("function");
+        expect(typeof el.pause).toBe("function");
+        expect(typeof el.resume).toBe("function");
+    });
+
     it("dispatches live2d-error when model load fails", async () => {
         const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
         el.setAttribute("renderer", "canvas2d");
@@ -55,5 +72,39 @@ describe("<live-2d> custom element skeleton", () => {
         const ev = await error;
         expect(String(ev.detail?.error ?? "")).toMatch(/./);
         expect(el.getAttribute("data-phase")).toBe("error");
+    });
+});
+
+describe("<live-2d-widget> custom element", () => {
+    beforeEach(() => {
+        document.body.innerHTML = "";
+        defineLive2dWidgetElement();
+    });
+
+    it("registers the live-2d-widget tag idempotently", () => {
+        defineLive2dWidgetElement();
+        expect(customElements.get(LIVE2D_WIDGET_ELEMENT_TAG)).toBe(
+            Live2dWidgetElement,
+        );
+    });
+
+    it("nests a live-2d actor and forwards model attribute", () => {
+        const el = document.createElement(
+            LIVE2D_WIDGET_ELEMENT_TAG,
+        ) as Live2dWidgetElement;
+        el.setAttribute("model", "/models/demo.model3.json");
+        el.setAttribute("width", "240");
+        el.setAttribute("height", "320");
+        document.body.appendChild(el);
+
+        const actor = el.querySelector(
+            LIVE2D_ELEMENT_TAG,
+        ) as Live2dElement | null;
+        expect(actor).toBeTruthy();
+        expect(el.actor).toBe(actor);
+        expect(actor?.getAttribute("model")).toBe("/models/demo.model3.json");
+        expect(actor?.getAttribute("width")).toBe("240");
+        expect(actor?.getAttribute("height")).toBe("320");
+        expect(el.querySelector('[part="chrome"]')).toBeTruthy();
     });
 });

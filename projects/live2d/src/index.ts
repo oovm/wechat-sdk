@@ -2,13 +2,13 @@
  * `@doki-land/live2d` — public facade.
  *
  * Layout:
- * - `facade/`    — `createLive2D()` default stage + actor entry
+ * - `facade/`    — `createLive2d()` default stage + actor entry
  * - `motion/`    — motion3 parse + playback
  * - `stage/`     — multi-actor stage, assets, transforms
  * - `reexports/` — optional subpath `@doki-land/live2d/{core,loader,renderer}`
  *
  * ```ts
- * import { createLive2D } from "@doki-land/live2d";
+ * import { createLive2d } from "@doki-land/live2d";
  * ```
  */
 
@@ -22,8 +22,8 @@ export type {
     FrameProfile,
     FrameSnapshot,
     InternalModel,
-    Live2DSession,
     Live2dActor,
+    Live2dSession,
     Live2dStage,
     Live2dStageAssets,
     LoadProgress,
@@ -74,9 +74,9 @@ export {
     parseExpression3,
 } from "./expression/index.js";
 export {
-    type CreateLive2DOptions,
-    createLive2D,
-    type Live2DRuntime,
+    type CreateLive2dOptions,
+    createLive2d,
+    type Live2dRuntime,
     MotionPriority,
     type PlayMotionOptions,
 } from "./facade/create-live2d.js";
@@ -89,6 +89,14 @@ export {
     MotionPlayer,
     parseMotion3,
 } from "./motion/index.js";
+export {
+    applyPhysics3,
+    type Physics3ApplyBinding,
+    type Physics3Clip,
+    type Physics3Output,
+    type Physics3Setting,
+    parsePhysics3,
+} from "./physics/index.js";
 export {
     applyPose3Activation,
     type Pose3Clip,
