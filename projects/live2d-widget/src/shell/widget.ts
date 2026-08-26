@@ -1,10 +1,7 @@
 import {
-    createLive2d,
     focusParameterUpdates,
     type Live2dActor,
-    type Live2dRuntime,
     type Live2dStage,
-    type RendererKind,
 } from "@doki-land/live2d";
 import {
     type ChromeSession,
@@ -30,30 +27,6 @@ export interface ComposedWidgetOptions {
 }
 
 /**
- * Bootstrap widget that creates its own Stage + Actor via `createLive2d`.
- * Prefer `createLive2dWidget({ stage, actor, ... })` when you already own the stage.
- */
-export interface LegacyWidgetOptions {
-    target: string | HTMLElement;
-    model?: string;
-    width?: number;
-    height?: number;
-    prefer?: RendererKind[];
-    autoSway?: boolean;
-    autoplay?: boolean;
-    chrome?: boolean | WidgetChromeOptions;
-    onHit?: (payload: { area: string; x: number; y: number }) => void;
-}
-
-export type WidgetOptions = ComposedWidgetOptions | LegacyWidgetOptions;
-
-function isLegacyOptions(
-    options: WidgetOptions,
-): options is LegacyWidgetOptions {
-    return !("stage" in options && "actor" in options);
-}
-
-/**
  * Page widget shell — product chrome over Stage + Actor.
  * Does not own renderer selection or a private RAF loop.
  */
@@ -61,14 +34,13 @@ export class Live2dWidget {
     #canvas: HTMLCanvasElement | null = null;
     #stage: Live2dStage | null = null;
     #actor: Live2dActor | null = null;
-    #runtime: Live2dRuntime | null = null;
     #chrome: ChromeSession | null = null;
     #unsubFrame: (() => void) | null = null;
     #autoSway = true;
     #swayPhase = 0;
     #onHit: ComposedWidgetOptions["onHit"];
 
-    async mount(options: WidgetOptions): Promise<void> {
+    async mount(options: ComposedWidgetOptions): Promise<void> {
         const host =
             typeof options.target === "string"
                 ? document.querySelector<HTMLElement>(options.target)
@@ -91,26 +63,9 @@ export class Live2dWidget {
         canvas.addEventListener("pointermove", this.#onPointerMove);
         canvas.addEventListener("pointerdown", this.#onPointerDown);
 
-        let stage: Live2dStage;
-        let actor: Live2dActor;
-        if (isLegacyOptions(options)) {
-            const prefer = normalizePrefer(options.prefer);
-            const runtime = createLive2d({
-                prefer,
-                updateMode: "auto",
-            });
-            await runtime.mount(canvas);
-            if (options.model) {
-                await runtime.loadModel(options.model);
-            }
-            this.#runtime = runtime;
-            stage = runtime.stage;
-            actor = runtime.actor;
-        } else {
-            stage = options.stage;
-            actor = options.actor;
-            await stage.mount(canvas);
-        }
+        const stage = options.stage;
+        const actor = options.actor;
+        await stage.mount(canvas);
 
         this.#canvas = canvas;
         this.#stage = stage;
@@ -166,16 +121,11 @@ export class Live2dWidget {
         }
         this.#chrome?.destroy();
         this.#chrome = null;
-        if (this.#runtime) {
-            this.#runtime.destroy();
-        } else {
-            this.#stage?.stop();
-        }
+        this.#stage?.stop();
         this.#canvas?.remove();
         this.#canvas = null;
         this.#stage = null;
         this.#actor = null;
-        this.#runtime = null;
         this.#onHit = undefined;
     }
 
@@ -185,11 +135,6 @@ export class Live2dWidget {
 
     get actor(): Live2dActor | null {
         return this.#actor;
-    }
-
-    /** Legacy accessor when mounted via `createLive2d`. */
-    getRuntime(): Live2dRuntime | null {
-        return this.#runtime;
     }
 
     showMessage(
@@ -238,25 +183,8 @@ export class Live2dWidget {
     };
 }
 
-function normalizePrefer(
-    prefer: RendererKind[] | undefined,
-): RendererKind[] | undefined {
-    if (!prefer?.length) return undefined;
-    const allowed = new Set<RendererKind>(["webgpu", "webgl2", "canvas2d"]);
-    const out = prefer.filter((k): k is RendererKind => allowed.has(k));
-    return out.length ? out : undefined;
-}
-
 export async function createLive2dWidget(
     options: ComposedWidgetOptions,
-): Promise<Live2dWidget> {
-    const widget = new Live2dWidget();
-    await widget.mount(options);
-    return widget;
-}
-
-export async function mountWidget(
-    options: WidgetOptions,
 ): Promise<Live2dWidget> {
     const widget = new Live2dWidget();
     await widget.mount(options);

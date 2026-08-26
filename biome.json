@@ -32,8 +32,6 @@
             "!**/dist",
             "!**/node_modules",
             "!**/public/models",
-            "!**/browser/doki-live2d-hexo.js",
-            "!**/browser/doki-live2d-hexo.bootstrap.mjs",
             "!**/browser/vendor",
             "!**/fixtures/.vendor",
             "!**/.placeholder-npm-cache.json"

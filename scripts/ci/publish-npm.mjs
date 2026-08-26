@@ -185,11 +185,6 @@ function publishJs(version) {
             continue;
         }
 
-        if (name === "hexo-plugin-live2d") {
-            // moved to hexo-theme-yuki — unreachable if PACKAGES is correct
-            fail("hexo-plugin-live2d must not publish from live2d.ts");
-        }
-
         const stage = path.join(
             os.tmpdir(),
             `live2d-pub-${name.replace(/[/@]/g, "-")}-${version}`,

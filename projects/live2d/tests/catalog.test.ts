@@ -16,6 +16,10 @@ describe("models catalog", () => {
             name: Record<string, string>;
             source: string;
             local: boolean;
+            fixture?: string;
+            sample?: string;
+            npm?: unknown;
+            tags?: string[];
         }>;
     };
 
@@ -61,5 +65,19 @@ describe("models catalog", () => {
                 .filter((m) => !m.local)
                 .every((m) => !m.source.startsWith("/models/quad")),
         ).toBe(true);
+    });
+
+    it("covers local sample/npm/fixture ids in the model matrix", async () => {
+        const { MODEL_MATRIX } = await import(
+            "../../live2d-renderer/tests/model-matrix.js"
+        );
+        const matrixIds = new Set(MODEL_MATRIX.map((r) => r.id));
+        for (const m of catalog.models.filter((m) => m.local)) {
+            if (m.fixture === "cpu-quad" || m.sample || m.npm) {
+                expect(matrixIds.has(m.id), `matrix missing ${m.id}`).toBe(
+                    true,
+                );
+            }
+        }
     });
 });
