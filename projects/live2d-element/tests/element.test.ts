@@ -52,6 +52,26 @@ describe("<live-2d> custom element", () => {
         expect(typeof el.resume).toBe("function");
     });
 
+    it("exposes source and renderOptions properties", () => {
+        const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
+        el.source = {
+            kind: "npm",
+            package: "live2d-widget-model-hijiki@1.0.5",
+            path: "assets/hijiki.model.json",
+        };
+        el.renderOptions = { prefer: ["canvas2d", "webgl2"] };
+        expect(el.source?.kind).toBe("npm");
+        expect(el.renderOptions?.prefer).toEqual(["canvas2d", "webgl2"]);
+    });
+
+    it("reflects autosway boolean attribute", () => {
+        const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
+        el.setAttribute("autosway", "");
+        expect(el.autosway).toBe(true);
+        el.autosway = false;
+        expect(el.hasAttribute("autosway")).toBe(false);
+    });
+
     it("dispatches live2d-error when model load fails", async () => {
         const el = document.createElement(LIVE2D_ELEMENT_TAG) as Live2dElement;
         el.setAttribute("renderer", "canvas2d");

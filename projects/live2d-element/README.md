@@ -28,6 +28,7 @@ pnpm add @doki-land/live2d-element
   width="320"
   height="320"
   autoplay
+  autosway
   interactive
   tracking="pointer"
 ></live-2d>
@@ -35,7 +36,10 @@ pnpm add @doki-land/live2d-element
   const el = document.querySelector("live-2d");
   el.addEventListener("live2d-ready", () => console.log("ready"));
   el.addEventListener("live2d-hit", (e) => console.log(e.detail));
+  el.addEventListener("live2d-progress", (e) => console.log(e.detail));
+  el.addEventListener("live2d-profile", (e) => console.log(e.detail));
   el.addEventListener("live2d-error", (e) => console.error(e.detail));
+  // Properties: source / renderOptions (complex ModelSource + prefer order)
   // Methods: loadModel / playMotion / setExpression / lookAt / pause / resume
 </script>
 ```
