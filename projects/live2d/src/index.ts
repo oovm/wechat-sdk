@@ -77,6 +77,12 @@ export {
     type CreateLive2dOptions,
     createLive2d,
     type Live2dRuntime,
+    /** @deprecated Use `createLive2d`. */
+    createLive2D,
+    /** @deprecated Use `CreateLive2dOptions`. */
+    type CreateLive2DOptions,
+    /** @deprecated Use `Live2dRuntime`. */
+    type Live2DRuntime,
     MotionPriority,
     type PlayMotionOptions,
 } from "./facade/create-live2d.js";

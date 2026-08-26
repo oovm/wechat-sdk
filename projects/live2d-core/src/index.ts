@@ -19,11 +19,17 @@ export { modelSourceUrl } from "./contracts.js";
 export {
     EventEmitter,
     type FrameProfile,
-    type Live2DEventMap,
-    type Live2DEventName,
-    type Live2DListener,
+    type Live2dEventMap,
+    type Live2dEventName,
+    type Live2dListener,
     type LoadProgress,
     type LoadProgressStage,
+    /** @deprecated Use `Live2dEventMap`. */
+    type Live2DEventMap,
+    /** @deprecated Use `Live2dEventName`. */
+    type Live2DEventName,
+    /** @deprecated Use `Live2dListener`. */
+    type Live2DListener,
 } from "./events.js";
 export { detectModelSettingsFormat } from "./format/detect-format.js";
 export {
@@ -52,6 +58,8 @@ export type {
 } from "./program.js";
 export {
     createSessionStub,
+    type Live2dSession,
+    /** @deprecated Use `Live2dSession`. */
     type Live2DSession,
 } from "./session.js";
 export type {
