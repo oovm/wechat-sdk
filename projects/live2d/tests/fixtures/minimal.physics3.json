@@ -1,0 +1,38 @@
+{
+    "Version": 3,
+    "Meta": {
+        "PhysicsSettingCount": 1,
+        "TotalInputCount": 0,
+        "TotalOutputCount": 1,
+        "VertexCount": 0,
+        "EffectiveForces": {
+            "Gravity": { "X": 0, "Y": -1 },
+            "Wind": { "X": 0, "Y": 0 }
+        },
+        "PhysicsDictionary": [{ "Id": "PhysicsSetting1", "Name": "Hair" }]
+    },
+    "PhysicsSettings": [
+        {
+            "Id": "PhysicsSetting1",
+            "Input": [],
+            "Output": [
+                {
+                    "Destination": {
+                        "Target": "Parameter",
+                        "Id": "PARAM_ANGLE_X"
+                    },
+                    "VertexIndex": 0,
+                    "Scale": 1,
+                    "Weight": 100,
+                    "Type": "X",
+                    "Reflect": false
+                }
+            ],
+            "Vertices": [],
+            "Normalization": {
+                "Position": { "Minimum": -10, "Default": 0, "Maximum": 10 },
+                "Angle": { "Minimum": -10, "Default": 0, "Maximum": 10 }
+            }
+        }
+    ]
+}

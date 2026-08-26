@@ -23,6 +23,11 @@ import {
     parseMotion3,
 } from "../motion/index.js";
 import {
+    applyPhysics3,
+    type Physics3Clip,
+    parsePhysics3,
+} from "../physics/index.js";
+import {
     applyPose3Activation,
     type Pose3Clip,
     parsePose3,
@@ -72,6 +77,7 @@ export class ActorModelSlot {
         weight: number;
     } | null = null;
     #poseClip: Pose3Clip | null = null;
+    #physicsClip: Physics3Clip | null = null;
 
     constructor(options: ActorModelSlotOptions) {
         this.#assets = options.assets;
@@ -187,6 +193,30 @@ export class ActorModelSlot {
         }
     }
 
+    async #loadPhysicsClip(): Promise<void> {
+        this.#physicsClip = null;
+        const physicsPath = this.#model?.settings.physics;
+        if (!physicsPath || !this.#lease) return;
+        try {
+            const json = await this.#lease.resolver.fetchJson(physicsPath);
+            this.#physicsClip = parsePhysics3(json);
+        } catch {
+            this.#physicsClip = null;
+        }
+    }
+
+    #applyPhysicsLayer(deltaTimeSeconds: number): void {
+        if (!this.#physicsClip || !this.#model || !this.#backend) return;
+        applyPhysics3(
+            this.#physicsClip,
+            deltaTimeSeconds,
+            this.#paramById,
+            (id, value) =>
+                this.#backend?.setParameter?.(this.#model!, id, value),
+        );
+        this.#syncParamCacheFromBackend();
+    }
+
     #rebuildParamCache(): void {
         this.#paramById.clear();
         this.#paramIndexById.clear();
@@ -223,8 +253,17 @@ export class ActorModelSlot {
     async load(
         source: ModelSource,
         resolver?: AssetResolver,
+        options?: { signal?: AbortSignal },
     ): Promise<InternalModel> {
         const gen = ++this.#loadGeneration;
+        const signal = options?.signal;
+        if (signal?.aborted) {
+            throw new Error("@doki-land/live2d: load cancelled");
+        }
+        const onAbort = () => {
+            this.#loadGeneration += 1;
+        };
+        signal?.addEventListener("abort", onAbort, { once: true });
         this.#report({
             stage: "mounting",
             progress: 0.01,
@@ -232,15 +271,22 @@ export class ActorModelSlot {
         });
         const drawPass = this.ensureDrawPass();
 
-        const lease = await this.#assets.acquire(source, resolver, (p) =>
-            this.#report(p),
-        );
-        if (gen !== this.#loadGeneration) {
-            lease.release();
-            throw new Error("@doki-land/live2d: load cancelled");
-        }
+        try {
+            const lease = await this.#assets.acquire(
+                source,
+                resolver,
+                (p) => this.#report(p),
+                { signal },
+            );
+            if (gen !== this.#loadGeneration) {
+                lease.release();
+                throw new Error("@doki-land/live2d: load cancelled");
+            }
 
-        return await this.#attachLease(lease, drawPass, gen);
+            return await this.#attachLease(lease, drawPass, gen);
+        } finally {
+            signal?.removeEventListener("abort", onAbort);
+        }
     }
 
     async loadAsset(asset: ModelAsset): Promise<InternalModel> {
@@ -275,6 +321,7 @@ export class ActorModelSlot {
         this.#motionPlayer.clear();
         this.#activeExpression = null;
         this.#poseClip = null;
+        this.#physicsClip = null;
         this.#releaseLease();
 
         const { model, backend } = await lease.createInstance(this.#renderer);
@@ -294,6 +341,7 @@ export class ActorModelSlot {
         this.#backend = backend;
         this.#rebuildParamCache();
         await this.#loadPoseClip();
+        await this.#loadPhysicsClip();
         this.#report({
             stage: "ready",
             progress: 1,
@@ -395,6 +443,7 @@ export class ActorModelSlot {
         this.#applyMotionSamples(this.#motionPlayer.update(deltaTimeSeconds));
         this.#tickExpression(deltaTimeSeconds);
         this.#applyExpressionLayer();
+        this.#applyPhysicsLayer(deltaTimeSeconds);
         this.#backend.updateModel(this.#model, deltaTimeSeconds);
         return this.#backend.getDrawables(this.#model);
     }
@@ -446,6 +495,7 @@ export class ActorModelSlot {
         this.#motionPlayer.clear();
         this.#activeExpression = null;
         this.#poseClip = null;
+        this.#physicsClip = null;
         if (this.#model && this.#backend) {
             this.#backend.destroyModel(this.#model);
         }

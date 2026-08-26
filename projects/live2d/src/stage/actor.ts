@@ -53,7 +53,33 @@ export class Live2dActorImpl implements Live2dActor {
         this.#slot = new ActorModelSlot({
             assets: shared.assets,
             renderer: shared.renderer,
+            onMotionStart: (payload) => this.#onMotionStart?.(payload),
+            onMotionFinish: (payload) => this.#onMotionFinish?.(payload),
         });
+    }
+
+    #onMotionStart:
+        | ((payload: { group: string; index: number; slot: string }) => void)
+        | null = null;
+    #onMotionFinish:
+        | ((payload: { group: string; index: number; slot: string }) => void)
+        | null = null;
+
+    /** Bridge MotionPlayer lifecycle into Stage/facade event buses. */
+    setMotionEventHandlers(handlers: {
+        onStart?: (payload: {
+            group: string;
+            index: number;
+            slot: string;
+        }) => void;
+        onFinish?: (payload: {
+            group: string;
+            index: number;
+            slot: string;
+        }) => void;
+    }): void {
+        this.#onMotionStart = handlers.onStart ?? null;
+        this.#onMotionFinish = handlers.onFinish ?? null;
     }
 
     get model(): InternalModel | null {
@@ -106,11 +132,12 @@ export class Live2dActorImpl implements Live2dActor {
     async load(
         source: Parameters<Live2dActor["load"]>[0],
         resolver?: Parameters<Live2dActor["load"]>[1],
+        options?: { signal?: AbortSignal },
     ): Promise<InternalModel> {
         if (this.#destroyed) {
             throw new Error("@doki-land/live2d: actor destroyed");
         }
-        return await this.#slot.load(source, resolver);
+        return await this.#slot.load(source, resolver, options);
     }
 
     async loadAsset(asset: ModelAsset): Promise<InternalModel> {
