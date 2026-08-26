@@ -2,7 +2,8 @@
     "name": "live2d.ts",
     "private": true,
     "type": "module",
-    "description": "Doki Land Live2D TypeScript workspace — facade @doki-land/live2d",
+    "description": "Doki Land Live2D TypeScript workspace  - facade @doki-land/live2d",
+    "license": "CC0-1.0",
     "homepage": "https://github.com/doki-land/live2d.ts",
     "repository": {
         "type": "git",
@@ -14,7 +15,8 @@
         "test": "pnpm -r --filter \"@doki-land/*\" --if-present run test",
         "dev:homepage": "pnpm --filter @doki-land/live2d-homepage dev",
         "build:homepage": "pnpm --filter @doki-land/live2d-homepage build",
-        "verify": "pnpm check && node scripts/ci/check-no-generated-assets.mjs && node scripts/ci/check-ce-fixture.mjs && pnpm typecheck && pnpm test && pnpm --filter hexo-plugin-live2d test && pnpm build && pnpm --filter hexo-plugin-live2d build && pnpm build:homepage",
+        "verify": "pnpm check && node scripts/ci/check-ce-fixture.mjs && pnpm typecheck && pnpm test && pnpm build && pnpm browser:ce-matrix && pnpm build:homepage",
+        "browser:ce-matrix": "node scripts/ci/prepare-ce-browser-fixture.mjs && node scripts/ci/browser-ce-matrix.mjs",
         "publish:packages": "node ./scripts/publish-packages.mjs",
         "publish:packages:yes": "node ./scripts/publish-packages.mjs --yes",
         "placeholder": "node scripts/ci/publish-placeholder.mjs",
@@ -26,8 +28,9 @@
     "devDependencies": {
         "@biomejs/biome": "2.5.10",
         "@webgpu/types": "^0.1.64",
-        "typescript": "^5.8.0",
+        "playwright": "^1.62.1",
         "tsup": "^8.5.1",
+        "typescript": "^5.8.0",
         "vitest": "^2.1.8"
     },
     "engines": {

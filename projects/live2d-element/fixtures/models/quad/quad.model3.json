@@ -1,0 +1,9 @@
+{
+    "Version": 3,
+    "Name": "quad-cpu-program",
+    "FileReferences": {
+        "Moc": "quad.program.json",
+        "Textures": []
+    },
+    "HitAreas": []
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CE browser matrix fixture</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      #status {
+        font: 0.85rem/1.4 ui-monospace, monospace;
+        padding: 0.5rem;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "@doki-land/live2d": "/.vendor/live2d/index.js",
+          "@doki-land/live2d/core": "/.vendor/live2d/reexports/core.js",
+          "@doki-land/live2d/loader": "/.vendor/live2d/reexports/loader.js",
+          "@doki-land/live2d/renderer": "/.vendor/live2d/reexports/renderer.js",
+          "@doki-land/live2d-core": "/.vendor/live2d-core/index.js",
+          "@doki-land/live2d-loader": "/.vendor/live2d-loader/index.js",
+          "@doki-land/live2d-renderer": "/.vendor/live2d-renderer/index.js",
+          "@doki-land/live2d-widget": "/.vendor/live2d-widget/index.js",
+          "@doki-land/live2d-element": "/.vendor/live2d-element/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <pre id="status" data-state="pending">pending</pre>
+    <live-2d
+      id="actor"
+      renderer="canvas2d"
+      width="128"
+      height="128"
+    ></live-2d>
+    <script type="module">
+      import "@doki-land/live2d-element";
+
+      const status = document.getElementById("status");
+      const actor = document.getElementById("actor");
+      const params = new URLSearchParams(location.search);
+      const scenario = params.get("scenario") || "load";
+
+      function setStatus(state, detail = "") {
+        status.dataset.state = state;
+        status.textContent = detail ? `${state}: ${detail}` : state;
+      }
+
+      actor.addEventListener("live2d-ready", () => {
+        setStatus("ready", actor.getAttribute("data-renderer") || "");
+      });
+      actor.addEventListener("live2d-error", (e) => {
+        setStatus("error", String(e.detail?.error ?? e.detail ?? "error"));
+      });
+
+      if (scenario === "missing") {
+        actor.setAttribute("model", "/__ce_matrix_missing__/nope.model3.json");
+      } else {
+        actor.setAttribute("model", "/models/quad/quad.model3.json");
+      }
+
+      window.__ceMatrix = { actor, setStatus };
+    </script>
+  </body>
+</html>
